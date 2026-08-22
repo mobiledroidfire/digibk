@@ -199,10 +199,10 @@ export default function Home() {
           ============================== */}
       <div className="hidden lg:flex lg:w-1/2 min-h-screen relative items-center justify-center p-4 xl:p-8">
         {/* Ornamen Latar Belakang (Pusat Lingkaran) */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[25rem] h-[25rem] bg-linear-to-tr from-blue-200/50 to-indigo-200/50 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-100 h-100 bg-linear-to-tr from-blue-200/50 to-indigo-200/50 rounded-full blur-3xl animate-pulse"></div>
 
         {/* Wadah Persegi Presisi */}
-        <div className="relative w-full max-w-[500px] xl:max-w-[600px] aspect-square">
+        <div className="relative w-full max-w-125 xl:max-w-150 aspect-square">
 
           {/* Logo Tengah */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-5 xl:p-6 bg-white/50 backdrop-blur-md rounded-full shadow-2xl border border-white/50 z-0 mt-4">

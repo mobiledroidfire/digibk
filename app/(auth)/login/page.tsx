@@ -3,7 +3,7 @@
 
 import { useState, useActionState } from 'react';
 import { studentLoginAction, teacherLoginAction, type AuthState } from '@/features/auth/actions/auth.actions';
-import { Loader2, GraduationCap, ShieldCheck, BrainCircuit, ActivitySquare, ArrowLeft } from 'lucide-react';
+import { Loader2, GraduationCap, ShieldCheck, BrainCircuit, ActivitySquare, ArrowLeft, Target, Users } from 'lucide-react';
 import Link from 'next/link';
 
 const initialState: AuthState = { error: null, success: false };
@@ -28,36 +28,57 @@ export default function LoginPage() {
                 <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-blue-500 blur-3xl opacity-50" />
 
                 <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-16">
+                    <div className="flex items-center gap-3 mb-12">
                         <GraduationCap className="h-10 w-10 text-yellow-300" strokeWidth={2.5} />
                         <span className="font-extrabold text-2xl tracking-widest">DIGIBK</span>
                     </div>
 
-                    <h1 className="text-5xl font-extrabold leading-tight mb-6">
+                    <h1 className="text-4xl xl:text-5xl font-extrabold leading-tight mb-6">
                         Kenali Potensi,<br />Raih Masa Depan.
                     </h1>
-                    <p className="text-blue-100 text-lg max-w-md leading-relaxed mb-12">
-                        Platform Bimbingan & Konseling Digital pertama yang dirancang untuk membantu siswa memetakan minat bakat dan mengelola emosi dengan cara yang menyenangkan.
+                    <p className="text-blue-100 text-base xl:text-lg max-w-md leading-relaxed mb-10">
+                        Platform Bimbingan & Konseling Digital yang dirancang dengan 7 Jurus utama untuk memetakan minat bakat dan mendampingi perkembangan psikologis siswa.
                     </p>
 
+                    {/* DAFTAR FITUR YANG DIPERLUAS */}
                     <div className="space-y-6">
                         <div className="flex items-center gap-4">
-                            <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-500/50 backdrop-blur-sm shadow-sm">
+                            <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-500/50 backdrop-blur-sm shadow-sm shrink-0">
                                 <BrainCircuit className="h-6 w-6 text-white" />
                             </div>
                             <div>
-                                <h3 className="font-semibold text-lg">Asesmen RIASEC</h3>
-                                <p className="text-blue-100 text-sm">Temukan tipe kepribadian dan gaya belajarmu.</p>
+                                <h3 className="font-semibold text-lg">Asesmen Potensi & RIASEC</h3>
+                                <p className="text-blue-100 text-sm">Temukan bakat, minat, serta gaya belajar idealmu.</p>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-500/50 backdrop-blur-sm shadow-sm">
+                            <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-500/50 backdrop-blur-sm shadow-sm shrink-0">
                                 <ActivitySquare className="h-6 w-6 text-white" />
                             </div>
                             <div>
-                                <h3 className="font-semibold text-lg">Kelola Emosi</h3>
-                                <p className="text-blue-100 text-sm">Kenali perasaanmu dan dapatkan saran harian.</p>
+                                <h3 className="font-semibold text-lg">Manajemen Emosi</h3>
+                                <p className="text-blue-100 text-sm">Kenali perasaan harianmu dan kelola emosi dengan lebih baik.</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-500/50 backdrop-blur-sm shadow-sm shrink-0">
+                                <ShieldCheck className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-lg">Tumbuhkan Resiliensi</h3>
+                                <p className="text-blue-100 text-sm">Bangun ketangguhan mental untuk hadapi tantangan belajar.</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-500/50 backdrop-blur-sm shadow-sm shrink-0">
+                                <Users className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-lg">Relasi & Kolaborasi</h3>
+                                <p className="text-blue-100 text-sm">Pelajari cara menjalin koneksi dan membangun kerja sama tim.</p>
                             </div>
                         </div>
                     </div>
@@ -73,7 +94,7 @@ export default function LoginPage() {
             {/* ============================================================= */}
             <div className="w-full lg:w-1/2 flex flex-col bg-slate-50 lg:bg-white min-h-screen">
 
-                {/* BARIS 1: AREA TOMBOL KEMBALI (Tidak melayang lagi, tapi punya blok sendiri) */}
+                {/* BARIS 1: AREA TOMBOL KEMBALI */}
                 <div className="w-full flex justify-end p-6 sm:p-8">
                     <Link
                         href="/"
@@ -84,7 +105,7 @@ export default function LoginPage() {
                     </Link>
                 </div>
 
-                {/* BARIS 2: AREA FORM (Mengisi sisa ruang di bawah tombol) */}
+                {/* BARIS 2: AREA FORM */}
                 <div className="flex-1 flex flex-col justify-center items-center w-full px-6 sm:px-12 pb-12">
                     <div className="w-full max-w-md">
 

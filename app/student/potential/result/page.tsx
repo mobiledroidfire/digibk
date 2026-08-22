@@ -51,10 +51,12 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
     const isKelas9 = eduLvl === 'SMP' && grade === 9;
     const isKelas12 = (eduLvl === 'SMA' || student.education_level === 'SMK' || student.education_level === 'MA') && grade === 12;
 
+    const isTransisi = isKelas6 || isKelas9 || isKelas12;
+
     let transitionMessage = null;
-    if (isKelas6) transitionMessage = "Fokus Transisi SMP: Persiapkan dirimu untuk memilih ekstrakurikuler yang tepat di SMP nanti sesuai minatmu!";
-    if (isKelas9) transitionMessage = "Fokus Jurusan SMA/SMK: Gunakan hasil ini untuk mantap memilih jurusan di SMA (MIPA/IPS/Bahasa) atau SMK yang tepat!";
-    if (isKelas12) transitionMessage = "Fokus Kuliah & Karier: Ini adalah panduan utamamu untuk menentukan program studi di kampus atau rencana karier setelah lulus!";
+    if (isKelas6) transitionMessage = "Fokus Transisi SMP: Persiapkan dirimu untuk memilih lingkungan dan ekstrakurikuler yang tepat di SMP nanti!";
+    if (isKelas9) transitionMessage = "Fokus Jurusan SMA/SMK: Gunakan hasil ini untuk mantap memilih penjurusan di tingkat menengah atas!";
+    if (isKelas12) transitionMessage = "Fokus Kuliah & Karier: Ini adalah panduan utamamu untuk menentukan program studi atau rencana karier setelah lulus!";
 
     if (!resultId) {
         const { data: latestResult } = await supabase.from('assessment_results')
@@ -110,8 +112,23 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
     const level2 = data2.levels[eduLvl];
     const level3 = data3.levels[eduLvl];
 
-    const mixedEdu1 = blendArrays(level1.eduList1, level2.eduList1, level3.eduList1, 5);
-    const mixedEdu2 = blendArrays(level1.eduList2, level2.eduList2, level3.eduList2, 5);
+    // ========================================================================
+    // LOGIKA PENDETEKSI KELAS DINAMIS (Memilih Data dari riasec.ts)
+    // ========================================================================
+    const list1_1 = isTransisi ? level1.transisiList1 : level1.eduList1;
+    const list1_2 = isTransisi ? level2.transisiList1 : level2.eduList1;
+    const list1_3 = isTransisi ? level3.transisiList1 : level3.eduList1;
+
+    const list2_1 = isTransisi ? level1.transisiList2 : level1.eduList2;
+    const list2_2 = isTransisi ? level2.transisiList2 : level2.eduList2;
+    const list2_3 = isTransisi ? level3.transisiList2 : level3.eduList2;
+
+    const displayTitleEdu1 = isTransisi ? level1.transisiTitle1 : level1.eduTitle1;
+    const displayTitleEdu2 = isTransisi ? level1.transisiTitle2 : level1.eduTitle2;
+    // ========================================================================
+
+    const mixedEdu1 = blendArrays(list1_1, list1_2, list1_3, 5);
+    const mixedEdu2 = blendArrays(list2_1, list2_2, list2_3, 5);
     const mixedMateri = blendArrays(level1.materi, level2.materi, level3.materi, 6);
     const mixedKarir = blendArrays(data1.karir, data2.karir, data3.karir, 7);
     const mixedFreelance = blendArrays(data1.freelance, data2.freelance, data3.freelance, 5);
@@ -127,42 +144,6 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
         dominantTieMessage = `Luar biasa! Kamu memiliki skor tertinggi yang seimbang pada tipe ${tieNames}. Ini menunjukkan bahwa kamu adalah pribadi yang fleksibel. Jadikan ini keunggulanmu!`;
     }
 
-    // ========================================================================
-    // LOGIKA PENDETEKSI KELAS DINAMIS
-    // ========================================================================
-    let displayTitleEdu1 = level1.eduTitle1;
-    let displayTitleEdu2 = level1.eduTitle2;
-
-    if (eduLvl === 'SD') {
-        if (grade === 6) {
-            displayTitleEdu1 = "Target Karakteristik SMP";
-            displayTitleEdu2 = "Ekskul Persiapan SMP";
-        } else {
-            // Default untuk kelas 1-5
-            displayTitleEdu1 = "Rekomendasi Ekstrakurikuler";
-            displayTitleEdu2 = "Pengembangan Diri";
-        }
-    } else if (eduLvl === 'SMP') {
-        if (grade === 9) {
-            displayTitleEdu1 = "Pilihan Jurusan SMA/MA";
-            displayTitleEdu2 = "Pilihan Jurusan SMK/Vokasi";
-        } else {
-            // Default untuk kelas 7-8
-            displayTitleEdu1 = "Persiapan Peminatan SMA Awal";
-            displayTitleEdu2 = "Eksplorasi Vokasi Dasar";
-        }
-    } else if (eduLvl === 'SMA') {
-        if (grade === 12) {
-            displayTitleEdu1 = "Rekomendasi Program Studi";
-            displayTitleEdu2 = "Alternatif Karir Lulusan Langsung";
-        } else {
-            // Default untuk kelas 10-11
-            displayTitleEdu1 = "Fokus Peminatan Kuliah";
-            displayTitleEdu2 = "Portofolio & Sertifikasi";
-        }
-    }
-    // ========================================================================
-
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col pb-12 font-sans">
             <header className="bg-white border-b border-slate-200 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between sticky top-0 z-10">
@@ -173,6 +154,7 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
             </header>
 
             <main className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
+
                 {transitionMessage && (
                     <div className="bg-linear-to-r from-blue-600 to-indigo-600 rounded-xl p-5 shadow-md flex items-center gap-4 text-white">
                         <div className="bg-white/20 p-3 rounded-full shrink-0">
@@ -253,9 +235,8 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-                        <h4 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b pb-2"><School className="h-4 w-4 text-blue-500" /> {eduLvl === 'SD' ? "Minat & Bakat" : "Studi Lanjut"}</h4>
+                        <h4 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b pb-2"><School className="h-4 w-4 text-blue-500" /> {isTransisi ? "Fokus Lulusan" : "Pengembangan Diri"}</h4>
 
-                        {/* Menggunakan displayTitle dinamis */}
                         <div className="mb-4">
                             <span className="text-xs font-semibold text-slate-400 uppercase">{displayTitleEdu1}</span>
                             <ul className="mt-2 space-y-1">{mixedEdu1.map((item, i) => <li key={i} className="text-sm text-slate-700">• {item}</li>)}</ul>
