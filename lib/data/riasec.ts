@@ -34,8 +34,8 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
         freelance: ["Tutor privat", "Trainer soft-skill", "Relawan komunitas"],
         levels: {
             SD: {
-                eduTitle1: "Rekomendasi Ekstrakurikuler", eduList1: ["Pramuka", "Dokter Kecil (UKS)", "Klub Bercerita"],
-                eduTitle2: "Pengembangan Diri", eduList2: ["Kerja Bakti Sekolah", "Lomba Pidato Cilik"],
+                eduTitle1: "Rekomendasi Ekstrakurikuler", eduList1: ["Pramuka", "Dokter Kecil (UKS)", "Klub Bercerita", "SMP Berwawasan Sosial/Pesantren"],
+                eduTitle2: "Pengembangan Diri", eduList2: ["Kerja Bakti Sekolah", "Lomba Pidato Cilik", "Relawan Cilik"],
                 materi: ["Pendidikan Pancasila", "Bahasa Indonesia", "Ilmu Pengetahuan Sosial Dasar"],
                 layanan: ["Pendampingan bermain kelompok", "Bimbingan empati anak", "Layanan cerita anak"],
                 guruBk: ["Ajak anak berbagi mainan atau bekal dengan teman", "Berikan pujian saat ia menolong orang lain", "Latih mendengarkan saat orang lain berbicara"],
@@ -51,7 +51,7 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
             },
             SMA: {
                 eduTitle1: "Rekomendasi Prodi Kuliah", eduList1: ["Ilmu Komunikasi", "Pendidikan Guru", "Psikologi", "Kedokteran", "Sosiologi"],
-                eduTitle2: "Alternatif Karir Lulusan Langsung", eduList2: ["Asisten Pengajar", "Staf Pelayanan Masyarakat"],
+                eduTitle2: "Alternatif Karir Lulusan Langsung", eduList2: ["Asisten Pengajar", "Staf Pelayanan Masyarakat", "Admin Pelayanan"],
                 materi: ["Sosiologi Lanjutan", "Psikologi Dasar", "Biologi Lanjutan", "Public Speaking"],
                 layanan: ["Konseling psikologi lanjutan", "Pelatihan Public Speaking", "Manajemen komunitas"],
                 guruBk: ["Arahkan ke panti asuhan/bakti sosial", "Latih empati untuk pemecahan masalah (mediator)", "Fasilitasi minat di bidang kesehatan masyarakat"],
@@ -66,8 +66,8 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
         freelance: ["Jasa pembukuan UMKM", "Data entry", "Admin sosial media"],
         levels: {
             SD: {
-                eduTitle1: "Rekomendasi Ekstrakurikuler", eduList1: ["Klub Komputer Dasar", "Pramuka (Bagian Administrasi)"],
-                eduTitle2: "Pengembangan Diri", eduList2: ["Lomba Menulis Rapi", "Menjadi Bendahara Kelas"],
+                eduTitle1: "Rekomendasi Ekstrakurikuler", eduList1: ["Klub Komputer Dasar", "Pramuka (Bagian Administrasi)", "Catur", "SMP dengan Ekstrakurikuler TIK"],
+                eduTitle2: "Pengembangan Diri", eduList2: ["Lomba Menulis Rapi", "Menjadi Bendahara Kelas", "Klub Jurnalistik Cilik"],
                 materi: ["Matematika (Aritmatika)", "Teknologi Informasi (Dasar)", "Keterampilan Mencatat"],
                 layanan: ["Pendampingan merapikan barang", "Bimbingan kedisiplinan waktu", "Latihan fokus dan ketelitian"],
                 guruBk: ["Latih anak merapikan mainan/bukunya sendiri", "Beri tugas sederhana seperti membagikan kertas ulangan", "Ajarkan kebiasaan menabung"],
@@ -98,8 +98,8 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
         freelance: ["Tutor sains/matematika", "Analisis data", "Penulis artikel ilmiah"],
         levels: {
             SD: {
-                eduTitle1: "Rekomendasi Ekstrakurikuler", eduList1: ["Klub Sains Cilik", "Robotik Dasar", "Catur"],
-                eduTitle2: "Pengembangan Diri", eduList2: ["Olimpiade Sains (OSN-SD)", "Eksperimen Alam"],
+                eduTitle1: "Rekomendasi Ekstrakurikuler", eduList1: ["Klub Sains Cilik", "Robotik Dasar", "Catur", "SMP Kelas Unggulan/OSN"],
+                eduTitle2: "Pengembangan Diri", eduList2: ["Olimpiade Sains (OSN-SD)", "Eksperimen Alam", "Klub Jurnalistik"],
                 materi: ["Matematika Dasar", "Ilmu Pengetahuan Alam (IPA)", "Buku Ensiklopedia"],
                 layanan: ["Bimbingan logika dasar", "Eksperimen sains menyenangkan", "Penyediaan buku ensiklopedia anak"],
                 guruBk: ["Fasilitasi permainan teka-teki, puzzle, atau catur", "Beri kesempatan anak bereksperimen sederhana (misal: tanam biji kacang)", "Dukung kebiasaan membaca buku pengetahuan"],
@@ -107,7 +107,7 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
             },
             SMP: {
                 eduTitle1: "Rekomendasi SMA (Jurusan)", eduList1: ["MIPA (Matematika, Fisika, Kimia, Biologi)"],
-                eduTitle2: "Rekomendasi SMK (Jurusan)", eduList2: ["Analis Kimia", "Farmasi", "Rekayasa Perangkat Lunak (RPL)"],
+                eduTitle2: "Rekomendasi SMK (Jurusan)", eduList2: ["Analis Kimia", "Farmasi", "Rekayasa Perangkat Lunak (RPL)", "Teknik Komputer"],
                 materi: ["Sains Eksperimen", "Matematika Aljabar", "Logika & Pemrograman Dasar", "Metode Ilmiah"],
                 layanan: ["Konsultasi bimbingan olimpiade", "Pelatihan logika pemrograman", "Akses laboratorium sekolah"],
                 guruBk: ["Dorong siswa untuk mengikuti ekstrakurikuler KIR (Karya Ilmiah Remaja)", "Berikan akses lebih ke laboratorium atau perpustakaan", "Kenalkan dasar-dasar coding/pemrograman komputer"],
@@ -115,7 +115,7 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
             },
             SMA: {
                 eduTitle1: "Rekomendasi Prodi Kuliah", eduList1: ["Teknik Informatika", "Fisika/Kimia Murni", "Kedokteran", "Ilmu Komputer"],
-                eduTitle2: "Alternatif Karir Lulusan Langsung", eduList2: ["Asisten Laboratorium", "Junior Programmer"],
+                eduTitle2: "Alternatif Karir Lulusan Langsung", eduList2: ["Asisten Laboratorium", "Junior Programmer", "Teknisi Pemula"],
                 materi: ["Matematika Lanjutan (Kalkulus)", "Fisika & Kimia Lanjutan", "Algoritma Pemrograman"],
                 layanan: ["Konsultasi riset akademik", "Bimbingan metode penelitian", "Pelatihan Data Science tingkat dasar"],
                 guruBk: ["Bimbing penyusunan karya tulis ilmiah untuk kompetisi nasional", "Arahkan pada riset dan beasiswa sains", "Diskusikan isu-isu teknologi terkini seperti AI"],
@@ -130,8 +130,8 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
         freelance: ["Jasa perbaikan", "Instruktur olahraga", "Fotografer alam"],
         levels: {
             SD: {
-                eduTitle1: "Rekomendasi Ekstrakurikuler", eduList1: ["Olahraga (Sepak Bola/Bulu Tangkis)", "Pramuka"],
-                eduTitle2: "Pengembangan Diri", eduList2: ["Lomba Merakit (Lego/Kerajinan)", "Kamping"],
+                eduTitle1: "Rekomendasi Ekstrakurikuler", eduList1: ["Olahraga (Sepak Bola/Bulu Tangkis)", "Pramuka", "Klub Mekanik Cilik", "SMP Berfokus Olahraga"],
+                eduTitle2: "Pengembangan Diri", eduList2: ["Lomba Merakit (Lego/Kerajinan)", "Kamping", "Lomba Memasak Cilik"],
                 materi: ["Pendidikan Jasmani", "Keterampilan/Prakarya"],
                 layanan: ["Kegiatan *outbound* anak", "Kelas membuat kerajinan (DIY)", "Pelatihan motorik kasar"],
                 guruBk: ["Berikan mainan yang perlu dirakit (seperti Lego atau *blocks*)", "Dukung anak beraktivitas fisik di luar ruangan", "Libatkan dalam pelajaran prakarya dasar"],
@@ -147,7 +147,7 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
             },
             SMA: {
                 eduTitle1: "Rekomendasi Prodi Kuliah", eduList1: ["Teknik Mesin", "Teknik Sipil", "Pendidikan Olahraga", "Arsitektur"],
-                eduTitle2: "Alternatif Karir Lulusan Langsung", eduList2: ["Mekanik Bengkel", "Staf Lapangan", "Koki Pemula"],
+                eduTitle2: "Alternatif Karir Lulusan Langsung", eduList2: ["Mekanik Bengkel", "Staf Lapangan", "Koki Pemula", "Atlet Muda"],
                 materi: ["Fisika Terapan", "Geografi Fisik", "Kesehatan Olahraga"],
                 layanan: ["Servis teknis tingkat lanjut", "Sertifikasi keahlian vokasi", "Manajemen aktivitas alam liar"],
                 guruBk: ["Arahkan pada sertifikasi keahlian SMK (jika SMK)", "Diskusikan prospek karier di militer/kepolisian jika berminat", "Bimbing dalam proyek inovasi teknik"],
@@ -162,8 +162,8 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
         freelance: ["Desain logo/poster", "Penulis artikel lepas", "Video editor"],
         levels: {
             SD: {
-                eduTitle1: "Rekomendasi Ekstrakurikuler", eduList1: ["Menggambar/Melukis", "Tari/Musik", "Teater Cilik"],
-                eduTitle2: "Pengembangan Diri", eduList2: ["Lomba Mewarnai", "Membaca Puisi"],
+                eduTitle1: "Rekomendasi Ekstrakurikuler", eduList1: ["Menggambar/Melukis", "Tari/Musik", "Teater Cilik", "SMP dengan Fokus Seni Budaya"],
+                eduTitle2: "Pengembangan Diri", eduList2: ["Lomba Mewarnai", "Membaca Puisi", "Membuat Mading"],
                 materi: ["Seni Budaya", "Bahasa Indonesia (Bercerita)"],
                 layanan: ["Bimbingan menggambar/mewarnai", "Kelas musik usia dini", "Taman bermain kreatif"],
                 guruBk: ["Bebaskan anak bereksperimen dengan krayon, cat air, atau plastisin", "Putarkan lagu dan ajak bernyanyi atau menari bersama", "Bacakan dongeng dan dorong ia menceritakannya kembali"],
@@ -171,7 +171,7 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
             },
             SMP: {
                 eduTitle1: "Rekomendasi SMA (Jurusan)", eduList1: ["Bahasa & Sastra", "IPS (Sosiologi Seni)"],
-                eduTitle2: "Rekomendasi SMK (Jurusan)", eduList2: ["Desain Komunikasi Visual (DKV)", "Multimedia", "Tata Busana"],
+                eduTitle2: "Rekomendasi SMK (Jurusan)", eduList2: ["Desain Komunikasi Visual (DKV)", "Multimedia", "Tata Busana", "Seni Karawitan"],
                 materi: ["Seni Rupa/Musik", "Bahasa & Sastra", "Desain Digital Pemula"],
                 layanan: ["Pelatihan desain grafis pemula", "Bimbingan teater/drama sekolah", "Manajemen pembuatan mading"],
                 guruBk: ["Fasilitasi karya siswa untuk dipajang di mading sekolah", "Berikan panggung untuk tampil di acara sekolah", "Dukung kebebasan gaya berekspresi secara visual"],
@@ -179,7 +179,7 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
             },
             SMA: {
                 eduTitle1: "Rekomendasi Prodi Kuliah", eduList1: ["Desain Interior", "Seni Rupa/Seni Pertunjukan", "Sastra", "Broadcasting"],
-                eduTitle2: "Alternatif Karir Lulusan Langsung", eduList2: ["Desainer Grafis Junior", "Content Creator"],
+                eduTitle2: "Alternatif Karir Lulusan Langsung", eduList2: ["Desainer Grafis Junior", "Content Creator", "Asisten Studio"],
                 materi: ["Sejarah Seni", "Aplikasi Desain (Adobe)", "Sastra Lanjutan"],
                 layanan: ["Konsultasi pameran karya", "Pelatihan pembuatan konten (Sosmed)", "Konseling kebebasan berekspresi"],
                 guruBk: ["Bimbing pembuatan portofolio untuk seleksi masuk PTN jalur seni", "Arahkan pada kompetisi film pendek, band, atau desain nasional", "Dukung inisiatif proyek seni kreatif OSIS"],
@@ -194,8 +194,8 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
         freelance: ["Reseller/Dropshipper online", "Event Organizer kecil", "MC/Pembawa Acara"],
         levels: {
             SD: {
-                eduTitle1: "Rekomendasi Ekstrakurikuler", eduList1: ["Pramuka (Pemimpin Regu)", "Dokter Kecil"],
-                eduTitle2: "Pengembangan Diri", eduList2: ["Market Day Sekolah", "Pemilihan Ketua Kelas"],
+                eduTitle1: "Rekomendasi Ekstrakurikuler", eduList1: ["Pramuka (Pemimpin Regu)", "Dokter Kecil", "Klub Jurnalistik Cilik", "SMP dengan Budaya Kepemimpinan (OSIS Aktif)"],
+                eduTitle2: "Pengembangan Diri", eduList2: ["Market Day Sekolah", "Pemilihan Ketua Kelas", "Lomba Pidato"],
                 materi: ["Matematika Dasar (Uang)", "Pendidikan Kewarganegaraan"],
                 layanan: ["Pelatihan keberanian tampil di depan", "Simulasi jual-beli (Bermain peran)", "Bimbingan kepemimpinan cilik"],
                 guruBk: ["Tunjuk anak sebagai ketua kelompok atau pemimpin barisan", "Libatkan dalam acara *Market Day* atau simulasi berjualan", "Latih keberanian anak untuk menyampaikan pendapat"],
@@ -203,7 +203,7 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
             },
             SMP: {
                 eduTitle1: "Rekomendasi SMA (Jurusan)", eduList1: ["IPS (Fokus Ekonomi & Sosiologi)"],
-                eduTitle2: "Rekomendasi SMK (Jurusan)", eduList2: ["Bisnis Daring & Pemasaran", "Manajemen Logistik", "Perhotelan"],
+                eduTitle2: "Rekomendasi SMK (Jurusan)", eduList2: ["Bisnis Daring & Pemasaran", "Manajemen Logistik", "Perhotelan", "Akuntansi"],
                 materi: ["IPS Ekonomi Dasar", "Kewirausahaan Dasar", "Public Speaking"],
                 layanan: ["Konsultasi ide bisnis remaja", "Pelatihan kepemimpinan tingkat dasar", "Bimbingan retorika/debat"],
                 guruBk: ["Dorong siswa bergabung di jajaran pengurus OSIS", "Latih kemampuan negosiasi dan presentasi di depan kelas", "Dukung proyek kewirausahaan siswa kecil-kecilan"],
@@ -211,7 +211,7 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
             },
             SMA: {
                 eduTitle1: "Rekomendasi Prodi Kuliah", eduList1: ["Ilmu Komunikasi", "Manajemen Bisnis", "Ilmu Hukum", "Hubungan Internasional"],
-                eduTitle2: "Alternatif Karir Lulusan Langsung", eduList2: ["Sales Marketing", "Pramuniaga", "Staf Event Organizer"],
+                eduTitle2: "Alternatif Karir Lulusan Langsung", eduList2: ["Sales Marketing", "Pramuniaga", "Staf Event Organizer", "Customer Service"],
                 materi: ["Ekonomi Bisnis", "Dasar Kepemimpinan", "Hukum Dasar"],
                 layanan: ["Inkubasi bisnis pemula (Start-up)", "Pelatihan Event Organizer", "Konsultasi negosiasi dan manajemen proyek"],
                 guruBk: ["Libatkan sebagai ketua pelaksana acara besar sekolah (Pensi)", "Berikan referensi seminar bisnis atau perlombaan kewirausahaan", "Arahkan pada prospek hukum atau ilmu diplomasi (HI)"],

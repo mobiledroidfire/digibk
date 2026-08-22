@@ -3,7 +3,18 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, Brain, Activity, ArrowRight, GraduationCap } from 'lucide-react';
+import {
+  ShieldCheck,
+  Brain,
+  Activity,
+  ArrowRight,
+  GraduationCap,
+  Target,
+  BookOpen,
+  Users,
+  Clock,
+  Lightbulb
+} from 'lucide-react';
 
 export default function Home() {
   const router = useRouter();
@@ -61,6 +72,17 @@ export default function Home() {
     }
   ];
 
+  // KOORDINAT BARU: Diturunkan dan dipadatkan secara vertikal
+  const floatingCards = [
+    { id: 1, title: "Jurus 1", desc: "Kenali Potensi", icon: Brain, color: "from-blue-500 to-blue-600", top: "25%", left: "50%", anim: "animate-[bounce_4s_infinite]" },
+    { id: 2, title: "Jurus 2", desc: "Kelola Emosi", icon: Activity, color: "from-rose-500 to-pink-600", top: "45%", left: "85%", anim: "animate-[bounce_5s_infinite] delay-200" },
+    { id: 3, title: "Jurus 3", desc: "Tumbuhkan Resiliensi", icon: ShieldCheck, color: "from-amber-500 to-orange-500", top: "70%", left: "90%", anim: "animate-[bounce_6s_infinite] delay-500" },
+    { id: 4, title: "Jurus 4", desc: "Jaga Konsistensi", icon: Target, color: "from-emerald-500 to-teal-500", top: "95%", left: "70%", anim: "animate-[bounce_4.5s_infinite] delay-300" },
+    { id: 5, title: "Jurus 5", desc: "Jalin Koneksi", icon: Users, color: "from-purple-500 to-violet-500", top: "95%", left: "30%", anim: "animate-[bounce_5.5s_infinite] delay-700" },
+    { id: 6, title: "Jurus 6", desc: "Bangun Kolaborasi", icon: BookOpen, color: "from-cyan-500 to-blue-500", top: "70%", left: "10%", anim: "animate-[bounce_7s_infinite] delay-1000" },
+    { id: 7, title: "Jurus 7", desc: "Menata Situasi", icon: Lightbulb, color: "from-yellow-400 to-amber-500", top: "45%", left: "15%", anim: "animate-[bounce_6.5s_infinite] delay-150" },
+  ];
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev === heroSlides.length - 1 ? 0 : prev + 1));
@@ -69,7 +91,7 @@ export default function Home() {
   }, [heroSlides.length]);
 
   return (
-    // Mengubah background utama menjadi gradasi slate yang elegan
+    /* Dihapus lg:h-screen lg:overflow-hidden agar fungsi scroll normal kembali */
     <div className="min-h-screen bg-linear-to-br from-slate-50 via-slate-100 to-slate-200 flex flex-col lg:flex-row font-sans">
 
       {/* ==============================
@@ -78,16 +100,12 @@ export default function Home() {
       <div className="fixed top-0 left-0 w-full z-50">
         <div className={`px-6 md:px-12 py-6 transition-all duration-500 ${isScrolled ? 'bg-white/80 backdrop-blur-lg shadow-sm py-4 border-b border-slate-200/50' : 'bg-transparent'}`}>
           <div className="max-w-7xl mx-auto flex items-center justify-between">
-
-            {/* Logo Kiri - Menggunakan GraduationCap */}
             <div className={`flex items-center gap-2 font-extrabold text-xl tracking-tight transition-colors duration-300 ${isScrolled ? 'text-blue-700' : 'text-slate-900'}`}>
               <div className="p-2 bg-blue-600 rounded-xl shadow-md">
                 <GraduationCap className="h-5 w-5 text-white" strokeWidth={2.5} />
               </div>
               DIGIBK
             </div>
-
-            {/* Tombol di Kanan */}
             <div className="flex items-center gap-4">
               <button
                 onClick={() => router.push('/login')}
@@ -123,7 +141,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Titik Navigasi Slider */}
           <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-2 z-20">
             {heroSlides.map((_, idx) => (
               <button
@@ -135,7 +152,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Tombol Aksi Tambahan untuk Mobile */}
         <div className="p-8 flex justify-center mt-2">
           <button
             onClick={() => router.push('/login')}
@@ -151,9 +167,9 @@ export default function Home() {
           ============================== */}
       <div
         ref={containerRef}
-        className="hidden lg:flex lg:w-1/2 min-h-screen flex-col justify-center p-16 xl:p-24 text-slate-900 relative overflow-hidden"
+        className="hidden lg:flex lg:w-1/2 min-h-screen flex-col justify-center p-12 xl:p-20 text-slate-900 relative"
       >
-        <div className="relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+        <div className="relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-16">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100/50 text-blue-700 font-semibold text-sm mb-8 border border-blue-200/50">
             <GraduationCap size={16} /> Platform Konseling Modern
           </div>
@@ -179,35 +195,39 @@ export default function Home() {
       </div>
 
       {/* ==============================
-          BAGIAN KANAN DESKTOP (Ilustrasi Interaktif)
+          BAGIAN KANAN DESKTOP (Ilustrasi Interaktif 7 JURUS LINGKARAN)
           ============================== */}
-      <div className="hidden lg:flex lg:w-1/2 relative items-center justify-center p-12">
-        {/* Ornamen Latar Belakang */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-125 h-125 bg-linear-to-tr from-blue-200/40 to-indigo-200/40 rounded-full blur-3xl"></div>
+      <div className="hidden lg:flex lg:w-1/2 min-h-screen relative items-center justify-center p-4 xl:p-8">
+        {/* Ornamen Latar Belakang (Pusat Lingkaran) */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[25rem] h-[25rem] bg-linear-to-tr from-blue-200/50 to-indigo-200/50 rounded-full blur-3xl animate-pulse"></div>
 
-        <div className="relative w-full max-w-lg aspect-square">
+        {/* Wadah Persegi Presisi */}
+        <div className="relative w-full max-w-[500px] xl:max-w-[600px] aspect-square">
 
-          {/* Card Animasi Mengambang 1 */}
-          <div className="absolute top-16 left-0 bg-white/80 backdrop-blur-xl p-6 rounded-2xl shadow-2xl shadow-slate-200/50 border border-white flex gap-5 items-center animate-[bounce_4s_infinite] hover:scale-105 transition-transform cursor-default">
-            <div className="bg-linear-to-br from-blue-500 to-blue-600 p-4 rounded-xl text-white shadow-inner">
-              <Brain size={28} />
-            </div>
-            <div>
-              <p className="font-bold text-slate-800 text-lg tracking-tight">Asesmen RIASEC</p>
-              <p className="text-sm text-slate-500 font-medium">Pemetaan 6 dimensi minat</p>
-            </div>
+          {/* Logo Tengah */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-5 xl:p-6 bg-white/50 backdrop-blur-md rounded-full shadow-2xl border border-white/50 z-0 mt-4">
+            <GraduationCap className="w-12 h-12 xl:w-16 xl:h-16 text-blue-500/50" />
           </div>
 
-          {/* Card Animasi Mengambang 2 */}
-          <div className="absolute bottom-24 right-0 bg-white/80 backdrop-blur-xl p-6 rounded-2xl shadow-2xl shadow-slate-200/50 border border-white flex gap-5 items-center animate-[bounce_5s_infinite] hover:scale-105 transition-transform cursor-default delay-300">
-            <div className="bg-linear-to-br from-rose-500 to-pink-600 p-4 rounded-xl text-white shadow-inner">
-              <Activity size={28} />
-            </div>
-            <div>
-              <p className="font-bold text-slate-800 text-lg tracking-tight">Kelola Emosi</p>
-              <p className="text-sm text-slate-500 font-medium">Check-in perasaan harian</p>
-            </div>
-          </div>
+          {/* MAPPING 7 JURUS */}
+          {floatingCards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <div
+                key={card.id}
+                style={{ top: card.top, left: card.left }}
+                className={`absolute -translate-x-1/2 -translate-y-1/2 w-48 xl:w-56 bg-white/95 backdrop-blur-xl p-3 xl:p-4 rounded-2xl shadow-xl shadow-slate-300/60 border border-white flex gap-3 items-center hover:scale-110 transition-all duration-300 cursor-default ${card.anim} z-10`}
+              >
+                <div className={`bg-linear-to-br ${card.color} p-2 xl:p-3 rounded-xl text-white shadow-inner shrink-0`}>
+                  <Icon size={20} className="xl:w-6 xl:h-6" />
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <p className="font-bold text-slate-800 text-xs xl:text-sm tracking-tight truncate">{card.title}</p>
+                  <p className="text-[10px] xl:text-xs text-slate-500 font-medium truncate">{card.desc}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
