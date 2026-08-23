@@ -27,6 +27,19 @@ function cleanCode(code?: string): string {
     return code ? code.trim().toUpperCase() : '';
 }
 
+// PERBAIKAN: Menambahkan helper untuk menyelaraskan warna RIASEC dengan PDF
+const getRiasecStyle = (code: string) => {
+    switch (code) {
+        case 'R': return { color: 'text-red-600', bar: 'bg-red-500' };
+        case 'I': return { color: 'text-amber-600', bar: 'bg-amber-500' };
+        case 'A': return { color: 'text-emerald-600', bar: 'bg-emerald-500' };
+        case 'S': return { color: 'text-blue-600', bar: 'bg-blue-500' };
+        case 'E': return { color: 'text-violet-600', bar: 'bg-violet-500' };
+        case 'C': return { color: 'text-slate-600', bar: 'bg-slate-500' };
+        default: return { color: 'text-indigo-600', bar: 'bg-indigo-500' };
+    }
+}
+
 export default async function ResultPage({ searchParams }: { searchParams: Promise<{ id?: string }>; }) {
     const resolvedParams = await searchParams;
     let resultId = resolvedParams.id;
@@ -201,6 +214,10 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
                             const percentage = Math.min((Number(score.raw_score) / 35) * 100, 100);
                             const safeCode = cleanCode(score.code);
                             const dimInfo = dimensionDefs[safeCode] || { name: safeCode, meaning: '' };
+
+                            // PERBAIKAN: Memanggil helper warna untuk setiap skor
+                            const style = getRiasecStyle(safeCode);
+
                             return (
                                 <div key={safeCode} className="flex flex-col gap-2">
                                     <div className="flex justify-between items-end">
@@ -208,10 +225,14 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
                                             <span className="font-bold text-slate-800 text-sm">{dimInfo.name}</span>
                                             <p className="text-xs text-slate-500 mt-0.5">{dimInfo.meaning}</p>
                                         </div>
-                                        <span className="text-sm font-bold text-indigo-600">{score.raw_score}</span>
+                                        {/* PERBAIKAN: Warna text poin disesuaikan & ditambah teks persentase seperti PDF */}
+                                        <span className={`text-sm font-bold ${style.color}`}>
+                                            {score.raw_score} ({Math.round(percentage)}%)
+                                        </span>
                                     </div>
                                     <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                        <div className="h-full rounded-full bg-indigo-500 transition-all duration-1000" style={{ width: `${percentage}%` }}></div>
+                                        {/* Warna grafik bar disesuaikan */}
+                                        <div className={`h-full rounded-full transition-all duration-1000 ${style.bar}`} style={{ width: `${percentage}%` }}></div>
                                     </div>
                                 </div>
                             );

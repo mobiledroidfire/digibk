@@ -170,6 +170,10 @@ export default async function VakResultPage({ searchParams }: { searchParams: Pr
                             const percentage = Math.min((rawScoreNum / maxScore) * 100, 100);
                             const Icon = style.icon;
 
+                            // PERBAIKAN: Mengecek jika skornya menyentuh nilai tertinggi (seri di pucuk sama seperti PDF)
+                            const isDominant = rawScoreNum === maxScore;
+                            const statusText = isDominant ? 'Dominan' : 'Pendukung';
+
                             return (
                                 <div key={code} className="flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
@@ -178,7 +182,10 @@ export default async function VakResultPage({ searchParams }: { searchParams: Pr
                                     <div className="flex-1">
                                         <div className="flex justify-between items-center mb-1">
                                             <span className="font-bold text-slate-800 text-sm">{data.title}</span>
-                                            <span className="text-sm font-bold text-slate-600">{rawScoreNum} Poin</span>
+                                            {/* Warna teks poin berubah hijau jika statusnya Dominan (seri) */}
+                                            <span className={`text-sm font-bold ${isDominant ? 'text-emerald-600' : 'text-slate-600'}`}>
+                                                {rawScoreNum} Poin ({statusText})
+                                            </span>
                                         </div>
                                         <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
                                             <div

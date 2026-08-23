@@ -29,7 +29,7 @@ function cleanCode(code?: string): string {
     return code ? code.trim().toUpperCase() : '';
 }
 
-// STYLESHEET
+// STYLESHEET 
 const styles = StyleSheet.create({
     container: { padding: 5 },
     phaseBanner: { backgroundColor: '#3b82f6', padding: 12, borderRadius: 8, marginBottom: 15 },
@@ -45,16 +45,16 @@ const styles = StyleSheet.create({
     alertBlue: { backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', padding: 10, borderRadius: 6, marginTop: 8 },
     alertBlueText: { color: '#1e40af', fontSize: 9.5, lineHeight: 1.4 },
 
-    // Desain Tabel 
-    table: { width: '100%', marginBottom: 15, border: '1px solid #cbd5e1', borderRadius: 4 },
-    tableRow: { flexDirection: 'row', borderBottom: '1px solid #cbd5e1' },
-    tableHeader: { backgroundColor: '#f8fafc' },
-    tableCol1: { width: '15%', padding: 6, borderRight: '1px solid #cbd5e1', textAlign: 'center' },
-    tableCol2: { width: '45%', padding: 6, borderRight: '1px solid #cbd5e1' },
-    tableCol3: { width: '20%', padding: 6, borderRight: '1px solid #cbd5e1', textAlign: 'center' },
-    tableCol4: { width: '20%', padding: 6, textAlign: 'center' },
-    tableCell: { fontSize: 9, color: '#334155' },
-    tableCellHeader: { fontSize: 9, color: '#0f172a', fontWeight: 'bold' },
+    // Desain Grafik Bar Modern
+    scoreRowContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
+    scoreItem: { width: '48%' },
+    scoreItemFull: { width: '100%', marginBottom: 12 },
+    scoreTextRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
+    scoreLabel: { fontSize: 10, fontWeight: 'bold', color: '#1e293b' },
+    scoreSub: { fontSize: 8.5, color: '#64748b', marginTop: 2 },
+    scoreVal: { fontSize: 10, fontWeight: 'bold', color: '#1d4ed8' },
+    barBg: { height: 6, backgroundColor: '#e2e8f0', borderRadius: 3, width: '100%', marginTop: 2 },
+    barFill: { height: 6, borderRadius: 3 },
 
     // Grid
     gridRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginBottom: 15 },
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     boxLightText: { flex: 1, fontSize: 9.5, color: '#1e3a8a', lineHeight: 1.4 }
 });
 
-// Kamus Terjemahan Tipe Holland (RIASEC)
+// Kamus Terjemahan & Warna Dinamis
 const hollandTranslations: Record<string, string> = {
     'Realistic': 'Realistis',
     'Investigative': 'Investigatif',
@@ -87,11 +87,25 @@ const hollandTranslations: Record<string, string> = {
     'Conventional': 'Konvensional'
 };
 
-// Kamus Terjemahan Gaya Belajar (VAK)
+const riasecColors: Record<string, string> = {
+    'R': '#ef4444', // Merah
+    'I': '#f59e0b', // Kuning/Amber
+    'A': '#10b981', // Hijau
+    'S': '#3b82f6', // Biru
+    'E': '#8b5cf6', // Ungu
+    'C': '#64748b'  // Abu-abu kebiruan
+};
+
 const vakTranslations: Record<string, string> = {
     'V': 'Penglihatan',
     'A': 'Pendengaran',
     'K': 'Gerak / Praktik'
+};
+
+const vakColors: Record<string, string> = {
+    'V': '#3b82f6', // Biru
+    'A': '#10b981', // Hijau
+    'K': '#f59e0b'  // Oranye
 };
 
 export async function POST(request: Request) {
@@ -112,7 +126,6 @@ export async function POST(request: Request) {
         if (!student) return NextResponse.json({ error: 'Data siswa tidak ditemukan' }, { status: 404 });
 
         const studentName = student.full_name;
-        // PERBAIKAN: Menambahkan kembali variabel schoolObj yang terhapus
         const schoolObj = student.schools;
         const baseSchoolName = schoolObj && typeof schoolObj === 'object' && 'name' in schoolObj ? String(schoolObj.name) : 'Sekolah Anda';
         const eduLvl = student.education_level || 'SMP';
@@ -122,8 +135,6 @@ export async function POST(request: Request) {
         else if (eduLvl === 'SMA' || eduLvl === 'MA' || eduLvl === 'SMK') defaultGrade = 12;
 
         const grade = student.grade_level ?? defaultGrade;
-
-        // Menggabungkan nama sekolah dan kelas secara logis di sini
         const schoolNameWithGrade = `${baseSchoolName} - Kelas ${grade}`;
 
         let phaseKey = 'SMP_Awal';
@@ -200,6 +211,12 @@ export async function POST(request: Request) {
                 const mixedGuruBk = blendAccurate(phase1.guruBk, phase2.guruBk, phase3.guruBk, 4);
                 const mixedSiswa = blendAccurate(phase1.siswa, phase2.siswa, phase3.siswa, 4);
 
+                // Membagi skor menjadi 2 kolom
+                const scoreRows = [];
+                for (let i = 0; i < sortedScores.length; i += 2) {
+                    scoreRows.push(sortedScores.slice(i, i + 2));
+                }
+
                 ModuleContent = (
                     <View style={styles.container}>
                         <View style={styles.phaseBanner} wrap={false}>
@@ -229,30 +246,35 @@ export async function POST(request: Request) {
 
                         <View style={styles.sectionCard} wrap={false}>
                             <Text style={styles.sectionTitle}>Ringkasan Skor 6 Dimensi (RIASEC)</Text>
-                            <View style={styles.table}>
-                                <View style={[styles.tableRow, styles.tableHeader]}>
-                                    <View style={styles.tableCol1}><Text style={styles.tableCellHeader}>Kode</Text></View>
-                                    <View style={styles.tableCol2}><Text style={styles.tableCellHeader}>Tipe Holland</Text></View>
-                                    <View style={styles.tableCol3}><Text style={styles.tableCellHeader}>Skor</Text></View>
-                                    <View style={styles.tableCol4}><Text style={styles.tableCellHeader}>Persentase</Text></View>
-                                </View>
-                                {sortedScores.map((sc) => {
-                                    const code = cleanCode(sc.code);
-                                    const def = dimensionDefs[code] || { name: code, meaning: '' };
-                                    const scoreNum = Number(sc.raw_score);
-                                    const pct = Math.round((scoreNum / 35) * 100);
-                                    const translatedName = hollandTranslations[def.name] || def.name;
 
-                                    return (
-                                        <View key={code} style={styles.tableRow}>
-                                            <View style={styles.tableCol1}><Text style={[styles.tableCell, { fontWeight: 'bold', color: '#1e40af' }]}>{code}</Text></View>
-                                            <View style={styles.tableCol2}><Text style={[styles.tableCell, { fontWeight: 'bold' }]}>{def.name} ({translatedName})</Text></View>
-                                            <View style={styles.tableCol3}><Text style={styles.tableCell}>{scoreNum}</Text></View>
-                                            <View style={styles.tableCol4}><Text style={styles.tableCell}>{pct}%</Text></View>
-                                        </View>
-                                    );
-                                })}
-                            </View>
+                            {scoreRows.map((row, idx) => (
+                                <View key={idx} style={styles.scoreRowContainer}>
+                                    {row.map((sc) => {
+                                        const code = cleanCode(sc.code);
+                                        const def = dimensionDefs[code] || { name: code, meaning: '' };
+                                        const translatedName = hollandTranslations[def.name] || def.name;
+                                        const scoreNum = Number(sc.raw_score);
+                                        const pct = Math.min(Math.round((scoreNum / 35) * 100), 100);
+                                        // Mengambil warna dinamis
+                                        const barColor = riasecColors[code] || '#3b82f6';
+
+                                        return (
+                                            <View key={code} style={styles.scoreItem}>
+                                                <View style={styles.scoreTextRow}>
+                                                    <View style={{ flex: 1, paddingRight: 8 }}>
+                                                        <Text style={styles.scoreLabel}>{code} - {def.name} ({translatedName})</Text>
+                                                        <Text style={styles.scoreSub}>{def.meaning}</Text>
+                                                    </View>
+                                                    <Text style={[styles.scoreVal, { color: barColor }]}>{scoreNum} ({pct}%)</Text>
+                                                </View>
+                                                <View style={styles.barBg}>
+                                                    <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: barColor }]} />
+                                                </View>
+                                            </View>
+                                        );
+                                    })}
+                                </View>
+                            ))}
                         </View>
 
                         <View style={styles.gridRow} break>
@@ -341,6 +363,9 @@ export async function POST(request: Request) {
                 const domData = vakDictionary[domCode] || vakDictionary['V'];
                 const phaseData: VakPhaseData = (domData.levels as any)[phaseKey] || domData.levels['SMP_Transisi'];
 
+                // Menentukan nilai tertinggi untuk mencari yang Dominan
+                const maxScore = Math.max(...sortedScores.map(s => Number(s.raw_score)), 1);
+
                 ModuleContent = (
                     <View style={styles.container}>
                         <View style={styles.phaseBanner} wrap={false}>
@@ -365,33 +390,36 @@ export async function POST(request: Request) {
 
                         <View style={styles.sectionCard} wrap={false}>
                             <Text style={styles.sectionTitle}>Ringkasan Skor V-A-K</Text>
-                            <View style={styles.table}>
-                                <View style={[styles.tableRow, styles.tableHeader]}>
-                                    <View style={styles.tableCol1}><Text style={styles.tableCellHeader}>Kode</Text></View>
-                                    <View style={styles.tableCol2}><Text style={styles.tableCellHeader}>Gaya Belajar</Text></View>
-                                    <View style={styles.tableCol3}><Text style={styles.tableCellHeader}>Skor Poin</Text></View>
-                                    <View style={styles.tableCol4}><Text style={styles.tableCellHeader}>Status</Text></View>
-                                </View>
-                                {sortedScores.map((sc, index) => {
-                                    const code = cleanCode(sc.code);
-                                    const dictRef = vakDictionary[code] || { title: code, indonesianTitle: '' };
-                                    const scoreNum = Number(sc.raw_score);
-                                    const translatedName = vakTranslations[code] || dictRef.indonesianTitle || '';
 
-                                    return (
-                                        <View key={code} style={styles.tableRow}>
-                                            <View style={styles.tableCol1}><Text style={[styles.tableCell, { fontWeight: 'bold', color: '#1e40af' }]}>{code}</Text></View>
-                                            <View style={styles.tableCol2}>
-                                                <Text style={[styles.tableCell, { fontWeight: 'bold' }]}>
-                                                    {dictRef.title} {translatedName ? `(${translatedName})` : ''}
-                                                </Text>
+                            {sortedScores.map((sc) => {
+                                const code = cleanCode(sc.code);
+                                const dictRef = vakDictionary[code] || { title: code, indonesianTitle: '' };
+                                const scoreNum = Number(sc.raw_score);
+                                const translatedName = vakTranslations[code] || dictRef.indonesianTitle || '';
+
+                                // PERBAIKAN: Mengecek jika skornya menyentuh nilai tertinggi (seri di pucuk)
+                                const isDominant = scoreNum === maxScore;
+                                const status = isDominant ? 'Dominan' : 'Pendukung';
+
+                                const pct = Math.min((scoreNum / maxScore) * 100, 100);
+                                const barColor = vakColors[code] || '#3b82f6';
+
+                                return (
+                                    <View key={code} style={styles.scoreItemFull}>
+                                        <View style={styles.scoreTextRow}>
+                                            <View style={{ flex: 1, paddingRight: 8 }}>
+                                                <Text style={styles.scoreLabel}>{code} - {dictRef.title} ({translatedName})</Text>
                                             </View>
-                                            <View style={styles.tableCol3}><Text style={styles.tableCell}>{scoreNum}</Text></View>
-                                            <View style={styles.tableCol4}><Text style={[styles.tableCell, { color: index === 0 ? '#10b981' : '#64748b', fontWeight: 'bold' }]}>{index === 0 ? 'Dominan' : 'Pendukung'}</Text></View>
+                                            <Text style={[styles.scoreVal, { color: isDominant ? '#10b981' : '#64748b' }]}>
+                                                {scoreNum} Poin ({status})
+                                            </Text>
                                         </View>
-                                    );
-                                })}
-                            </View>
+                                        <View style={styles.barBg}>
+                                            <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: barColor }]} />
+                                        </View>
+                                    </View>
+                                );
+                            })}
                         </View>
 
                         <View style={styles.gridRow} break>
