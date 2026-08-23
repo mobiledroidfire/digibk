@@ -1,3 +1,4 @@
+// D:\APLIKASI\digibk\app\api\pdf\route.tsx
 import { NextResponse } from 'next/server';
 import { renderToBuffer, Text, View, StyleSheet } from '@react-pdf/renderer';
 import MasterPdfTemplate from '@/components/pdf/MasterPdfTemplate';

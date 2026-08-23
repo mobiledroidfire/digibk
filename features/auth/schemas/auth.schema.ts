@@ -1,3 +1,4 @@
+// D:\APLIKASI\digibk\features\auth\schemas\auth.schema.ts
 import { z } from "zod";
 
 export const loginSchema = z.object({
