@@ -171,7 +171,9 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
                 <h1 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
                     <Trophy className="text-blue-600" size={16} /> Laporan Asesmen ({schoolName} - Kelas {grade})
                 </h1>
-                <Link href="/student/dashboard" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">Tutup</Link>
+                <Link href="/student/dashboard" className="text-sm font-bold text-slate-500 px-4 py-2 rounded-lg transition-all duration-300 hover:text-red-600 hover:bg-red-50 hover:shadow-md hover:shadow-red-500/40">
+                    Tutup
+                </Link>
             </header>
 
             <main className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
@@ -292,7 +294,10 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
                 </div>
 
                 <div className="pt-6 pb-12 flex justify-end">
-                    <Link href="/student/dashboard" className="inline-flex items-center gap-2 px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
+                    <Link
+                        href="/student/dashboard"
+                        className="inline-flex items-center gap-2 px-8 py-3 bg-blue-600 text-white text-sm font-bold rounded-xl transition-all duration-300 hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-500/40 hover:-translate-y-0.5"
+                    >
                         Selesai & Kembali <ArrowRight className="h-4 w-4" />
                     </Link>
                 </div>

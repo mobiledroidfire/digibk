@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getVakQuestions, submitVakAssessment } from '@/features/assessments/actions/vak.actions';
-import { BookOpen, Loader2, ArrowLeft, AlertCircle, Sparkles, CheckCircle2 } from 'lucide-react';
+// PERBAIKAN: Menambahkan ArrowRight untuk navigasi
+import { BookOpen, Loader2, ArrowLeft, ArrowRight, AlertCircle, Sparkles, CheckCircle2 } from 'lucide-react';
 
 type Question = {
     id: string;
@@ -82,13 +83,11 @@ export default function VakAssessmentPage() {
             return [...prev, newAnswer];
         });
 
+        // PERBAIKAN: Hanya otomatis maju jika BUKAN soal terakhir. Auto-submit dihapus.
         if (currentIndex < questions.length - 1) {
             setTimeout(() => {
                 setCurrentIndex((prev) => prev + 1);
             }, 200);
-        } else {
-            const finalAnswers = [...answers.filter(a => a.questionId !== currentQ.id), newAnswer];
-            submitAssessment(finalAnswers);
         }
     };
 
@@ -135,8 +134,12 @@ export default function VakAssessmentPage() {
         );
     }
 
+    // Variabel pembantu untuk logika navigasi UI
     const progressPercentage = (currentIndex / questions.length) * 100;
     const currentAnswer = answers.find(a => a.questionId === questions[currentIndex]?.id);
+    const hasAnsweredCurrent = !!currentAnswer;
+    const isLastQuestion = currentIndex === questions.length - 1;
+    const allQuestionsAnswered = answers.length === questions.length;
 
     return (
         <div className="min-h-screen bg-linear-to-br from-teal-50 via-slate-50 to-emerald-50 flex flex-col relative overflow-hidden">
@@ -163,7 +166,8 @@ export default function VakAssessmentPage() {
             <header className="bg-white/80 backdrop-blur-xl border-b border-white/20 px-6 py-4 flex items-center gap-4 sticky top-0 z-10 shadow-sm">
                 <button
                     onClick={() => router.push('/student/dashboard')}
-                    className="p-2 bg-white shadow-sm hover:shadow-md hover:bg-slate-50 rounded-full transition-all text-slate-500"
+                    // PERBAIKAN HOVER TOMBOL KEMBALI: Ditambahkan warna, cahaya, dan animasi terangkat
+                    className="p-2 bg-white rounded-full transition-all duration-300 text-slate-500 shadow-sm hover:text-teal-600 hover:bg-teal-50 hover:shadow-md hover:shadow-teal-500/30 hover:-translate-y-0.5"
                     title="Kembali ke Dashboard"
                 >
                     <ArrowLeft size={18} />
@@ -187,16 +191,17 @@ export default function VakAssessmentPage() {
             </div>
 
             {/* Main Content */}
-            <main className="flex-1 max-w-3xl w-full mx-auto p-4 sm:p-6 md:p-12 flex flex-col justify-center">
+            <main className="flex-1 max-w-3xl w-full mx-auto p-4 sm:p-6 md:p-12 flex flex-col justify-center pb-20">
                 <div className="bg-white/90 backdrop-blur-2xl rounded-[2.5rem] p-6 md:p-12 shadow-2xl shadow-teal-100/50 border border-white relative flex flex-col">
 
-                    {/* Desain Header Kartu: Tombol Kembali & Label */}
+                    {/* Desain Header Kartu: Tombol Navigasi Bawah */}
                     <div className="flex flex-col-reverse sm:flex-row items-center justify-between mb-8 gap-4 w-full">
                         <div className="w-full sm:w-1/3 flex justify-start">
                             {currentIndex > 0 && (
                                 <button
                                     onClick={handlePrevious}
-                                    className="flex items-center gap-1.5 px-4 py-2 w-full sm:w-auto justify-center bg-slate-50 border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:text-teal-600 hover:border-teal-300 hover:bg-teal-50 shadow-sm transition-all"
+                                    // PERBAIKAN HOVER
+                                    className="flex items-center gap-1.5 px-4 py-2 w-full sm:w-auto justify-center bg-slate-50 border border-slate-200 rounded-full text-xs font-bold text-slate-600 transition-all duration-300 hover:text-teal-700 hover:border-teal-400 hover:bg-teal-100 hover:shadow-md hover:-translate-y-0.5"
                                 >
                                     <ArrowLeft size={14} /> Ke Soal Sebelumnya
                                 </button>
@@ -210,9 +215,19 @@ export default function VakAssessmentPage() {
                         </div>
 
                         <div className="w-full sm:w-1/3 flex justify-end">
-                            <div className="hidden md:flex items-center gap-1.5 text-xs font-medium text-slate-400">
-                                <CheckCircle2 size={14} className="text-teal-500" /> Tersimpan
-                            </div>
+                            {/* PERBAIKAN: Menambahkan tombol Selanjutnya */}
+                            {(currentIndex < questions.length - 1 && hasAnsweredCurrent) ? (
+                                <button
+                                    onClick={() => setCurrentIndex(prev => prev + 1)}
+                                    className="flex items-center gap-1.5 px-4 py-2 w-full sm:w-auto justify-center bg-slate-50 border border-slate-200 rounded-full text-xs font-bold text-slate-600 transition-all duration-300 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100 hover:shadow-md hover:-translate-y-0.5"
+                                >
+                                    Selanjutnya <ArrowRight size={14} />
+                                </button>
+                            ) : (
+                                <div className="hidden md:flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                                    <CheckCircle2 size={14} className="text-teal-500" /> Tersimpan
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -247,6 +262,19 @@ export default function VakAssessmentPage() {
                             );
                         })}
                     </div>
+
+                    {/* PERBAIKAN: Tombol khusus Selesai & Kumpulkan yang muncul secara perlahan */}
+                    {isLastQuestion && allQuestionsAnswered && (
+                        <div className="mt-10 flex justify-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <button
+                                onClick={() => submitAssessment(answers)}
+                                className="px-8 py-4 bg-teal-600 text-white font-bold rounded-2xl shadow-sm transition-all duration-300 hover:bg-teal-500 hover:shadow-lg hover:shadow-teal-500/40 hover:-translate-y-1 flex items-center gap-3"
+                            >
+                                <CheckCircle2 size={24} />
+                                <span className="text-lg">Selesai & Kumpulkan Jawaban</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
             </main>
         </div>

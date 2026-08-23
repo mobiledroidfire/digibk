@@ -134,7 +134,9 @@ export default async function VakResultPage({ searchParams }: { searchParams: Pr
                 <h1 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
                     <Trophy className="text-teal-600" size={16} /> Hasil Gaya Belajar ({schoolName})
                 </h1>
-                <Link href="/student/dashboard" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">Tutup</Link>
+                <Link href="/student/dashboard" className="text-sm font-bold text-slate-500 px-4 py-2 rounded-lg transition-all duration-300 hover:text-red-600 hover:bg-red-50 hover:shadow-md hover:shadow-red-500/40">
+                    Tutup
+                </Link>
             </header>
 
             <main className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
@@ -271,7 +273,10 @@ export default async function VakResultPage({ searchParams }: { searchParams: Pr
                 </div>
 
                 <div className="pt-4 pb-12 flex justify-end">
-                    <Link href="/student/dashboard" className="inline-flex items-center gap-2 px-8 py-3 bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
+                    <Link
+                        href="/student/dashboard"
+                        className="inline-flex items-center gap-2 px-8 py-3 bg-teal-600 text-white text-sm font-bold rounded-xl transition-all duration-300 hover:bg-teal-500 hover:shadow-lg hover:shadow-teal-500/40 hover:-translate-y-0.5"
+                    >
                         Selesai & Kembali <ArrowRight className="h-4 w-4" />
                     </Link>
                 </div>
