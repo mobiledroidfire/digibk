@@ -1,13 +1,14 @@
 // Lokasi file: src/app/api/pdf/route.tsx
 import { NextResponse } from 'next/server';
-import { renderToStream } from '@react-pdf/renderer';
-import { Text, View, StyleSheet } from '@react-pdf/renderer';
+import { renderToBuffer, Text, View, StyleSheet } from '@react-pdf/renderer';
 import MasterPdfTemplate from '@/components/pdf/MasterPdfTemplate';
+import { createClient } from '@/lib/supabase/server'; // PERBAIKAN 1: Import Supabase
 
-// 1. Style untuk konten di dalam PDF
+// Style untuk konten di dalam PDF
 const styles = StyleSheet.create({
     title: { fontSize: 16, fontWeight: 'bold', marginBottom: 15, color: '#0f172a' },
     text: { fontSize: 12, marginBottom: 8, color: '#334155', lineHeight: 1.5 },
+    highlight: { fontWeight: 'bold', color: '#2563eb' },
     placeholder: { fontSize: 12, color: '#94a3b8', fontStyle: 'italic', marginTop: 10 }
 });
 
@@ -16,62 +17,97 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { moduleType, studentData } = body;
 
+        // Inisialisasi Supabase
+        const supabase = await createClient();
+
         let ModuleContent;
         let moduleTitle = '';
 
-        // 2. Routing Konten untuk Seluruh 7 Jurus
+        // ==========================================================
+        // 1. LOGIKA UNTUK MENGAMBIL DAN MENCETAK DATA RIASEC
+        // ==========================================================
         if (moduleType === 'RIASEC') {
             moduleTitle = 'Jurus 1: Kenali Potensi (RIASEC)';
-            ModuleContent = (
-                <View>
-                    <Text style={styles.title}>Hasil Tes Minat Bakat (RIASEC)</Text>
-                    <Text style={styles.text}>Tipe Kepribadian Dominan: Realistic (Contoh)</Text>
-                    {/* Komponen grafik atau tabel RIASEC bisa ditambahkan di sini nantinya */}
-                </View>
-            );
-        } else if (moduleType === 'VAK') {
-            moduleTitle = 'Jurus 1: Gaya Belajar (VAK)';
-            ModuleContent = (
-                <View>
-                    <Text style={styles.title}>Hasil Gaya Belajar (VAK)</Text>
-                    <Text style={styles.text}>Gaya Belajar Dominan: Visual (Contoh)</Text>
-                </View>
-            );
-        } else if (moduleType === 'EMOSI') {
-            moduleTitle = 'Jurus 2: Kelola Emosi';
-            ModuleContent = (
-                <View><Text style={styles.placeholder}>Detail laporan Kelola Emosi akan ditampilkan di sini.</Text></View>
-            );
-        } else if (moduleType === 'RESILIENSI') {
-            moduleTitle = 'Jurus 3: Tumbuhkan Resiliensi';
-            ModuleContent = (
-                <View><Text style={styles.placeholder}>Detail laporan Tumbuhkan Resiliensi akan ditampilkan di sini.</Text></View>
-            );
-        } else if (moduleType === 'KONSISTENSI') {
-            moduleTitle = 'Jurus 4: Jaga Konsistensi';
-            ModuleContent = (
-                <View><Text style={styles.placeholder}>Detail laporan Jaga Konsistensi akan ditampilkan di sini.</Text></View>
-            );
-        } else if (moduleType === 'KONEKSI') {
-            moduleTitle = 'Jurus 5: Jalin Koneksi';
-            ModuleContent = (
-                <View><Text style={styles.placeholder}>Detail laporan Jalin Koneksi akan ditampilkan di sini.</Text></View>
-            );
-        } else if (moduleType === 'KOLABORASI') {
-            moduleTitle = 'Jurus 6: Bangun Kolaborasi';
-            ModuleContent = (
-                <View><Text style={styles.placeholder}>Detail laporan Bangun Kolaborasi akan ditampilkan di sini.</Text></View>
-            );
-        } else if (moduleType === 'SITUASI') {
-            moduleTitle = 'Jurus 7: Menata Situasi';
-            ModuleContent = (
-                <View><Text style={styles.placeholder}>Detail laporan Menata Situasi akan ditampilkan di sini.</Text></View>
-            );
+
+            // Mengambil hasil RIASEC terakhir milik siswa ini
+            const { data: riasecData, error } = await supabase
+                .from('riasec_profiles')
+                .select(`
+                    code, primary_code, interpretation,
+                    assessment_results!inner(
+                        assessment_sessions!inner( student_id )
+                    )
+                `)
+                .eq('assessment_results.assessment_sessions.student_id', studentData.id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+
+            if (error || !riasecData) {
+                ModuleContent = <View><Text style={styles.text}>Data hasil RIASEC belum tersedia atau belum lengkap.</Text></View>;
+            } else {
+                ModuleContent = (
+                    <View>
+                        <Text style={styles.title}>Hasil Tes Minat Bakat (RIASEC)</Text>
+                        <Text style={styles.text}>Kode Profil Kamu: <Text style={styles.highlight}>{riasecData.code}</Text></Text>
+                        <Text style={styles.text}>Tipe Dominan: <Text style={styles.highlight}>{riasecData.primary_code}</Text></Text>
+                        <Text style={styles.text}>Interpretasi/Saran Karir:</Text>
+                        <Text style={styles.text}>{riasecData.interpretation || 'Belum ada interpretasi.'}</Text>
+                    </View>
+                );
+            }
+        }
+        // ==========================================================
+        // 2. LOGIKA UNTUK MENGAMBIL DAN MENCETAK DATA VAK
+        // ==========================================================
+        else if (moduleType === 'VAK') {
+            moduleTitle = 'Jurus 2: Gaya Belajar (VAK)';
+
+            // Mengambil hasil VAK terakhir milik siswa ini
+            const { data: vakData, error } = await supabase
+                .from('vak_profiles')
+                .select(`
+                    code, dominant_code, interpretation,
+                    assessment_results!inner(
+                        assessment_sessions!inner( student_id )
+                    )
+                `)
+                .eq('assessment_results.assessment_sessions.student_id', studentData.id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+
+            if (error || !vakData) {
+                ModuleContent = <View><Text style={styles.text}>Data hasil VAK belum tersedia atau belum lengkap.</Text></View>;
+            } else {
+                // Mengubah kode huruf menjadi kata agar mudah dibaca di PDF
+                const dominantLabel =
+                    vakData.dominant_code === 'V' ? 'Visual (Melihat)' :
+                        vakData.dominant_code === 'A' ? 'Auditori (Mendengar)' :
+                            vakData.dominant_code === 'K' ? 'Kinestetik (Bergerak/Praktik)' : vakData.dominant_code;
+
+                ModuleContent = (
+                    <View>
+                        <Text style={styles.title}>Hasil Gaya Belajar (VAK)</Text>
+                        <Text style={styles.text}>Kombinasi Gaya Belajar: <Text style={styles.highlight}>{vakData.code}</Text></Text>
+                        <Text style={styles.text}>Gaya Belajar Dominan: <Text style={styles.highlight}>{dominantLabel}</Text></Text>
+                        <Text style={styles.text}>Saran Belajar:</Text>
+                        <Text style={styles.text}>{vakData.interpretation || 'Belum ada saran khusus.'}</Text>
+                    </View>
+                );
+            }
+        }
+        // ==========================================================
+        // JURUS LAINNYA (Segera Hadir)
+        // ==========================================================
+        else if (['EMOSI', 'RESILIENSI', 'KONSISTENSI', 'KONEKSI', 'KOLABORASI', 'SITUASI'].includes(moduleType)) {
+            moduleTitle = `Jurus: ${moduleType}`;
+            ModuleContent = <View><Text style={styles.placeholder}>Laporan untuk modul {moduleType} akan ditampilkan di sini setelah dikerjakan.</Text></View>;
         } else {
             return NextResponse.json({ error: 'Modul tidak dikenali' }, { status: 400 });
         }
 
-        // 3. Memasukkan Konten Modul ke dalam Master Template
+        // Memasukkan Konten Modul ke dalam Master Template
         const MyDocument = (
             <MasterPdfTemplate
                 moduleName={moduleTitle}
@@ -82,22 +118,19 @@ export async function POST(request: Request) {
             </MasterPdfTemplate>
         );
 
-        // 4. Proses konversi ke PDF menggunakan Stream
-        const pdfStream = await renderToStream(MyDocument);
-        const chunks: Uint8Array[] = [];
+        // Merender React Component menjadi Buffer
+        const pdfBuffer = await renderToBuffer(MyDocument);
+        const webBuffer = new Uint8Array(pdfBuffer);
 
-        // PERBAIKAN: Mengganti tipe 'any' dengan tipe data AsyncIterable yang tepat dan ketat
-        for await (const chunk of pdfStream as unknown as AsyncIterable<Uint8Array>) {
-            chunks.push(chunk);
-        }
-        const pdfBuffer = Buffer.concat(chunks);
+        const safeStudentName = studentData.name.replace(/\s+/g, '_');
+        const fileName = `Hasil_${moduleType}_${safeStudentName}.pdf`;
 
-        // 5. Kembalikan Response PDF
-        return new NextResponse(pdfBuffer, {
+        // Kembalikan Response PDF
+        return new NextResponse(webBuffer, {
             status: 200,
             headers: {
                 'Content-Type': 'application/pdf',
-                'Content-Disposition': 'inline; filename="Hasil_Asesmen_DIGIBK.pdf"',
+                'Content-Disposition': `attachment; filename="${fileName}"`,
             },
         });
 
