@@ -3,8 +3,6 @@ import { NextResponse } from 'next/server';
 import { renderToBuffer, Text, View, StyleSheet } from '@react-pdf/renderer';
 import MasterPdfTemplate from '@/components/pdf/MasterPdfTemplate';
 import { createClient } from '@/lib/supabase/server';
-
-// 1. IMPORT DICTIONARY AGAR PDF BISA MEMBACA SARAN/DESKRIPSI
 import { riasecDictionary } from '@/lib/data/riasec';
 import { vakDictionary } from '@/lib/data/vak';
 
@@ -13,7 +11,6 @@ const styles = StyleSheet.create({
     subtitle: { fontSize: 12, fontWeight: 'bold', marginTop: 12, marginBottom: 4, color: '#1e293b' },
     text: { fontSize: 11, marginBottom: 6, color: '#334155', lineHeight: 1.5 },
     highlight: { fontWeight: 'bold', color: '#2563eb' },
-    placeholder: { fontSize: 11, color: '#94a3b8', fontStyle: 'italic', marginTop: 10 },
     bulletContainer: { flexDirection: 'row', marginBottom: 4 },
     bulletPoint: { width: 15, fontSize: 11, color: '#334155' },
     bulletText: { flex: 1, fontSize: 11, color: '#334155', lineHeight: 1.5 }
@@ -22,45 +19,67 @@ const styles = StyleSheet.create({
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { moduleType, studentData } = body;
+        const { moduleType } = body;
         const supabase = await createClient();
+
+        // 1. CARA YANG SAMA DENGAN PAGE.TSX: Ambil user login
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'Belum login' }, { status: 401 });
+
+        // 2. CARA YANG SAMA DENGAN PAGE.TSX: Ambil data siswa
+        const { data: student } = await supabase
+            .from('students')
+            .select(`id, full_name, schools (name)`)
+            .eq('user_id', user.id)
+            .single();
+
+        if (!student) return NextResponse.json({ error: 'Data siswa tidak ditemukan' }, { status: 404 });
+
+        const studentName = student.full_name;
+        const schoolObj = student.schools;
+        // Penanganan aman untuk nama sekolah
+        const schoolName = schoolObj && typeof schoolObj === 'object' && 'name' in schoolObj
+            ? String(schoolObj.name)
+            : 'Sekolah Anda';
 
         let ModuleContent;
         let moduleTitle = '';
 
         // ==========================================================
-        // LOGIKA CETAK PDF: RIASEC
+        // CETAK PDF: RIASEC
         // ==========================================================
         if (moduleType === 'RIASEC') {
             moduleTitle = 'Jurus 1: Kenali Potensi (RIASEC)';
 
-            const { data: riasecData, error } = await supabase
-                .from('riasec_profiles')
-                .select(`code, primary_code, assessment_results!inner(assessment_sessions!inner(student_id))`)
-                .eq('assessment_results.assessment_sessions.student_id', studentData.id)
-                .order('created_at', { ascending: false })
+            // 3A. CARA YANG SAMA DENGAN PAGE.TSX: Ambil hasil asesmen terakhir
+            const { data: latestResult } = await supabase
+                .from('assessment_results')
+                .select(`id, riasec_profiles ( code, primary_code )`)
+                .eq('student_id', student.id)
+                .eq('scoring_version', 'RIASEC-SCORING-v1')
+                .order('calculated_at', { ascending: false })
                 .limit(1)
                 .single();
 
-            if (error || !riasecData) {
+            const profile = latestResult?.riasec_profiles;
+            const actualProfile = Array.isArray(profile) ? profile[0] : profile;
+
+            if (!actualProfile) {
                 ModuleContent = <View><Text style={styles.text}>Data hasil RIASEC belum tersedia.</Text></View>;
             } else {
-                // Mengambil deskripsi dari Dictionary menggunakan kode dominan siswa
-                const primaryCode = riasecData.primary_code;
-                const dict = riasecDictionary[primaryCode];
+                const domCode = actualProfile.primary_code;
+                const dict = riasecDictionary[domCode];
 
                 ModuleContent = (
                     <View>
                         <Text style={styles.title}>Hasil Tes Minat Bakat (RIASEC)</Text>
-                        <Text style={styles.text}>Kombinasi Profil: <Text style={styles.highlight}>{riasecData.code}</Text></Text>
+                        <Text style={styles.text}>Kombinasi Profil: <Text style={styles.highlight}>{actualProfile.code}</Text></Text>
 
                         {dict && (
                             <>
                                 <Text style={styles.text}>Tipe Dominan: <Text style={styles.highlight}>{dict.title} ({dict.indonesianTitle})</Text></Text>
-
                                 <Text style={styles.subtitle}>Deskripsi Kepribadian:</Text>
                                 <Text style={styles.text}>{dict.desc}</Text>
-
                                 <Text style={styles.subtitle}>Rekomendasi Pilihan Karir:</Text>
                                 {dict.karir.map((karirItem, index) => (
                                     <View key={index} style={styles.bulletContainer}>
@@ -75,40 +94,42 @@ export async function POST(request: Request) {
             }
         }
         // ==========================================================
-        // LOGIKA CETAK PDF: VAK
+        // CETAK PDF: VAK
         // ==========================================================
         else if (moduleType === 'VAK') {
             moduleTitle = 'Jurus 2: Gaya Belajar (VAK)';
 
-            const { data: vakData, error } = await supabase
-                .from('vak_profiles')
-                .select(`code, dominant_code, assessment_results!inner(assessment_sessions!inner(student_id))`)
-                .eq('assessment_results.assessment_sessions.student_id', studentData.id)
-                .order('created_at', { ascending: false })
+            // 3B. CARA YANG SAMA DENGAN PAGE.TSX: Ambil hasil asesmen terakhir
+            const { data: latestResult } = await supabase
+                .from('assessment_results')
+                .select(`id, vak_profiles ( code, dominant_code )`)
+                .eq('student_id', student.id)
+                .eq('scoring_version', 'VAK-SCORING-v1')
+                .order('calculated_at', { ascending: false })
                 .limit(1)
                 .single();
 
-            if (error || !vakData) {
+            const profile = latestResult?.vak_profiles;
+            const actualProfile = Array.isArray(profile) ? profile[0] : profile;
+
+            if (!actualProfile) {
                 ModuleContent = <View><Text style={styles.text}>Data hasil VAK belum tersedia.</Text></View>;
             } else {
-                // Mengambil deskripsi dari Dictionary menggunakan kode dominan siswa
-                const domCode = vakData.dominant_code;
+                const domCode = actualProfile.dominant_code;
                 const dict = vakDictionary[domCode];
 
                 ModuleContent = (
                     <View>
                         <Text style={styles.title}>Hasil Gaya Belajar (VAK)</Text>
-                        <Text style={styles.text}>Kombinasi Skor: <Text style={styles.highlight}>{vakData.code}</Text></Text>
+                        <Text style={styles.text}>Kombinasi Skor: <Text style={styles.highlight}>{actualProfile.code}</Text></Text>
 
                         {dict && (
                             <>
                                 <Text style={styles.text}>Gaya Dominan: <Text style={styles.highlight}>{dict.title} ({dict.indonesianTitle})</Text></Text>
-
                                 <Text style={styles.subtitle}>Deskripsi Gaya Belajar:</Text>
                                 <Text style={styles.text}>{dict.desc}</Text>
-
                                 <Text style={styles.subtitle}>Kekuatan / Prospek Utama:</Text>
-                                {dict.karir.slice(0, 4).map((karirItem, index) => (
+                                {dict.karir.map((karirItem, index) => (
                                     <View key={index} style={styles.bulletContainer}>
                                         <Text style={styles.bulletPoint}>•</Text>
                                         <Text style={styles.bulletText}>{karirItem}</Text>
@@ -123,15 +144,16 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Modul tidak dikenali' }, { status: 400 });
         }
 
+        // 4. Masukkan ke Master Template
         const MyDocument = (
-            <MasterPdfTemplate moduleName={moduleTitle} studentName={studentData.name} schoolName={studentData.school}>
+            <MasterPdfTemplate moduleName={moduleTitle} studentName={studentName} schoolName={schoolName}>
                 {ModuleContent}
             </MasterPdfTemplate>
         );
 
         const pdfBuffer = await renderToBuffer(MyDocument);
         const webBuffer = new Uint8Array(pdfBuffer);
-        const safeStudentName = studentData.name.replace(/\s+/g, '_');
+        const safeStudentName = studentName.replace(/\s+/g, '_');
 
         return new NextResponse(webBuffer, {
             status: 200,
