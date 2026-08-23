@@ -2,135 +2,142 @@
 import { NextResponse } from 'next/server';
 import { renderToBuffer, Text, View, StyleSheet } from '@react-pdf/renderer';
 import MasterPdfTemplate from '@/components/pdf/MasterPdfTemplate';
-import { createClient } from '@/lib/supabase/server'; // PERBAIKAN 1: Import Supabase
+import { createClient } from '@/lib/supabase/server';
 
-// Style untuk konten di dalam PDF
+// 1. IMPORT DICTIONARY AGAR PDF BISA MEMBACA SARAN/DESKRIPSI
+import { riasecDictionary } from '@/lib/data/riasec';
+import { vakDictionary } from '@/lib/data/vak';
+
 const styles = StyleSheet.create({
     title: { fontSize: 16, fontWeight: 'bold', marginBottom: 15, color: '#0f172a' },
-    text: { fontSize: 12, marginBottom: 8, color: '#334155', lineHeight: 1.5 },
+    subtitle: { fontSize: 12, fontWeight: 'bold', marginTop: 12, marginBottom: 4, color: '#1e293b' },
+    text: { fontSize: 11, marginBottom: 6, color: '#334155', lineHeight: 1.5 },
     highlight: { fontWeight: 'bold', color: '#2563eb' },
-    placeholder: { fontSize: 12, color: '#94a3b8', fontStyle: 'italic', marginTop: 10 }
+    placeholder: { fontSize: 11, color: '#94a3b8', fontStyle: 'italic', marginTop: 10 },
+    bulletContainer: { flexDirection: 'row', marginBottom: 4 },
+    bulletPoint: { width: 15, fontSize: 11, color: '#334155' },
+    bulletText: { flex: 1, fontSize: 11, color: '#334155', lineHeight: 1.5 }
 });
 
 export async function POST(request: Request) {
     try {
         const body = await request.json();
         const { moduleType, studentData } = body;
-
-        // Inisialisasi Supabase
         const supabase = await createClient();
 
         let ModuleContent;
         let moduleTitle = '';
 
         // ==========================================================
-        // 1. LOGIKA UNTUK MENGAMBIL DAN MENCETAK DATA RIASEC
+        // LOGIKA CETAK PDF: RIASEC
         // ==========================================================
         if (moduleType === 'RIASEC') {
             moduleTitle = 'Jurus 1: Kenali Potensi (RIASEC)';
 
-            // Mengambil hasil RIASEC terakhir milik siswa ini
             const { data: riasecData, error } = await supabase
                 .from('riasec_profiles')
-                .select(`
-                    code, primary_code, interpretation,
-                    assessment_results!inner(
-                        assessment_sessions!inner( student_id )
-                    )
-                `)
+                .select(`code, primary_code, assessment_results!inner(assessment_sessions!inner(student_id))`)
                 .eq('assessment_results.assessment_sessions.student_id', studentData.id)
                 .order('created_at', { ascending: false })
                 .limit(1)
                 .single();
 
             if (error || !riasecData) {
-                ModuleContent = <View><Text style={styles.text}>Data hasil RIASEC belum tersedia atau belum lengkap.</Text></View>;
+                ModuleContent = <View><Text style={styles.text}>Data hasil RIASEC belum tersedia.</Text></View>;
             } else {
+                // Mengambil deskripsi dari Dictionary menggunakan kode dominan siswa
+                const primaryCode = riasecData.primary_code;
+                const dict = riasecDictionary[primaryCode];
+
                 ModuleContent = (
                     <View>
                         <Text style={styles.title}>Hasil Tes Minat Bakat (RIASEC)</Text>
-                        <Text style={styles.text}>Kode Profil Kamu: <Text style={styles.highlight}>{riasecData.code}</Text></Text>
-                        <Text style={styles.text}>Tipe Dominan: <Text style={styles.highlight}>{riasecData.primary_code}</Text></Text>
-                        <Text style={styles.text}>Interpretasi/Saran Karir:</Text>
-                        <Text style={styles.text}>{riasecData.interpretation || 'Belum ada interpretasi.'}</Text>
+                        <Text style={styles.text}>Kombinasi Profil: <Text style={styles.highlight}>{riasecData.code}</Text></Text>
+
+                        {dict && (
+                            <>
+                                <Text style={styles.text}>Tipe Dominan: <Text style={styles.highlight}>{dict.title} ({dict.indonesianTitle})</Text></Text>
+
+                                <Text style={styles.subtitle}>Deskripsi Kepribadian:</Text>
+                                <Text style={styles.text}>{dict.desc}</Text>
+
+                                <Text style={styles.subtitle}>Rekomendasi Pilihan Karir:</Text>
+                                {dict.karir.map((karirItem, index) => (
+                                    <View key={index} style={styles.bulletContainer}>
+                                        <Text style={styles.bulletPoint}>•</Text>
+                                        <Text style={styles.bulletText}>{karirItem}</Text>
+                                    </View>
+                                ))}
+                            </>
+                        )}
                     </View>
                 );
             }
         }
         // ==========================================================
-        // 2. LOGIKA UNTUK MENGAMBIL DAN MENCETAK DATA VAK
+        // LOGIKA CETAK PDF: VAK
         // ==========================================================
         else if (moduleType === 'VAK') {
             moduleTitle = 'Jurus 2: Gaya Belajar (VAK)';
 
-            // Mengambil hasil VAK terakhir milik siswa ini
             const { data: vakData, error } = await supabase
                 .from('vak_profiles')
-                .select(`
-                    code, dominant_code, interpretation,
-                    assessment_results!inner(
-                        assessment_sessions!inner( student_id )
-                    )
-                `)
+                .select(`code, dominant_code, assessment_results!inner(assessment_sessions!inner(student_id))`)
                 .eq('assessment_results.assessment_sessions.student_id', studentData.id)
                 .order('created_at', { ascending: false })
                 .limit(1)
                 .single();
 
             if (error || !vakData) {
-                ModuleContent = <View><Text style={styles.text}>Data hasil VAK belum tersedia atau belum lengkap.</Text></View>;
+                ModuleContent = <View><Text style={styles.text}>Data hasil VAK belum tersedia.</Text></View>;
             } else {
-                // Mengubah kode huruf menjadi kata agar mudah dibaca di PDF
-                const dominantLabel =
-                    vakData.dominant_code === 'V' ? 'Visual (Melihat)' :
-                        vakData.dominant_code === 'A' ? 'Auditori (Mendengar)' :
-                            vakData.dominant_code === 'K' ? 'Kinestetik (Bergerak/Praktik)' : vakData.dominant_code;
+                // Mengambil deskripsi dari Dictionary menggunakan kode dominan siswa
+                const domCode = vakData.dominant_code;
+                const dict = vakDictionary[domCode];
 
                 ModuleContent = (
                     <View>
                         <Text style={styles.title}>Hasil Gaya Belajar (VAK)</Text>
-                        <Text style={styles.text}>Kombinasi Gaya Belajar: <Text style={styles.highlight}>{vakData.code}</Text></Text>
-                        <Text style={styles.text}>Gaya Belajar Dominan: <Text style={styles.highlight}>{dominantLabel}</Text></Text>
-                        <Text style={styles.text}>Saran Belajar:</Text>
-                        <Text style={styles.text}>{vakData.interpretation || 'Belum ada saran khusus.'}</Text>
+                        <Text style={styles.text}>Kombinasi Skor: <Text style={styles.highlight}>{vakData.code}</Text></Text>
+
+                        {dict && (
+                            <>
+                                <Text style={styles.text}>Gaya Dominan: <Text style={styles.highlight}>{dict.title} ({dict.indonesianTitle})</Text></Text>
+
+                                <Text style={styles.subtitle}>Deskripsi Gaya Belajar:</Text>
+                                <Text style={styles.text}>{dict.desc}</Text>
+
+                                <Text style={styles.subtitle}>Kekuatan / Prospek Utama:</Text>
+                                {dict.karir.slice(0, 4).map((karirItem, index) => (
+                                    <View key={index} style={styles.bulletContainer}>
+                                        <Text style={styles.bulletPoint}>•</Text>
+                                        <Text style={styles.bulletText}>{karirItem}</Text>
+                                    </View>
+                                ))}
+                            </>
+                        )}
                     </View>
                 );
             }
-        }
-        // ==========================================================
-        // JURUS LAINNYA (Segera Hadir)
-        // ==========================================================
-        else if (['EMOSI', 'RESILIENSI', 'KONSISTENSI', 'KONEKSI', 'KOLABORASI', 'SITUASI'].includes(moduleType)) {
-            moduleTitle = `Jurus: ${moduleType}`;
-            ModuleContent = <View><Text style={styles.placeholder}>Laporan untuk modul {moduleType} akan ditampilkan di sini setelah dikerjakan.</Text></View>;
         } else {
             return NextResponse.json({ error: 'Modul tidak dikenali' }, { status: 400 });
         }
 
-        // Memasukkan Konten Modul ke dalam Master Template
         const MyDocument = (
-            <MasterPdfTemplate
-                moduleName={moduleTitle}
-                studentName={studentData.name}
-                schoolName={studentData.school}
-            >
+            <MasterPdfTemplate moduleName={moduleTitle} studentName={studentData.name} schoolName={studentData.school}>
                 {ModuleContent}
             </MasterPdfTemplate>
         );
 
-        // Merender React Component menjadi Buffer
         const pdfBuffer = await renderToBuffer(MyDocument);
         const webBuffer = new Uint8Array(pdfBuffer);
-
         const safeStudentName = studentData.name.replace(/\s+/g, '_');
-        const fileName = `Hasil_${moduleType}_${safeStudentName}.pdf`;
 
-        // Kembalikan Response PDF
         return new NextResponse(webBuffer, {
             status: 200,
             headers: {
                 'Content-Type': 'application/pdf',
-                'Content-Disposition': `attachment; filename="${fileName}"`,
+                'Content-Disposition': `attachment; filename="Hasil_${moduleType}_${safeStudentName}.pdf"`,
             },
         });
 
