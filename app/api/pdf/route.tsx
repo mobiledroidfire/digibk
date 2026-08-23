@@ -5,8 +5,20 @@ import MasterPdfTemplate from '@/components/pdf/MasterPdfTemplate';
 import { createClient } from '@/lib/supabase/server';
 
 // Import Data
-import { riasecDictionary, dimensionDefs, PhaseData as RiasecPhaseData } from '@/lib/data/riasec';
-import { vakDictionary, PhaseData as VakPhaseData } from '@/lib/data/vak';
+import {
+    riasecDictionary,
+    dimensionDefs,
+    PhaseData as RiasecPhaseData,
+    type AssessmentResult,
+    type RiasecProfile
+} from '@/lib/data/riasec';
+
+import {
+    vakDictionary,
+    PhaseData as VakPhaseData,
+    type AssessmentResultVak,
+    type VakProfile
+} from '@/lib/data/vak';
 
 // Helper Functions
 function blendArrays(arr1: string[] = [], arr2: string[] = [], arr3: string[] = [], maxItems: number): string[] {
@@ -116,7 +128,11 @@ export async function POST(request: Request) {
                 .order('calculated_at', { ascending: false });
 
             const validResult = results?.find(r => r.riasec_profiles && (Array.isArray(r.riasec_profiles) ? r.riasec_profiles.length > 0 : true));
-            const actualProfile = validResult ? (Array.isArray(validResult.riasec_profiles) ? validResult.riasec_profiles[0] : validResult.riasec_profiles) : null;
+
+            // Terapkan SSOT Casting
+            const typedResult = validResult as unknown as AssessmentResult;
+            const rawProfile = typedResult ? (Array.isArray(typedResult.riasec_profiles) ? typedResult.riasec_profiles[0] : typedResult.riasec_profiles) : null;
+            const actualProfile = rawProfile as RiasecProfile | null;
 
             if (!actualProfile) {
                 ModuleContent = <View><Text style={{ fontSize: 10 }}>Data hasil RIASEC belum tersedia.</Text></View>;
@@ -286,7 +302,11 @@ export async function POST(request: Request) {
                 .order('calculated_at', { ascending: false });
 
             const validResult = results?.find(r => r.vak_profiles && (Array.isArray(r.vak_profiles) ? r.vak_profiles.length > 0 : true));
-            const actualProfile = validResult ? (Array.isArray(validResult.vak_profiles) ? validResult.vak_profiles[0] : validResult.vak_profiles) : null;
+
+            // Terapkan SSOT Casting
+            const typedResult = validResult as unknown as AssessmentResultVak;
+            const rawProfile = typedResult ? (Array.isArray(typedResult.vak_profiles) ? typedResult.vak_profiles[0] : typedResult.vak_profiles) : null;
+            const actualProfile = rawProfile as VakProfile | null;
 
             if (!actualProfile) {
                 ModuleContent = <View><Text style={{ fontSize: 10 }}>Data hasil VAK belum tersedia.</Text></View>;

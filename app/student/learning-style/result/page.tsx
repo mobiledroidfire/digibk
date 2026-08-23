@@ -107,7 +107,11 @@ export default async function VakResultPage({ searchParams }: { searchParams: Pr
         redirect('/student/dashboard?error=Data_Gagal_Dimuat');
     }
 
-    const profile = Array.isArray(resultData.vak_profiles) ? resultData.vak_profiles[0] : resultData.vak_profiles;
+    // Tambahkan penegasan tipe data agar sinkron dengan src/lib/data/vak.ts
+    const typedResult = resultData as unknown as AssessmentResultVak;
+    const rawProfile = Array.isArray(typedResult.vak_profiles) ? typedResult.vak_profiles[0] : typedResult.vak_profiles;
+    const profile = rawProfile as VakProfile | null;
+
     if (!profile) return <div className="p-8 text-center bg-slate-50 min-h-screen pt-20">Profil VAK Belum Ditemukan.</div>;
 
     const rawResults = profile.vak_results || [];

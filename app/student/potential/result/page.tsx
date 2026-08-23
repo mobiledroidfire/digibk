@@ -104,16 +104,11 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
 
     const typedResult = resultData as unknown as AssessmentResult;
 
-    // PERBAIKAN TypeScript: Membuat tipe gabungan (Intersection Type) 
-    // agar TypeScript mengenali properti baru tanpa harus merombak file definisi aslinya.
-    type ExtendedRiasecProfile = RiasecProfile & {
-        primary_code?: string;
-        secondary_code?: string;
-        tertiary_code?: string;
-    };
-
+    // Kita sudah tidak butuh ExtendedRiasecProfile karena RiasecProfile di database sudah lengkap
     const rawProfile = Array.isArray(typedResult.riasec_profiles) ? typedResult.riasec_profiles[0] : typedResult.riasec_profiles;
-    const profile = rawProfile as ExtendedRiasecProfile | null;
+
+    // Langsung cast ke RiasecProfile asli
+    const profile = rawProfile as RiasecProfile | null;
 
     if (!profile) return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50 font-sans">
