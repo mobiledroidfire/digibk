@@ -4,9 +4,11 @@ import { renderToBuffer, Text, View, StyleSheet } from '@react-pdf/renderer';
 import MasterPdfTemplate from '@/components/pdf/MasterPdfTemplate';
 import { createClient } from '@/lib/supabase/server';
 
+// Import Data
 import { riasecDictionary, dimensionDefs, PhaseData as RiasecPhaseData } from '@/lib/data/riasec';
 import { vakDictionary, PhaseData as VakPhaseData } from '@/lib/data/vak';
 
+// Helper Functions
 function blendArrays(arr1: string[] = [], arr2: string[] = [], arr3: string[] = [], maxItems: number): string[] {
     const combined = [...arr1, ...arr2.slice(0, Math.max(1, Math.floor(arr2.length / 2))), ...arr3.slice(0, 1)];
     return [...new Set(combined)].slice(0, maxItems);
@@ -16,42 +18,46 @@ function cleanCode(code?: string): string {
     return code ? code.trim().toUpperCase() : '';
 }
 
-// STYLESHEET DIPERBARUI: Lebih aman untuk PDF A4 (Tanpa 'gap' dan 'flexWrap' yang rawan bug)
+// STYLESHEET: Diperbarui agar 100% menyerupai Web
 const styles = StyleSheet.create({
     container: { padding: 5 },
 
-    // Banner Fase (Ungu)
+    // Banner Fase
     phaseBanner: { backgroundColor: '#7e22ce', padding: 12, borderRadius: 8, marginBottom: 12 },
     phaseTitle: { color: '#ffffff', fontSize: 13, fontWeight: 'bold', marginBottom: 2 },
     phaseSub: { color: '#f3e8ff', fontSize: 10 },
 
-    // Section Ringkasan Kesimpulan
+    // Kotak Section
     sectionCard: { backgroundColor: '#ffffff', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 12 },
     sectionTitle: { fontSize: 14, fontWeight: 'bold', color: '#0f172a', marginBottom: 8 },
     badgeProfil: { backgroundColor: '#eff6ff', padding: '6 12', borderRadius: 6, width: 80, textAlign: 'center', marginBottom: 8 },
     badgeText: { fontSize: 14, fontWeight: 'bold', color: '#1d4ed8' },
 
-    // Alert Boxes
-    alertBlue: { backgroundColor: '#f0f9ff', border: '1px solid #bae6fd', padding: 8, borderRadius: 6, marginTop: 8 },
-    alertBlueText: { color: '#0369a1', fontSize: 9.5, lineHeight: 1.4 },
+    // Pesan Alert
+    alertBlue: { backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', padding: 8, borderRadius: 6, marginTop: 8 },
+    alertBlueText: { color: '#1e40af', fontSize: 9.5, lineHeight: 1.4 },
     alertAmber: { backgroundColor: '#fffbeb', border: '1px solid #fde68a', padding: 8, borderRadius: 6, marginTop: 6 },
-    alertAmberText: { color: '#b45309', fontSize: 9.5, lineHeight: 1.4 },
+    alertAmberText: { color: '#92400e', fontSize: 9.5, lineHeight: 1.4 },
 
-    // Bar Skor Dimensi (Diperbaiki agar teks tidak menumpuk)
+    // Progress Bar Skor
     scoreRowContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
     scoreItem: { width: '48%' },
-    scoreTextRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
-    scoreTextCol: { flex: 1, paddingRight: 8 },
+    scoreItemFull: { width: '100%', marginBottom: 12 },
+    scoreTextRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 2 },
     scoreLabel: { fontSize: 10, fontWeight: 'bold', color: '#1e293b' },
-    scoreSub: { fontSize: 8.5, color: '#64748b', marginTop: 1 },
+    scoreSub: { fontSize: 8.5, color: '#64748b' },
     scoreVal: { fontSize: 10, fontWeight: 'bold', color: '#4338ca' },
-    barBg: { height: 6, backgroundColor: '#f1f5f9', borderRadius: 3, overflow: 'hidden' },
-    barFill: { height: '100%', backgroundColor: '#6366f1', borderRadius: 3 },
+    barBg: { height: 6, backgroundColor: '#e2e8f0', borderRadius: 3, width: '100%', marginTop: 4 }, // Bug fix: height fixed
+    barFill: { height: 6, borderRadius: 3 }, // Warna disuntikkan secara dinamis
 
-    // Layout 2 Kolom (Mengganti 3 kolom yang terlalu sempit)
-    gridRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-    gridCol2: { width: '48%', backgroundColor: '#ffffff', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0' },
-    gridColFull: { width: '100%', backgroundColor: '#ffffff', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 10 },
+    // Grid 3 Kolom (Sesuai Web RIASEC)
+    gridRow3: { flexDirection: 'row', justifyContent: 'space-between', gap: 6, marginBottom: 12 },
+    gridCol3: { flex: 1, backgroundColor: '#ffffff', padding: 8, borderRadius: 8, border: '1px solid #e2e8f0' },
+
+    // Grid 2 Kolom (Sesuai Web VAK)
+    gridRow2: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, marginBottom: 12 },
+    gridCol2: { flex: 1, backgroundColor: '#ffffff', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0' },
+
     colHeader: { fontSize: 11, fontWeight: 'bold', color: '#0f172a', marginBottom: 6, borderBottom: '1px solid #f1f5f9', paddingBottom: 4 },
     colSubHeader: { fontSize: 8.5, fontWeight: 'bold', color: '#94a3b8', marginTop: 4, marginBottom: 2, textTransform: 'uppercase' },
 
@@ -59,12 +65,12 @@ const styles = StyleSheet.create({
     bulletPoint: { width: 10, fontSize: 10, color: '#334155' },
     bulletItem: { flex: 1, fontSize: 9, color: '#334155', lineHeight: 1.4 },
 
-    // Box Bottom 2 Kolom (Saran)
-    boxDark: { width: '48%', backgroundColor: '#1e293b', padding: 10, borderRadius: 8 },
+    // Saran Bawah
+    boxDark: { flex: 1, backgroundColor: '#1e293b', padding: 10, borderRadius: 8 },
     boxDarkTitle: { fontSize: 11, fontWeight: 'bold', color: '#ffffff', marginBottom: 6 },
     boxDarkText: { flex: 1, fontSize: 9, color: '#cbd5e1', lineHeight: 1.4 },
 
-    boxLight: { width: '48%', backgroundColor: '#eff6ff', padding: 10, borderRadius: 8, border: '1px solid #bfdbfe' },
+    boxLight: { flex: 1, backgroundColor: '#eff6ff', padding: 10, borderRadius: 8, border: '1px solid #bfdbfe' },
     boxLightTitle: { fontSize: 11, fontWeight: 'bold', color: '#1e40af', marginBottom: 6 },
     boxLightText: { flex: 1, fontSize: 9, color: '#1e3a8a', lineHeight: 1.4 }
 });
@@ -92,7 +98,6 @@ export async function POST(request: Request) {
         const eduLvl = student.education_level || 'SD';
         const grade = student.grade_level || 7;
 
-        // Fase & Banner Message
         let phaseKey = 'SD_Transisi';
         let bannerTitle = 'Fase Penjelajahan Minat';
         let bannerMessage = 'Eksplorasi minat dan bakat siswa.';
@@ -109,19 +114,23 @@ export async function POST(request: Request) {
         let ModuleContent;
         let moduleTitle = '';
 
+        // ==========================================================
+        // RENDER PDF: RIASEC (3 Kolom Sesuai Web)
+        // ==========================================================
         if (moduleType === 'RIASEC') {
             moduleTitle = `Kenali Potensi (${schoolName} - Kelas ${grade})`;
 
-            const { data: resultData } = await supabase
+            // Ambil SEMUA data, lalu saring agar tidak kena bug "data kosong"
+            const { data: results } = await supabase
                 .from('assessment_results')
                 .select(`id, riasec_profiles ( code, riasec_results ( code, raw_score ) )`)
                 .eq('student_id', student.id)
-                .order('calculated_at', { ascending: false })
-                .limit(1)
-                .single();
+                .eq('scoring_version', 'RIASEC-SCORING-v1')
+                .order('calculated_at', { ascending: false });
 
-            const profile = resultData?.riasec_profiles;
-            const actualProfile = Array.isArray(profile) ? profile[0] : profile;
+            // Menyeleksi data yang benar-benar memiliki profil riasec
+            const validResult = results?.find(r => r.riasec_profiles && (Array.isArray(r.riasec_profiles) ? r.riasec_profiles.length > 0 : true));
+            const actualProfile = validResult ? (Array.isArray(validResult.riasec_profiles) ? validResult.riasec_profiles[0] : validResult.riasec_profiles) : null;
 
             if (!actualProfile) {
                 ModuleContent = <View><Text style={{ fontSize: 10 }}>Data hasil RIASEC belum tersedia.</Text></View>;
@@ -152,7 +161,6 @@ export async function POST(request: Request) {
                 const mixedGuruBk = blendArrays(phase1.guruBk, phase2.guruBk, phase3.guruBk, 3);
                 const mixedSiswa = blendArrays(phase1.siswa, phase2.siswa, phase3.siswa, 3);
 
-                // Memecah array skor menjadi per-baris (2 item per baris) agar tidak menggunakan flexWrap
                 const scoreRows = [];
                 for (let i = 0; i < sortedScores.length; i += 2) {
                     scoreRows.push(sortedScores.slice(i, i + 2));
@@ -180,12 +188,8 @@ export async function POST(request: Request) {
                                     <Text style={{ fontSize: 9, color: '#475569', marginTop: 2 }}>• {data2.title}: {data2.desc}</Text>
                                 </View>
                             </View>
-
                             <View style={styles.alertBlue}>
                                 <Text style={styles.alertBlueText}>☆ Hebat! Kamu memiliki kecerdasan minat yang seimbang pada beberapa bidang sekaligus. Perpaduan ini membuatmu lebih mudah beradaptasi di berbagai lingkungan!</Text>
-                            </View>
-                            <View style={styles.alertAmber}>
-                                <Text style={styles.alertAmberText}>~ Selain pola di atas, kamu juga memiliki potensi kuat di bidang Realistic (Skor 23). Jadikan opsi keterampilan unik!</Text>
                             </View>
                         </View>
 
@@ -202,14 +206,14 @@ export async function POST(request: Request) {
                                         return (
                                             <View key={code} style={styles.scoreItem}>
                                                 <View style={styles.scoreTextRow}>
-                                                    <View style={styles.scoreTextCol}>
+                                                    <View style={{ flex: 1, paddingRight: 8 }}>
                                                         <Text style={styles.scoreLabel}>{def.name}</Text>
                                                         <Text style={styles.scoreSub}>{def.meaning}</Text>
                                                     </View>
                                                     <Text style={styles.scoreVal}>{scoreNum}</Text>
                                                 </View>
                                                 <View style={styles.barBg}>
-                                                    <View style={[styles.barFill, { width: `${pct}%` }]} />
+                                                    <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: '#4f46e5' }]} />
                                                 </View>
                                             </View>
                                         );
@@ -218,81 +222,56 @@ export async function POST(request: Request) {
                             ))}
                         </View>
 
-                        {/* Diubah menjadi 2 Kolom agar tulisan punya ruang */}
-                        <View style={styles.gridRow} wrap={false}>
-                            <View style={styles.gridCol2}>
+                        {/* Layout 3 Kolom Sesuai Tangkapan Layar Web Anda */}
+                        <View style={styles.gridRow3} wrap={false}>
+                            <View style={styles.gridCol3}>
                                 <Text style={styles.colHeader}>Aktivitas & Ekstrakurikuler</Text>
                                 <Text style={styles.colSubHeader}>TARGET LINGKUNGAN SMP</Text>
                                 {mixedEdu1.map((item, i) => (
-                                    <View key={`edu1-${i}`} style={styles.bulletContainer}>
-                                        <Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text>
-                                    </View>
+                                    <View key={`edu1-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
                                 ))}
                                 <Text style={styles.colSubHeader}>PERSIAPAN EKSKUL SMP</Text>
                                 {mixedEdu2.map((item, i) => (
-                                    <View key={`edu2-${i}`} style={styles.bulletContainer}>
-                                        <Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text>
-                                    </View>
+                                    <View key={`edu2-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
                                 ))}
                             </View>
 
-                            <View style={styles.gridCol2}>
+                            <View style={styles.gridCol3}>
                                 <Text style={styles.colHeader}>Karier & Usaha</Text>
                                 <Text style={styles.colSubHeader}>PEKERJAAN MASA DEPAN</Text>
                                 {mixedKarir.map((item, i) => (
-                                    <View key={`karir-${i}`} style={styles.bulletContainer}>
-                                        <Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text>
-                                    </View>
+                                    <View key={`karir-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
                                 ))}
                                 <Text style={styles.colSubHeader}>PELUANG PENGEMBANGAN KHUSUS</Text>
                                 {mixedFreelance.map((item, i) => (
-                                    <View key={`free-${i}`} style={styles.bulletContainer}>
-                                        <Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text>
-                                    </View>
+                                    <View key={`free-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
+                                ))}
+                            </View>
+
+                            <View style={styles.gridCol3}>
+                                <Text style={styles.colHeader}>Pembelajaran</Text>
+                                <Text style={styles.colSubHeader}>FOKUS MATERI ({eduLvl})</Text>
+                                {mixedMateri.map((item, i) => (
+                                    <View key={`mat-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
+                                ))}
+                                <Text style={styles.colSubHeader}>LAYANAN PENDUKUNG</Text>
+                                {mixedLayanan.map((item, i) => (
+                                    <View key={`lay-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
                                 ))}
                             </View>
                         </View>
 
-                        <View style={styles.gridColFull} wrap={false}>
-                            <Text style={styles.colHeader}>Pembelajaran & Fokus Materi</Text>
-                            <View style={{ flexDirection: 'row' }}>
-                                <View style={{ flex: 1, paddingRight: 10 }}>
-                                    <Text style={styles.colSubHeader}>FOKUS MATERI ({eduLvl})</Text>
-                                    {mixedMateri.map((item, i) => (
-                                        <View key={`mat-${i}`} style={styles.bulletContainer}>
-                                            <Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text>
-                                        </View>
-                                    ))}
-                                </View>
-                                <View style={{ flex: 1 }}>
-                                    <Text style={styles.colSubHeader}>LAYANAN PENDUKUNG</Text>
-                                    {mixedLayanan.map((item, i) => (
-                                        <View key={`lay-${i}`} style={styles.bulletContainer}>
-                                            <Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text>
-                                        </View>
-                                    ))}
-                                </View>
-                            </View>
-                        </View>
-
-                        <View style={styles.gridRow} wrap={false}>
+                        <View style={styles.gridRow2} wrap={false}>
                             <View style={styles.boxDark}>
                                 <Text style={styles.boxDarkTitle}>Saran untuk Guru / Orang Tua</Text>
                                 {mixedGuruBk.map((item, i) => (
-                                    <View key={`gbk-${i}`} style={styles.bulletContainer}>
-                                        <Text style={{ ...styles.bulletPoint, color: '#94a3b8' }}>→</Text>
-                                        <Text style={styles.boxDarkText}>{item}</Text>
-                                    </View>
+                                    <View key={`gbk-${i}`} style={styles.bulletContainer}><Text style={{ ...styles.bulletPoint, color: '#94a3b8' }}>→</Text><Text style={styles.boxDarkText}>{item}</Text></View>
                                 ))}
                             </View>
-
                             <View style={styles.boxLight}>
                                 <Text style={styles.boxLightTitle}>Saran untuk Kamu (Siswa)</Text>
                                 {mixedSiswa.map((item, i) => (
-                                    <View key={`sis-${i}`} style={styles.bulletContainer}>
-                                        <Text style={{ ...styles.bulletPoint, color: '#3b82f6' }}>✦</Text>
-                                        <Text style={styles.boxLightText}>{item}</Text>
-                                    </View>
+                                    <View key={`sis-${i}`} style={styles.bulletContainer}><Text style={{ ...styles.bulletPoint, color: '#3b82f6' }}>✦</Text><Text style={styles.boxLightText}>{item}</Text></View>
                                 ))}
                             </View>
                         </View>
@@ -301,13 +280,123 @@ export async function POST(request: Request) {
             }
         }
         // ==========================================================
-        // VAK MODULE (Sama rapinya)
+        // RENDER PDF: VAK (GAYA BELAJAR) DENGAN LAYOUT IDENTIK
         // ==========================================================
         else if (moduleType === 'VAK') {
             moduleTitle = `Gaya Belajar (${schoolName} - Kelas ${grade})`;
-            // ... (Bagian VAK dikosongkan sejenak agar fokus ke RIASEC sesuai contoh Anda, 
-            // namun di production Anda bisa melakukan hal yang persis sama dengan RIASEC di atas).
-            return NextResponse.json({ error: 'Modul VAK sedang disesuaikan' }, { status: 400 });
+
+            // Sama seperti RIASEC, saring hasil kosong
+            const { data: results } = await supabase
+                .from('assessment_results')
+                .select(`id, vak_profiles ( code, dominant_code, vak_results ( code, raw_score ) )`)
+                .eq('student_id', student.id)
+                .eq('scoring_version', 'VAK-SCORING-v1')
+                .order('calculated_at', { ascending: false });
+
+            const validResult = results?.find(r => r.vak_profiles && (Array.isArray(r.vak_profiles) ? r.vak_profiles.length > 0 : true));
+            const actualProfile = validResult ? (Array.isArray(validResult.vak_profiles) ? validResult.vak_profiles[0] : validResult.vak_profiles) : null;
+
+            if (!actualProfile) {
+                ModuleContent = <View><Text style={{ fontSize: 10 }}>Data hasil VAK belum tersedia.</Text></View>;
+            } else {
+                const rawResults = actualProfile.vak_results || [];
+                const sortedScores = [...rawResults].sort((a, b) => Number(b.raw_score) - Number(a.raw_score));
+
+                const domCode = cleanCode(actualProfile.dominant_code || sortedScores[0]?.code || 'V');
+                const domData = vakDictionary[domCode] || vakDictionary['V'];
+                const phaseData: VakPhaseData = (domData.levels as any)[phaseKey] || domData.levels['SD_Transisi'];
+
+                const maxScore = Math.max(...sortedScores.map(s => Number(s.raw_score)), 1);
+
+                ModuleContent = (
+                    <View style={styles.container}>
+                        <View style={styles.phaseBanner} wrap={false}>
+                            <Text style={styles.phaseTitle}>{bannerTitle}</Text>
+                            <Text style={styles.phaseSub}>{bannerMessage}</Text>
+                        </View>
+
+                        <View style={styles.sectionCard} wrap={false}>
+                            <View style={{ flexDirection: 'row' }}>
+                                <View style={styles.badgeProfil}>
+                                    <Text style={{ fontSize: 7, color: '#3b82f6', textAlign: 'center' }}>DOMINAN</Text>
+                                    <Text style={styles.badgeText}>{domCode}</Text>
+                                </View>
+                                <View style={{ flex: 1, paddingLeft: 12 }}>
+                                    <Text style={styles.sectionTitle}>{domData.title}</Text>
+                                    <Text style={{ fontSize: 9.5, color: '#334155', lineHeight: 1.4 }}>
+                                        Kamu adalah tipe pembelajar <Text style={{ fontWeight: 'bold' }}>{domData.indonesianTitle}</Text>.
+                                    </Text>
+                                    <Text style={{ fontSize: 9, color: '#475569', marginTop: 4 }}>{domData.desc}</Text>
+                                </View>
+                            </View>
+                        </View>
+
+                        <View style={styles.sectionCard} wrap={false}>
+                            <Text style={styles.sectionTitle}>Profil Detail V-A-K Kamu</Text>
+                            {sortedScores.map((sc) => {
+                                const code = cleanCode(sc.code);
+                                const dictRef = vakDictionary[code] || { title: code, indonesianTitle: '' };
+                                const scoreNum = Number(sc.raw_score);
+                                const pct = Math.min((scoreNum / maxScore) * 100, 100);
+
+                                return (
+                                    <View key={code} style={styles.scoreItemFull}>
+                                        <View style={styles.scoreTextRow}>
+                                            <Text style={styles.scoreLabel}>{dictRef.title}</Text>
+                                            <Text style={styles.scoreVal}>{scoreNum} Poin</Text>
+                                        </View>
+                                        <View style={styles.barBg}>
+                                            <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: code === 'V' ? '#3b82f6' : code === 'A' ? '#10b981' : '#f59e0b' }]} />
+                                        </View>
+                                    </View>
+                                );
+                            })}
+                        </View>
+
+                        {/* Layout 2 Kolom Sesuai Tangkapan Layar Web VAK Anda */}
+                        <View style={styles.gridRow2} wrap={false}>
+                            <View style={styles.gridCol2}>
+                                <Text style={styles.colHeader}>Strategi Belajar</Text>
+                                <Text style={styles.colSubHeader}>{phaseData.eduTitle1}</Text>
+                                {phaseData.eduList1.map((item, i) => (
+                                    <View key={`str1-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
+                                ))}
+                                <Text style={styles.colSubHeader}>{phaseData.eduTitle2}</Text>
+                                {phaseData.eduList2.map((item, i) => (
+                                    <View key={`str2-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
+                                ))}
+                            </View>
+
+                            <View style={styles.gridCol2}>
+                                <Text style={styles.colHeader}>Pengayaan & Materi</Text>
+                                <Text style={styles.colSubHeader}>FOKUS / TRIK UJIAN</Text>
+                                {phaseData.materi.map((item, i) => (
+                                    <View key={`mat-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
+                                ))}
+                                <Text style={styles.colSubHeader}>PROSPEK KARIR UTAMA</Text>
+                                {domData.karir.slice(0, 5).map((item, i) => (
+                                    <View key={`kar-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
+                                ))}
+                            </View>
+                        </View>
+
+                        <View style={styles.gridRow2} wrap={false}>
+                            <View style={styles.boxDark}>
+                                <Text style={styles.boxDarkTitle}>Saran untuk Guru / Orang Tua</Text>
+                                {phaseData.guruBk.map((item, i) => (
+                                    <View key={`gbk-${i}`} style={styles.bulletContainer}><Text style={{ ...styles.bulletPoint, color: '#94a3b8' }}>→</Text><Text style={styles.boxDarkText}>{item}</Text></View>
+                                ))}
+                            </View>
+                            <View style={styles.boxLight}>
+                                <Text style={styles.boxLightTitle}>Apa yang Harus Kamu Lakukan?</Text>
+                                {phaseData.siswa.map((item, i) => (
+                                    <View key={`sis-${i}`} style={styles.bulletContainer}><Text style={{ ...styles.bulletPoint, color: '#3b82f6' }}>✦</Text><Text style={styles.boxLightText}>{item}</Text></View>
+                                ))}
+                            </View>
+                        </View>
+                    </View>
+                );
+            }
         } else {
             return NextResponse.json({ error: 'Modul tidak dikenali' }, { status: 400 });
         }
