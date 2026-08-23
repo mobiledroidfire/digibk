@@ -31,6 +31,9 @@ export default function LoginPage() {
     const [isStudentMode, setIsStudentMode] = useState<boolean>(true);
     const [showPassword, setShowPassword] = useState<boolean>(false);
 
+    // PERBAIKAN: State untuk menampung nilai input kelas
+    const [classNameValue, setClassNameValue] = useState<string>('');
+
     const [studentState, studentAction, isStudentPending] = useActionState(studentLoginAction, initialState);
     const [teacherState, teacherAction, isTeacherPending] = useActionState(teacherLoginAction, initialState);
 
@@ -40,6 +43,33 @@ export default function LoginPage() {
     // Mengaktifkan efek Marquee untuk input yang panjang
     const schoolPlaceholder = useMarqueePlaceholder("Contoh: SD Muhammadiyah 1 Surakarta atau SMAN 1 Jakarta", 150);
     const namePlaceholder = useMarqueePlaceholder("Contoh: Hendi Prasetyo Sangat Panjang Sekali Namanya", 150);
+    // PERBAIKAN: Menambahkan Marquee untuk kolom kelas
+    const classPlaceholder = useMarqueePlaceholder("Contoh: 6 A, VII B, atau 10 MIPA", 150);
+
+    // =========================================================================
+    // FUNGSI BANTUAN: Menangani perubahan dan deteksi Romawi di input Kelas
+    // =========================================================================
+    const handleClassChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // Otomatis membuat huruf menjadi kapital saat diketik
+        setClassNameValue(e.target.value.toUpperCase());
+    };
+
+    const handleClassBlur = () => {
+        // Kamus konversi Romawi ke Angka (Kelas 1 sampai 12)
+        const romanMap: Record<string, string> = {
+            'I': '1', 'II': '2', 'III': '3', 'IV': '4', 'V': '5', 'VI': '6',
+            'VII': '7', 'VIII': '8', 'IX': '9', 'X': '10', 'XI': '11', 'XII': '12'
+        };
+
+        // Memecah teks berdasarkan spasi. Misal "X MIPA 1" menjadi ["X", "MIPA", "1"]
+        const parts = classNameValue.trim().split(' ');
+
+        // Cek apakah kata pertama adalah angka Romawi yang ada di kamus
+        if (parts.length > 0 && romanMap[parts[0]]) {
+            parts[0] = romanMap[parts[0]]; // Ubah "X" menjadi "10"
+            setClassNameValue(parts.join(' ')); // Gabungkan kembali menjadi "10 MIPA 1"
+        }
+    };
 
     return (
         <main className="flex min-h-screen bg-white font-sans text-slate-900">
@@ -197,8 +227,11 @@ export default function LoginPage() {
                                         <label htmlFor="className" className="text-sm font-semibold text-slate-700">Kelas</label>
                                         <input
                                             id="className" name="className" type="text" required disabled={isPending}
-                                            placeholder="Ex: 6 A atau 10 MIPA"
-                                            className="w-full h-12 rounded-xl bg-slate-50 border border-slate-200 px-4 text-sm font-medium text-slate-900 uppercase focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all disabled:opacity-50"
+                                            placeholder={classPlaceholder} // Memasang efek Marquee di sini
+                                            value={classNameValue} // Mengontrol input dengan state
+                                            onChange={handleClassChange} // Saat pengguna mengetik
+                                            onBlur={handleClassBlur} // Saat kursor keluar dari kolom (Konversi Romawi)
+                                            className="w-full h-12 rounded-xl bg-slate-50 border border-slate-200 px-4 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all disabled:opacity-50"
                                         />
                                     </div>
                                     <div className="space-y-2">

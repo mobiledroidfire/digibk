@@ -2,17 +2,19 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { logoutAction } from '@/features/auth/actions/auth.actions';
+// logoutAction dihapus dari sini karena sudah dipanggil di dalam LogoutButton
 import {
     User, GraduationCap, School, PlayCircle,
-    CheckCircle2, LogOut, BrainCircuit,
-    Clock, Lock, BookOpen, Activity, ShieldCheck,
+    CheckCircle2, BrainCircuit,
+    Clock, Lock, Activity, ShieldCheck,
     Target, Users, Handshake, Lightbulb
-} from 'lucide-react';
+} from 'lucide-react'; // Ikon LogOut dihapus dari sini
 import Link from 'next/link';
 
-// PERBAIKAN 1: Mengimpor komponen PrintPdfButton
+// Import komponen PrintPdfButton
 import PrintPdfButton from '@/components/pdf/PrintPdfButton';
+// PERBAIKAN: Import komponen LogoutButton yang baru dibuat
+import LogoutButton from '@/components/auth/LogoutButton';
 
 // 1. Mendefinisikan Tipe Data
 type StudentData = {
@@ -72,7 +74,6 @@ export default async function StudentDashboardPage() {
     if (sessionsRaw) {
         const sessions = sessionsRaw as unknown as SessionData[];
 
-        // Menggunakan for...of agar TypeScript bisa melacak perubahan nilai
         for (const session of sessions) {
             const code = session.assessment_versions?.assessments?.code;
             const currentStatus = session.status;
@@ -113,12 +114,8 @@ export default async function StudentDashboardPage() {
                         <span className="font-bold text-xl tracking-tight text-slate-900">DIGIBK</span>
                     </div>
 
-                    <form action={logoutAction}>
-                        <button type="submit" className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-red-600 transition-colors bg-slate-100 hover:bg-red-50 px-3 py-2 rounded-lg">
-                            <LogOut className="h-4 w-4" />
-                            <span className="hidden sm:inline">Keluar</span>
-                        </button>
-                    </form>
+                    {/* PERBAIKAN: Memanggil komponen Pop-up Logout yang modern */}
+                    <LogoutButton />
                 </div>
             </header>
 
@@ -187,8 +184,6 @@ export default async function StudentDashboardPage() {
                                                 <Link href="/student/potential/result" className="flex-1 inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-sm font-bold py-2.5 px-4 rounded-xl transition-colors">
                                                     Lihat Hasil
                                                 </Link>
-
-                                                {/* PERBAIKAN 2: Memasang Tombol PDF untuk RIASEC */}
                                                 <PrintPdfButton
                                                     moduleType="RIASEC"
                                                     studentData={{
@@ -223,8 +218,6 @@ export default async function StudentDashboardPage() {
                                                 <Link href="/student/learning-style/result" className="flex-1 inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-sm font-bold py-2.5 px-4 rounded-xl transition-colors">
                                                     Lihat Hasil
                                                 </Link>
-
-                                                {/* PERBAIKAN 3: Memasang Tombol PDF untuk VAK */}
                                                 <PrintPdfButton
                                                     moduleType="VAK"
                                                     studentData={{
