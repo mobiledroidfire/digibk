@@ -1,7 +1,13 @@
 // Lokasi file: src/lib/data/riasec.ts
 
 export type RiasecResultItem = { code: string; raw_score: number; };
-export type RiasecProfile = { code: string; riasec_results: RiasecResultItem[]; };
+export type RiasecProfile = {
+    code: string;
+    primary_code?: string;    // SSOT Database
+    secondary_code?: string;  // SSOT Database
+    tertiary_code?: string;   // SSOT Database
+    riasec_results: RiasecResultItem[];
+};
 export type AssessmentResult = { id: string; riasec_profiles: RiasecProfile | RiasecProfile[] | null; };
 
 // Struktur baru yang menampung SEMUA atribut secara dinamis per fase

@@ -4,9 +4,9 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import {
-    BrainCircuit, Trophy, ArrowRight, Activity,
-    GraduationCap, School, Briefcase, BookOpen,
-    UserCheck, HeartHandshake, Sparkles, Star, Target
+    Trophy, ArrowRight, Activity,
+    School, Briefcase, BookOpen,
+    UserCheck, HeartHandshake, Sparkles, Target
 } from 'lucide-react';
 
 import {
@@ -42,7 +42,6 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
         .single();
 
     if (studentError || !student) {
-        console.error("🚨 ERROR AMBIL DATA SISWA:", studentError?.message);
         redirect('/student/dashboard?error=Akses_Ditolak_Gagal_Ambil_Data');
     }
 
@@ -52,9 +51,6 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
     const eduLvl = student.education_level || 'SMP';
     const grade = student.grade_level || 7;
 
-    // ========================================================================
-    // PERBAIKAN: Pisahkan secara detail Fase MI, MTs, dan MA
-    // ========================================================================
     let phaseKey: keyof LevelData = 'SMP_Awal';
     let bannerMessage = null;
     let isTransisi = false;
@@ -91,17 +87,33 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
         else redirect('/student/dashboard?error=Hasil_Tidak_Ditemukan');
     }
 
+    // Memanggil primary, secondary, tertiary code langsung dari tabel riasec_profiles
     const { data: resultData, error: resultError } = await supabase.from('assessment_results')
-        .select(`id, riasec_profiles ( code, riasec_results ( code, raw_score ) )`)
+        .select(`
+            id, 
+            riasec_profiles ( 
+                code, primary_code, secondary_code, tertiary_code, 
+                riasec_results ( code, raw_score ) 
+            )
+        `)
         .eq('id', resultId).eq('student_id', student.id).single();
 
     if (resultError || !resultData) {
-        console.error("🚨 ERROR AMBIL HASIL ASESMEN:", resultError?.message);
         redirect('/student/dashboard?error=Data_Gagal_Dimuat');
     }
 
     const typedResult = resultData as unknown as AssessmentResult;
-    const profile: RiasecProfile | null = Array.isArray(typedResult.riasec_profiles) ? typedResult.riasec_profiles[0] : typedResult.riasec_profiles;
+
+    // PERBAIKAN TypeScript: Membuat tipe gabungan (Intersection Type) 
+    // agar TypeScript mengenali properti baru tanpa harus merombak file definisi aslinya.
+    type ExtendedRiasecProfile = RiasecProfile & {
+        primary_code?: string;
+        secondary_code?: string;
+        tertiary_code?: string;
+    };
+
+    const rawProfile = Array.isArray(typedResult.riasec_profiles) ? typedResult.riasec_profiles[0] : typedResult.riasec_profiles;
+    const profile = rawProfile as ExtendedRiasecProfile | null;
 
     if (!profile) return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50 font-sans">
@@ -110,69 +122,22 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
     );
 
     const rawResults = profile.riasec_results || [];
+    // Sorting hanya untuk visual grafik batang
+    const sortedScores = [...rawResults].sort((a, b) => Number(b.raw_score) - Number(a.raw_score));
 
-    const sortedScores = [...rawResults].sort((a, b) => {
-        const scoreA = Number(a.raw_score);
-        const scoreB = Number(b.raw_score);
-        if (scoreB !== scoreA) return scoreB - scoreA;
-        return cleanCode(a.code).localeCompare(cleanCode(b.code));
-    });
-
-    const topThree = sortedScores.slice(0, 3);
-    const code1 = cleanCode(topThree[0]?.code) || 'S';
-    const code2 = cleanCode(topThree[1]?.code) || 'C';
-    const code3 = cleanCode(topThree[2]?.code) || 'I';
+    // MENGGUNAKAN SINGLE SOURCE OF TRUTH DARI DATABASE
+    const code1 = cleanCode(profile.primary_code) || 'C';
+    const code2 = cleanCode(profile.secondary_code) || 'S';
+    const code3 = cleanCode(profile.tertiary_code) || 'I';
     const hyphenatedCodes = `${code1}-${code2}-${code3}`;
 
-    const highestScore = Number(sortedScores[0]?.raw_score) || 0;
-    const dominantTies = sortedScores.filter((item) => Number(item.raw_score) === highestScore);
-    const isDominantTie = dominantTies.length > 1;
-
-    const cutoffScore = Number(topThree[2]?.raw_score) ?? 0;
-    const tiedAtCutoff = sortedScores.filter((item) => Number(item.raw_score) === cutoffScore);
-
-    const additionalTiedCodes = tiedAtCutoff
-        .filter((item) => !topThree.some((topItem) => cleanCode(topItem.code) === cleanCode(item.code)))
-        .map((item) => {
-            const code = cleanCode(item.code);
-            return dimensionDefs[code]?.name || code;
-        });
-
-    const cutoffMotivationMessage = additionalTiedCodes.length > 0
-        ? `Selain pola di atas, kamu juga memiliki potensi kuat di bidang ${additionalTiedCodes.join(' dan ')} (Skor ${cutoffScore}). Jadikan opsi keterampilan unik!`
-        : null;
-
-    const data1 = riasecDictionary[code1] || riasecDictionary['S'];
-    const data2 = riasecDictionary[code2] || riasecDictionary['C'];
+    const data1 = riasecDictionary[code1] || riasecDictionary['C'];
+    const data2 = riasecDictionary[code2] || riasecDictionary['S'];
     const data3 = riasecDictionary[code3] || riasecDictionary['I'];
 
-    let dynamicConclusion = "";
-
-    if (isDominantTie) {
-        const tieNamesText = dominantTies.map(t => {
-            const code = cleanCode(t.code);
-            return riasecDictionary[code]?.indonesianTitle || code;
-        }).join(" dan ");
-
-        dynamicConclusion = `Kamu memiliki ${dominantTies.length} tipe dominan yang seimbang, yaitu ${tieNamesText} dengan pola gabungan ${hyphenatedCodes}.\n\n`;
-
-        dominantTies.forEach(t => {
-            const code = cleanCode(t.code);
-            const dict = riasecDictionary[code];
-            if (dict) {
-                dynamicConclusion += `• ${dict.title}: ${dict.desc}\n`;
-            }
-        });
-
-        dynamicConclusion += `\nSecara khusus, perpaduan ini memberikanmu kekuatan dari ${dimensionDefs[code1]?.name || code1}, didukung gaya pendekatan ${dimensionDefs[code2]?.behavior || 'tertentu'}, serta insting ${dimensionDefs[code3]?.behavior || 'khas'}.`;
-    } else {
-        dynamicConclusion = `Tipe dominan kamu adalah ${data1.title} (${data1.indonesianTitle}) dengan pola gabungan ${hyphenatedCodes}. ${data1.desc}\n\nSecara khusus, kamu memadukan dorongan dari ${dimensionDefs[code1]?.name || code1}, gaya pendekatan ${dimensionDefs[code2]?.behavior || 'tertentu'}, didukung insting ${dimensionDefs[code3]?.behavior || 'khas'}.`;
-    }
-
-    let dominantTieMessage = null;
-    if (isDominantTie) {
-        dominantTieMessage = `Hebat! Kamu memiliki kecerdasan minat yang seimbang pada beberapa bidang sekaligus. Perpaduan ini membuatmu lebih mudah beradaptasi di berbagai lingkungan!`;
-    }
+    // Pesan kesimpulan yang disederhanakan dan presisi
+    const dynamicConclusion = `Tipe dominan kamu adalah ${data1.title} (${data1.indonesianTitle}) dan ${data2.title} (${data2.indonesianTitle}) dengan pola gabungan ${hyphenatedCodes}.\n\n• ${data1.title}: ${data1.desc}\n• ${data2.title}: ${data2.desc}`;
+    const dominantTieMessage = `Hebat! Kamu memiliki kecerdasan minat yang seimbang pada beberapa bidang sekaligus. Perpaduan ini membuatmu lebih mudah beradaptasi di berbagai lingkungan!`;
 
     const phase1: PhaseData = data1.levels[phaseKey] || data1.levels['SMP_Awal'];
     const phase2: PhaseData = data2.levels[phaseKey] || data2.levels['SMP_Awal'];
@@ -202,7 +167,6 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
             </header>
 
             <main className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
-
                 {bannerMessage && (
                     <div className={`rounded-xl p-5 shadow-md flex items-center gap-4 text-white ${isTransisi ? 'bg-linear-to-r from-indigo-600 to-purple-600' : 'bg-linear-to-r from-blue-600 to-cyan-600'}`}>
                         <div className="bg-white/20 p-3 rounded-full shrink-0">
@@ -225,19 +189,10 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
                             <h2 className="text-lg font-bold text-slate-900 mb-3">Ringkasan Kesimpulan</h2>
                             <p className="text-slate-700 text-sm leading-relaxed mb-4 whitespace-pre-line">{dynamicConclusion}</p>
 
-                            {dominantTieMessage && (
-                                <div className="mb-4 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 flex items-start gap-2">
-                                    <Star className="h-4 w-4 text-indigo-600 mt-0.5 shrink-0" />
-                                    <p className="text-sm text-indigo-900 leading-relaxed font-medium">{dominantTieMessage}</p>
-                                </div>
-                            )}
-
-                            {cutoffMotivationMessage && (
-                                <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 flex items-start gap-2">
-                                    <Activity className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-                                    <p className="text-sm text-amber-900 leading-relaxed">{cutoffMotivationMessage}</p>
-                                </div>
-                            )}
+                            <div className="mb-4 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 flex items-start gap-2">
+                                <Sparkles className="h-4 w-4 text-indigo-600 mt-0.5 shrink-0" />
+                                <p className="text-sm text-indigo-900 leading-relaxed font-medium">{dominantTieMessage}</p>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -250,7 +205,7 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
                         {sortedScores.map((score) => {
                             const percentage = Math.min((Number(score.raw_score) / 35) * 100, 100);
                             const safeCode = cleanCode(score.code);
-                            const dimInfo = dimensionDefs[safeCode] || { name: safeCode, meaning: 'Data dimensi tidak ditemukan' };
+                            const dimInfo = dimensionDefs[safeCode] || { name: safeCode, meaning: '' };
                             return (
                                 <div key={safeCode} className="flex flex-col gap-2">
                                     <div className="flex justify-between items-end">

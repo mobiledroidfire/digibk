@@ -9,7 +9,6 @@ import {
     BookOpen, Lightbulb, UserCheck, HeartHandshake
 } from 'lucide-react';
 
-// Import data yang sudah kita buat sebelumnya di lib/data/vak.ts
 import {
     vakDictionary,
     type AssessmentResultVak,
@@ -18,11 +17,14 @@ import {
     type PhaseData
 } from '@/lib/data/vak';
 
-// Fungsi helper untuk mendapatkan ikon dan warna khusus VAK
 const getVakStyle = (code: string) => {
     if (code === 'V') return { icon: Eye, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', bar: 'bg-blue-500' };
     if (code === 'A') return { icon: Headphones, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', bar: 'bg-emerald-500' };
     return { icon: MousePointerClick, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', bar: 'bg-amber-500' };
+}
+
+function cleanCode(code?: string): string {
+    return code ? code.trim().toUpperCase() : '';
 }
 
 export default async function VakResultPage({ searchParams }: { searchParams: Promise<{ id?: string }>; }) {
@@ -49,9 +51,6 @@ export default async function VakResultPage({ searchParams }: { searchParams: Pr
     const eduLvl = student.education_level || 'SMP';
     const grade = student.grade_level || 7;
 
-    // ========================================================================
-    // PENENTUAN FASE (Sama persis seperti RIASEC, agar presisi per jenjang)
-    // ========================================================================
     let phaseKey: keyof LevelData = 'SMP_Awal';
 
     if (eduLvl === 'SD') {
@@ -93,6 +92,7 @@ export default async function VakResultPage({ searchParams }: { searchParams: Pr
         else redirect('/student/dashboard?error=Hasil_Tidak_Ditemukan');
     }
 
+    // PERBAIKAN SSOT: Memanggil dominant_code langsung dari tabel vak_profiles
     const { data: resultData, error: resultError } = await supabase
         .from('assessment_results')
         .select(`
@@ -112,27 +112,17 @@ export default async function VakResultPage({ searchParams }: { searchParams: Pr
 
     const rawResults = profile.vak_results || [];
 
-    const sortedScores = [...rawResults].sort((a, b) => {
-        const scoreA = Number(a.raw_score);
-        const scoreB = Number(b.raw_score);
-        if (scoreB !== scoreA) return scoreB - scoreA;
-        return a.code.localeCompare(b.code);
-    });
+    // Sorting hanya untuk keperluan visual grafik batang
+    const sortedScores = [...rawResults].sort((a, b) => Number(b.raw_score) - Number(a.raw_score));
+    const maxScore = Math.max(...sortedScores.map(s => Number(s.raw_score)), 1);
 
-    const dominantCode = profile.dominant_code || sortedScores[0]?.code || 'V';
+    // MENGGUNAKAN SINGLE SOURCE OF TRUTH DARI DATABASE
+    const dominantCode = cleanCode(profile.dominant_code) || 'V';
     const dominantData = vakDictionary[dominantCode];
     const dominantStyle = getVakStyle(dominantCode);
     const DominantIcon = dominantStyle.icon;
 
-    const highestScore = Number(sortedScores[0]?.raw_score) || 0;
-    const dominantTies = sortedScores.filter(item => Number(item.raw_score) === highestScore);
-    const isDominantTie = dominantTies.length > 1;
-
-    // Ambil data spesifik berdasarkan Fase Pendidikan
     const phaseData: PhaseData = dominantData.levels[phaseKey] || dominantData.levels['SMP_Awal'];
-
-    // Skor maksimal VAK adalah jumlah pertanyaan per dimensi dikali nilai max (5) -> Misal 15 pertanyaan, 5 per dimensi = 25 max
-    const MAX_SCORE_PER_DIMENSION = 25;
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col pb-12 font-sans">
@@ -144,8 +134,6 @@ export default async function VakResultPage({ searchParams }: { searchParams: Pr
             </header>
 
             <main className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
-
-                {/* Banner Utama */}
                 <section className="bg-white rounded-2xl p-6 md:p-10 shadow-sm border border-slate-200 overflow-hidden relative">
                     <div className={`absolute top-0 right-0 w-64 h-64 ${dominantStyle.bg} rounded-full blur-3xl -mr-20 -mt-20 opacity-60`}></div>
 
@@ -159,41 +147,27 @@ export default async function VakResultPage({ searchParams }: { searchParams: Pr
                             <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${dominantStyle.bg} ${dominantStyle.color} text-xs font-bold uppercase tracking-widest mb-3`}>
                                 <Sparkles size={14} /> Dominan
                             </div>
-
-                            {isDominantTie ? (
-                                <>
-                                    <h2 className="text-2xl font-bold text-slate-900 mb-2">Gaya Belajar Seimbang</h2>
-                                    <p className="text-slate-600 leading-relaxed">
-                                        Luar biasa! Kamu memiliki kecenderungan gaya belajar yang seimbang antara
-                                        <span className="font-bold"> {dominantTies.map(t => vakDictionary[t.code]?.title).join(' dan ')}</span>.
-                                        Ini artinya kamu sangat fleksibel dan bisa belajar dari berbagai media dengan sama baiknya!
-                                    </p>
-                                </>
-                            ) : (
-                                <>
-                                    <h2 className="text-2xl font-bold text-slate-900 mb-2">{dominantData.title}</h2>
-                                    <p className="text-slate-600 leading-relaxed">{dominantData.desc}</p>
-                                </>
-                            )}
+                            <h2 className="text-2xl font-bold text-slate-900 mb-2">{dominantData.title}</h2>
+                            <p className="text-slate-600 leading-relaxed">{dominantData.desc}</p>
                         </div>
                     </div>
                 </section>
 
-                {/* Grafik Bar Skor */}
                 <section className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200">
                     <h3 className="text-base font-bold text-slate-800 mb-6 flex items-center gap-2 border-b pb-3">
                         <Activity className="h-5 w-5 text-teal-500" /> Profil Detail V-A-K Kamu
                     </h3>
                     <div className="space-y-6">
                         {sortedScores.map((score) => {
-                            const data = vakDictionary[score.code];
-                            const style = getVakStyle(score.code);
+                            const code = cleanCode(score.code);
+                            const data = vakDictionary[code] || { title: code };
+                            const style = getVakStyle(code);
                             const rawScoreNum = Number(score.raw_score);
-                            const percentage = Math.min((rawScoreNum / MAX_SCORE_PER_DIMENSION) * 100, 100);
+                            const percentage = Math.min((rawScoreNum / maxScore) * 100, 100);
                             const Icon = style.icon;
 
                             return (
-                                <div key={score.code} className="flex items-center gap-4">
+                                <div key={code} className="flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
                                         <Icon className={`h-5 w-5 ${style.color}`} />
                                     </div>
@@ -215,9 +189,7 @@ export default async function VakResultPage({ searchParams }: { searchParams: Pr
                     </div>
                 </section>
 
-                {/* Detail Rekomendasi (Disesuaikan dari Database dictionary yang baru) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Kotak Strategi & Metode */}
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
                         <h4 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b pb-2">
                             <Lightbulb className="h-4 w-4 text-amber-500" /> Strategi Belajar
@@ -236,7 +208,6 @@ export default async function VakResultPage({ searchParams }: { searchParams: Pr
                         </div>
                     </div>
 
-                    {/* Kotak Materi Pendukung & Jurusan/Karir */}
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
                         <h4 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b pb-2">
                             <BookOpen className="h-4 w-4 text-emerald-500" /> Pengayaan & Materi
@@ -248,7 +219,7 @@ export default async function VakResultPage({ searchParams }: { searchParams: Pr
                             </ul>
                         </div>
                         <div>
-                            <span className="text-xs font-semibold text-slate-400 uppercase">Prospek Karir Utama (Sesuai Gaya Belajar)</span>
+                            <span className="text-xs font-semibold text-slate-400 uppercase">Prospek Karir Utama</span>
                             <ul className="mt-2 space-y-1.5 flex flex-wrap gap-1">
                                 {dominantData.karir.map((item, i) => (
                                     <li key={i} className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-md">{item}</li>
@@ -258,7 +229,6 @@ export default async function VakResultPage({ searchParams }: { searchParams: Pr
                     </div>
                 </div>
 
-                {/* Kotak Saran untuk Guru & Siswa */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-700">
                         <h4 className="text-sm font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-600 pb-2">
@@ -289,13 +259,11 @@ export default async function VakResultPage({ searchParams }: { searchParams: Pr
                     </div>
                 </div>
 
-                {/* Tombol Selesai */}
                 <div className="pt-4 pb-12 flex justify-end">
                     <Link href="/student/dashboard" className="inline-flex items-center gap-2 px-8 py-3 bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
                         Selesai & Kembali <ArrowRight className="h-4 w-4" />
                     </Link>
                 </div>
-
             </main>
         </div>
     );

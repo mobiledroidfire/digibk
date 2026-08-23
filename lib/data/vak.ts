@@ -1,7 +1,13 @@
 // Lokasi file: src/lib/data/vak.ts
 
 export type VakResultItem = { code: string; raw_score: number; };
-export type VakProfile = { code: string; vak_results: VakResultItem[]; };
+export type VakProfile = {
+    code: string;
+    dominant_code?: string;   // SSOT Database
+    secondary_code?: string;  // SSOT Database
+    tertiary_code?: string;   // SSOT Database
+    vak_results: VakResultItem[];
+};
 export type AssessmentResultVak = { id: string; vak_profiles: VakProfile | VakProfile[] | null; };
 
 // Struktur ini disamakan persis dengan RIASEC agar UI Frontend bisa seragam (Re-usable)

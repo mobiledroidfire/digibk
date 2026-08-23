@@ -18,28 +18,18 @@ function cleanCode(code?: string): string {
     return code ? code.trim().toUpperCase() : '';
 }
 
-// STYLESHEET: Diperbarui agar 100% menyerupai Web
+// STYLESHEET
 const styles = StyleSheet.create({
     container: { padding: 5 },
-
-    // Banner Fase
     phaseBanner: { backgroundColor: '#7e22ce', padding: 12, borderRadius: 8, marginBottom: 12 },
     phaseTitle: { color: '#ffffff', fontSize: 13, fontWeight: 'bold', marginBottom: 2 },
     phaseSub: { color: '#f3e8ff', fontSize: 10 },
-
-    // Kotak Section
     sectionCard: { backgroundColor: '#ffffff', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 12 },
     sectionTitle: { fontSize: 14, fontWeight: 'bold', color: '#0f172a', marginBottom: 8 },
     badgeProfil: { backgroundColor: '#eff6ff', padding: '6 12', borderRadius: 6, width: 80, textAlign: 'center', marginBottom: 8 },
     badgeText: { fontSize: 14, fontWeight: 'bold', color: '#1d4ed8' },
-
-    // Pesan Alert
     alertBlue: { backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', padding: 8, borderRadius: 6, marginTop: 8 },
     alertBlueText: { color: '#1e40af', fontSize: 9.5, lineHeight: 1.4 },
-    alertAmber: { backgroundColor: '#fffbeb', border: '1px solid #fde68a', padding: 8, borderRadius: 6, marginTop: 6 },
-    alertAmberText: { color: '#92400e', fontSize: 9.5, lineHeight: 1.4 },
-
-    // Progress Bar Skor
     scoreRowContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
     scoreItem: { width: '48%' },
     scoreItemFull: { width: '100%', marginBottom: 12 },
@@ -47,29 +37,20 @@ const styles = StyleSheet.create({
     scoreLabel: { fontSize: 10, fontWeight: 'bold', color: '#1e293b' },
     scoreSub: { fontSize: 8.5, color: '#64748b' },
     scoreVal: { fontSize: 10, fontWeight: 'bold', color: '#4338ca' },
-    barBg: { height: 6, backgroundColor: '#e2e8f0', borderRadius: 3, width: '100%', marginTop: 4 }, // Bug fix: height fixed
-    barFill: { height: 6, borderRadius: 3 }, // Warna disuntikkan secara dinamis
-
-    // Grid 3 Kolom (Sesuai Web RIASEC)
+    barBg: { height: 6, backgroundColor: '#e2e8f0', borderRadius: 3, width: '100%', marginTop: 4 },
+    barFill: { height: 6, borderRadius: 3 },
     gridRow3: { flexDirection: 'row', justifyContent: 'space-between', gap: 6, marginBottom: 12 },
     gridCol3: { flex: 1, backgroundColor: '#ffffff', padding: 8, borderRadius: 8, border: '1px solid #e2e8f0' },
-
-    // Grid 2 Kolom (Sesuai Web VAK)
     gridRow2: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, marginBottom: 12 },
     gridCol2: { flex: 1, backgroundColor: '#ffffff', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0' },
-
     colHeader: { fontSize: 11, fontWeight: 'bold', color: '#0f172a', marginBottom: 6, borderBottom: '1px solid #f1f5f9', paddingBottom: 4 },
     colSubHeader: { fontSize: 8.5, fontWeight: 'bold', color: '#94a3b8', marginTop: 4, marginBottom: 2, textTransform: 'uppercase' },
-
     bulletContainer: { flexDirection: 'row', marginBottom: 3 },
     bulletPoint: { width: 10, fontSize: 10, color: '#334155' },
     bulletItem: { flex: 1, fontSize: 9, color: '#334155', lineHeight: 1.4 },
-
-    // Saran Bawah
     boxDark: { flex: 1, backgroundColor: '#1e293b', padding: 10, borderRadius: 8 },
     boxDarkTitle: { fontSize: 11, fontWeight: 'bold', color: '#ffffff', marginBottom: 6 },
     boxDarkText: { flex: 1, fontSize: 9, color: '#cbd5e1', lineHeight: 1.4 },
-
     boxLight: { flex: 1, backgroundColor: '#eff6ff', padding: 10, borderRadius: 8, border: '1px solid #bfdbfe' },
     boxLightTitle: { fontSize: 11, fontWeight: 'bold', color: '#1e40af', marginBottom: 6 },
     boxLightText: { flex: 1, fontSize: 9, color: '#1e3a8a', lineHeight: 1.4 }
@@ -102,33 +83,38 @@ export async function POST(request: Request) {
         let bannerTitle = 'Fase Penjelajahan Minat';
         let bannerMessage = 'Eksplorasi minat dan bakat siswa.';
 
-        if (eduLvl === 'SD') {
+        if (eduLvl === 'SD' || eduLvl === 'MI') {
             if (grade <= 3) { phaseKey = 'SD_Awal'; bannerMessage = "Fase Bermain & Karakter Dasar: Dukung anak bereksplorasi dengan menyenangkan!"; }
             else if (grade <= 5) { phaseKey = 'SD_Akhir'; bannerMessage = "Fase Eksplorasi Minat: Kenalkan anak pada berbagai ekstrakurikuler dasar."; }
-            else { phaseKey = 'SD_Transisi'; bannerTitle = "Fase Transisi Pendidikan"; bannerMessage = "Persiapan Lulus SD: Fokus persiapkan mental dan pemilihan SMP yang mendukung minatnya."; }
-        } else if (eduLvl === 'SMP') {
+            else { phaseKey = 'SD_Transisi'; bannerTitle = "Fase Transisi Pendidikan"; bannerMessage = "Persiapan Lulus SD/MI: Fokus persiapkan mental dan pemilihan SMP/MTs yang mendukung minatnya."; }
+        } else if (eduLvl === 'SMP' || eduLvl === 'MTs') {
             if (grade <= 8) { phaseKey = 'SMP_Awal'; bannerMessage = "Fase Pencarian Jati Diri: Eksplorasi ekstrakurikuler dan organisasi."; }
-            else { phaseKey = 'SMP_Transisi'; bannerTitle = "Fase Transisi Pendidikan"; bannerMessage = "Penentuan Jalur Menengah Atas: Gunakan data ini untuk mantap memilih SMA atau SMK!"; }
+            else { phaseKey = 'SMP_Transisi'; bannerTitle = "Fase Transisi Pendidikan"; bannerMessage = "Penentuan Jalur Menengah Atas: Gunakan data ini untuk mantap memilih SMA, MA, atau SMK!"; }
         }
 
         let ModuleContent;
         let moduleTitle = '';
 
         // ==========================================================
-        // RENDER PDF: RIASEC (3 Kolom Sesuai Web)
+        // RENDER PDF: RIASEC
         // ==========================================================
         if (moduleType === 'RIASEC') {
             moduleTitle = `Kenali Potensi (${schoolName} - Kelas ${grade})`;
 
-            // Ambil SEMUA data, lalu saring agar tidak kena bug "data kosong"
+            // PERBAIKAN SSOT: Ambil primary, secondary, tertiary code langsung dari database
             const { data: results } = await supabase
                 .from('assessment_results')
-                .select(`id, riasec_profiles ( code, riasec_results ( code, raw_score ) )`)
+                .select(`
+                    id, 
+                    riasec_profiles ( 
+                        code, primary_code, secondary_code, tertiary_code, 
+                        riasec_results ( code, raw_score ) 
+                    )
+                `)
                 .eq('student_id', student.id)
                 .eq('scoring_version', 'RIASEC-SCORING-v1')
                 .order('calculated_at', { ascending: false });
 
-            // Menyeleksi data yang benar-benar memiliki profil riasec
             const validResult = results?.find(r => r.riasec_profiles && (Array.isArray(r.riasec_profiles) ? r.riasec_profiles.length > 0 : true));
             const actualProfile = validResult ? (Array.isArray(validResult.riasec_profiles) ? validResult.riasec_profiles[0] : validResult.riasec_profiles) : null;
 
@@ -136,12 +122,13 @@ export async function POST(request: Request) {
                 ModuleContent = <View><Text style={{ fontSize: 10 }}>Data hasil RIASEC belum tersedia.</Text></View>;
             } else {
                 const rawResults = actualProfile.riasec_results || [];
+                // Sorting ini HANYA untuk tampilan progress bar (visual), bukan untuk menentukan profil
                 const sortedScores = [...rawResults].sort((a, b) => Number(b.raw_score) - Number(a.raw_score));
 
-                const topThree = sortedScores.slice(0, 3);
-                const code1 = cleanCode(topThree[0]?.code) || 'C';
-                const code2 = cleanCode(topThree[1]?.code) || 'S';
-                const code3 = cleanCode(topThree[2]?.code) || 'I';
+                // MENGGUNAKAN SINGLE SOURCE OF TRUTH DARI DATABASE
+                const code1 = cleanCode(actualProfile.primary_code) || 'C';
+                const code2 = cleanCode(actualProfile.secondary_code) || 'S';
+                const code3 = cleanCode(actualProfile.tertiary_code) || 'I';
                 const hyphenatedCodes = `${code1}-${code2}-${code3}`;
 
                 const data1 = riasecDictionary[code1] || riasecDictionary['C'];
@@ -222,7 +209,6 @@ export async function POST(request: Request) {
                             ))}
                         </View>
 
-                        {/* Layout 3 Kolom Sesuai Tangkapan Layar Web Anda */}
                         <View style={styles.gridRow3} wrap={false}>
                             <View style={styles.gridCol3}>
                                 <Text style={styles.colHeader}>Aktivitas & Ekstrakurikuler</Text>
@@ -280,15 +266,21 @@ export async function POST(request: Request) {
             }
         }
         // ==========================================================
-        // RENDER PDF: VAK (GAYA BELAJAR) DENGAN LAYOUT IDENTIK
+        // RENDER PDF: VAK
         // ==========================================================
         else if (moduleType === 'VAK') {
             moduleTitle = `Gaya Belajar (${schoolName} - Kelas ${grade})`;
 
-            // Sama seperti RIASEC, saring hasil kosong
+            // PERBAIKAN SSOT: Ambil dominant_code langsung dari database
             const { data: results } = await supabase
                 .from('assessment_results')
-                .select(`id, vak_profiles ( code, dominant_code, vak_results ( code, raw_score ) )`)
+                .select(`
+                    id, 
+                    vak_profiles ( 
+                        code, dominant_code, secondary_code, tertiary_code, 
+                        vak_results ( code, raw_score ) 
+                    )
+                `)
                 .eq('student_id', student.id)
                 .eq('scoring_version', 'VAK-SCORING-v1')
                 .order('calculated_at', { ascending: false });
@@ -302,7 +294,8 @@ export async function POST(request: Request) {
                 const rawResults = actualProfile.vak_results || [];
                 const sortedScores = [...rawResults].sort((a, b) => Number(b.raw_score) - Number(a.raw_score));
 
-                const domCode = cleanCode(actualProfile.dominant_code || sortedScores[0]?.code || 'V');
+                // MENGGUNAKAN SINGLE SOURCE OF TRUTH DARI DATABASE
+                const domCode = cleanCode(actualProfile.dominant_code) || 'V';
                 const domData = vakDictionary[domCode] || vakDictionary['V'];
                 const phaseData: VakPhaseData = (domData.levels as any)[phaseKey] || domData.levels['SD_Transisi'];
 
@@ -353,7 +346,6 @@ export async function POST(request: Request) {
                             })}
                         </View>
 
-                        {/* Layout 2 Kolom Sesuai Tangkapan Layar Web VAK Anda */}
                         <View style={styles.gridRow2} wrap={false}>
                             <View style={styles.gridCol2}>
                                 <Text style={styles.colHeader}>Strategi Belajar</Text>
