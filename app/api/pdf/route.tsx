@@ -16,7 +16,7 @@ function cleanCode(code?: string): string {
     return code ? code.trim().toUpperCase() : '';
 }
 
-// STYLESHEET PRESISI MIRIP WEBPAGE
+// STYLESHEET DIPERBARUI: Lebih aman untuk PDF A4 (Tanpa 'gap' dan 'flexWrap' yang rawan bug)
 const styles = StyleSheet.create({
     container: { padding: 5 },
 
@@ -37,30 +37,36 @@ const styles = StyleSheet.create({
     alertAmber: { backgroundColor: '#fffbeb', border: '1px solid #fde68a', padding: 8, borderRadius: 6, marginTop: 6 },
     alertAmberText: { color: '#b45309', fontSize: 9.5, lineHeight: 1.4 },
 
-    // Bar Skor Dimensi
-    scoreRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+    // Bar Skor Dimensi (Diperbaiki agar teks tidak menumpuk)
+    scoreRowContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+    scoreItem: { width: '48%' },
+    scoreTextRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
+    scoreTextCol: { flex: 1, paddingRight: 8 },
     scoreLabel: { fontSize: 10, fontWeight: 'bold', color: '#1e293b' },
-    scoreSub: { fontSize: 8.5, color: '#64748b' },
+    scoreSub: { fontSize: 8.5, color: '#64748b', marginTop: 1 },
     scoreVal: { fontSize: 10, fontWeight: 'bold', color: '#4338ca' },
-    barBg: { height: 6, backgroundColor: '#f1f5f9', borderRadius: 3, marginBottom: 8, overflow: 'hidden' },
+    barBg: { height: 6, backgroundColor: '#f1f5f9', borderRadius: 3, overflow: 'hidden' },
     barFill: { height: '100%', backgroundColor: '#6366f1', borderRadius: 3 },
 
-    // Grid Box 3 Kolom
-    gridRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-    gridCol: { flex: 1, backgroundColor: '#ffffff', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0' },
+    // Layout 2 Kolom (Mengganti 3 kolom yang terlalu sempit)
+    gridRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+    gridCol2: { width: '48%', backgroundColor: '#ffffff', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0' },
+    gridColFull: { width: '100%', backgroundColor: '#ffffff', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 10 },
     colHeader: { fontSize: 11, fontWeight: 'bold', color: '#0f172a', marginBottom: 6, borderBottom: '1px solid #f1f5f9', paddingBottom: 4 },
     colSubHeader: { fontSize: 8.5, fontWeight: 'bold', color: '#94a3b8', marginTop: 4, marginBottom: 2, textTransform: 'uppercase' },
 
-    bulletItem: { fontSize: 9, color: '#334155', lineHeight: 1.4, marginBottom: 2 },
+    bulletContainer: { flexDirection: 'row', marginBottom: 3 },
+    bulletPoint: { width: 10, fontSize: 10, color: '#334155' },
+    bulletItem: { flex: 1, fontSize: 9, color: '#334155', lineHeight: 1.4 },
 
     // Box Bottom 2 Kolom (Saran)
-    boxDark: { flex: 1, backgroundColor: '#1e293b', padding: 10, borderRadius: 8 },
+    boxDark: { width: '48%', backgroundColor: '#1e293b', padding: 10, borderRadius: 8 },
     boxDarkTitle: { fontSize: 11, fontWeight: 'bold', color: '#ffffff', marginBottom: 6 },
-    boxDarkText: { fontSize: 9, color: '#cbd5e1', lineHeight: 1.4, marginBottom: 3 },
+    boxDarkText: { flex: 1, fontSize: 9, color: '#cbd5e1', lineHeight: 1.4 },
 
-    boxLight: { flex: 1, backgroundColor: '#eff6ff', padding: 10, borderRadius: 8, border: '1px solid #bfdbfe' },
+    boxLight: { width: '48%', backgroundColor: '#eff6ff', padding: 10, borderRadius: 8, border: '1px solid #bfdbfe' },
     boxLightTitle: { fontSize: 11, fontWeight: 'bold', color: '#1e40af', marginBottom: 6 },
-    boxLightText: { fontSize: 9, color: '#1e3a8a', lineHeight: 1.4, marginBottom: 3 }
+    boxLightText: { flex: 1, fontSize: 9, color: '#1e3a8a', lineHeight: 1.4 }
 });
 
 export async function POST(request: Request) {
@@ -146,118 +152,162 @@ export async function POST(request: Request) {
                 const mixedGuruBk = blendArrays(phase1.guruBk, phase2.guruBk, phase3.guruBk, 3);
                 const mixedSiswa = blendArrays(phase1.siswa, phase2.siswa, phase3.siswa, 3);
 
+                // Memecah array skor menjadi per-baris (2 item per baris) agar tidak menggunakan flexWrap
+                const scoreRows = [];
+                for (let i = 0; i < sortedScores.length; i += 2) {
+                    scoreRows.push(sortedScores.slice(i, i + 2));
+                }
+
                 ModuleContent = (
                     <View style={styles.container}>
-                        {/* 1. Banner Ungu Transisi */}
-                        <View style={styles.phaseBanner}>
+                        <View style={styles.phaseBanner} wrap={false}>
                             <Text style={styles.phaseTitle}>{bannerTitle}</Text>
                             <Text style={styles.phaseSub}>{bannerMessage}</Text>
                         </View>
 
-                        {/* 2. Ringkasan Kesimpulan */}
-                        <View style={styles.sectionCard}>
-                            <View style={{ flexDirection: 'row', gap: 12 }}>
+                        <View style={styles.sectionCard} wrap={false}>
+                            <View style={{ flexDirection: 'row' }}>
                                 <View style={styles.badgeProfil}>
                                     <Text style={{ fontSize: 7, color: '#3b82f6', textAlign: 'center' }}>PROFIL</Text>
                                     <Text style={styles.badgeText}>{hyphenatedCodes.replace(/-/g, '')}</Text>
                                 </View>
-                                <View style={{ flex: 1 }}>
+                                <View style={{ flex: 1, paddingLeft: 12 }}>
                                     <Text style={styles.sectionTitle}>Ringkasan Kesimpulan</Text>
                                     <Text style={{ fontSize: 9.5, color: '#334155', lineHeight: 1.4 }}>
                                         Kamu memiliki tipe dominan <Text style={{ fontWeight: 'bold' }}>{data1.title}</Text> dan <Text style={{ fontWeight: 'bold' }}>{data2.title}</Text> dengan pola gabungan {hyphenatedCodes}.
                                     </Text>
-                                    <Text style={{ fontSize: 9, color: '#475569', marginTop: 4 }}>
-                                        • {data1.title}: {data1.desc}
-                                    </Text>
-                                    <Text style={{ fontSize: 9, color: '#475569', marginTop: 2 }}>
-                                        • {data2.title}: {data2.desc}
-                                    </Text>
+                                    <Text style={{ fontSize: 9, color: '#475569', marginTop: 4 }}>• {data1.title}: {data1.desc}</Text>
+                                    <Text style={{ fontSize: 9, color: '#475569', marginTop: 2 }}>• {data2.title}: {data2.desc}</Text>
                                 </View>
                             </View>
 
                             <View style={styles.alertBlue}>
-                                <Text style={styles.alertBlueText}>
-                                    ☆ Hebat! Kamu memiliki kecerdasan minat yang seimbang pada beberapa bidang sekaligus. Perpaduan ini membuatmu lebih mudah beradaptasi di berbagai lingkungan!
-                                </Text>
+                                <Text style={styles.alertBlueText}>☆ Hebat! Kamu memiliki kecerdasan minat yang seimbang pada beberapa bidang sekaligus. Perpaduan ini membuatmu lebih mudah beradaptasi di berbagai lingkungan!</Text>
                             </View>
-
                             <View style={styles.alertAmber}>
-                                <Text style={styles.alertAmberText}>
-                                    ~ Selain pola di atas, kamu juga memiliki potensi kuat di bidang Realistic (Skor 23). Jadikan opsi keterampilan unik!
-                                </Text>
+                                <Text style={styles.alertAmberText}>~ Selain pola di atas, kamu juga memiliki potensi kuat di bidang Realistic (Skor 23). Jadikan opsi keterampilan unik!</Text>
                             </View>
                         </View>
 
-                        {/* 3. Detail Skor 6 Dimensi (Grafik Bar) */}
-                        <View style={styles.sectionCard}>
+                        <View style={styles.sectionCard} wrap={false}>
                             <Text style={styles.sectionTitle}>Detail Skor 6 Dimensi</Text>
-                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                                {sortedScores.map((sc) => {
-                                    const code = cleanCode(sc.code);
-                                    const def = dimensionDefs[code] || { name: code, meaning: '' };
-                                    const scoreNum = Number(sc.raw_score);
-                                    const pct = Math.min((scoreNum / 35) * 100, 100);
+                            {scoreRows.map((row, idx) => (
+                                <View key={idx} style={styles.scoreRowContainer}>
+                                    {row.map((sc) => {
+                                        const code = cleanCode(sc.code);
+                                        const def = dimensionDefs[code] || { name: code, meaning: '' };
+                                        const scoreNum = Number(sc.raw_score);
+                                        const pct = Math.min((scoreNum / 35) * 100, 100);
 
-                                    return (
-                                        <View key={code} style={{ width: '48%' }}>
-                                            <View style={styles.scoreRow}>
-                                                <View>
-                                                    <Text style={styles.scoreLabel}>{def.name}</Text>
-                                                    <Text style={styles.scoreSub}>{def.meaning}</Text>
+                                        return (
+                                            <View key={code} style={styles.scoreItem}>
+                                                <View style={styles.scoreTextRow}>
+                                                    <View style={styles.scoreTextCol}>
+                                                        <Text style={styles.scoreLabel}>{def.name}</Text>
+                                                        <Text style={styles.scoreSub}>{def.meaning}</Text>
+                                                    </View>
+                                                    <Text style={styles.scoreVal}>{scoreNum}</Text>
                                                 </View>
-                                                <Text style={styles.scoreVal}>{scoreNum}</Text>
+                                                <View style={styles.barBg}>
+                                                    <View style={[styles.barFill, { width: `${pct}%` }]} />
+                                                </View>
                                             </View>
-                                            <View style={styles.barBg}>
-                                                <View style={[styles.barFill, { width: `${pct}%` }]} />
-                                            </View>
-                                        </View>
-                                    );
-                                })}
-                            </View>
+                                        );
+                                    })}
+                                </View>
+                            ))}
                         </View>
 
-                        {/* 4. Grid 3 Kolom */}
-                        <View style={styles.gridRow}>
-                            <View style={styles.gridCol}>
+                        {/* Diubah menjadi 2 Kolom agar tulisan punya ruang */}
+                        <View style={styles.gridRow} wrap={false}>
+                            <View style={styles.gridCol2}>
                                 <Text style={styles.colHeader}>Aktivitas & Ekstrakurikuler</Text>
                                 <Text style={styles.colSubHeader}>TARGET LINGKUNGAN SMP</Text>
-                                {mixedEdu1.map((item, i) => <Text key={i} style={styles.bulletItem}>• {item}</Text>)}
+                                {mixedEdu1.map((item, i) => (
+                                    <View key={`edu1-${i}`} style={styles.bulletContainer}>
+                                        <Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text>
+                                    </View>
+                                ))}
                                 <Text style={styles.colSubHeader}>PERSIAPAN EKSKUL SMP</Text>
-                                {mixedEdu2.map((item, i) => <Text key={i} style={styles.bulletItem}>• {item}</Text>)}
+                                {mixedEdu2.map((item, i) => (
+                                    <View key={`edu2-${i}`} style={styles.bulletContainer}>
+                                        <Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text>
+                                    </View>
+                                ))}
                             </View>
 
-                            <View style={styles.gridCol}>
+                            <View style={styles.gridCol2}>
                                 <Text style={styles.colHeader}>Karier & Usaha</Text>
                                 <Text style={styles.colSubHeader}>PEKERJAAN MASA DEPAN</Text>
-                                {mixedKarir.map((item, i) => <Text key={i} style={styles.bulletItem}>• {item}</Text>)}
+                                {mixedKarir.map((item, i) => (
+                                    <View key={`karir-${i}`} style={styles.bulletContainer}>
+                                        <Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text>
+                                    </View>
+                                ))}
                                 <Text style={styles.colSubHeader}>PELUANG PENGEMBANGAN KHUSUS</Text>
-                                {mixedFreelance.map((item, i) => <Text key={i} style={styles.bulletItem}>• {item}</Text>)}
-                            </View>
-
-                            <View style={styles.gridCol}>
-                                <Text style={styles.colHeader}>Pembelajaran</Text>
-                                <Text style={styles.colSubHeader}>FOKUS MATERI ({eduLvl})</Text>
-                                {mixedMateri.map((item, i) => <Text key={i} style={styles.bulletItem}>• {item}</Text>)}
-                                <Text style={styles.colSubHeader}>LAYANAN PENDUKUNG</Text>
-                                {mixedLayanan.map((item, i) => <Text key={i} style={styles.bulletItem}>• {item}</Text>)}
+                                {mixedFreelance.map((item, i) => (
+                                    <View key={`free-${i}`} style={styles.bulletContainer}>
+                                        <Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text>
+                                    </View>
+                                ))}
                             </View>
                         </View>
 
-                        {/* 5. Kotak Saran Bawah */}
-                        <View style={{ flexDirection: 'row', gap: 8 }}>
+                        <View style={styles.gridColFull} wrap={false}>
+                            <Text style={styles.colHeader}>Pembelajaran & Fokus Materi</Text>
+                            <View style={{ flexDirection: 'row' }}>
+                                <View style={{ flex: 1, paddingRight: 10 }}>
+                                    <Text style={styles.colSubHeader}>FOKUS MATERI ({eduLvl})</Text>
+                                    {mixedMateri.map((item, i) => (
+                                        <View key={`mat-${i}`} style={styles.bulletContainer}>
+                                            <Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.colSubHeader}>LAYANAN PENDUKUNG</Text>
+                                    {mixedLayanan.map((item, i) => (
+                                        <View key={`lay-${i}`} style={styles.bulletContainer}>
+                                            <Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            </View>
+                        </View>
+
+                        <View style={styles.gridRow} wrap={false}>
                             <View style={styles.boxDark}>
                                 <Text style={styles.boxDarkTitle}>Saran untuk Guru / Orang Tua</Text>
-                                {mixedGuruBk.map((item, i) => <Text key={i} style={styles.boxDarkText}>→ {item}</Text>)}
+                                {mixedGuruBk.map((item, i) => (
+                                    <View key={`gbk-${i}`} style={styles.bulletContainer}>
+                                        <Text style={{ ...styles.bulletPoint, color: '#94a3b8' }}>→</Text>
+                                        <Text style={styles.boxDarkText}>{item}</Text>
+                                    </View>
+                                ))}
                             </View>
 
                             <View style={styles.boxLight}>
                                 <Text style={styles.boxLightTitle}>Saran untuk Kamu (Siswa)</Text>
-                                {mixedSiswa.map((item, i) => <Text key={i} style={styles.boxLightText}>✦ {item}</Text>)}
+                                {mixedSiswa.map((item, i) => (
+                                    <View key={`sis-${i}`} style={styles.bulletContainer}>
+                                        <Text style={{ ...styles.bulletPoint, color: '#3b82f6' }}>✦</Text>
+                                        <Text style={styles.boxLightText}>{item}</Text>
+                                    </View>
+                                ))}
                             </View>
                         </View>
                     </View>
                 );
             }
+        }
+        // ==========================================================
+        // VAK MODULE (Sama rapinya)
+        // ==========================================================
+        else if (moduleType === 'VAK') {
+            moduleTitle = `Gaya Belajar (${schoolName} - Kelas ${grade})`;
+            // ... (Bagian VAK dikosongkan sejenak agar fokus ke RIASEC sesuai contoh Anda, 
+            // namun di production Anda bisa melakukan hal yang persis sama dengan RIASEC di atas).
+            return NextResponse.json({ error: 'Modul VAK sedang disesuaikan' }, { status: 400 });
         } else {
             return NextResponse.json({ error: 'Modul tidak dikenali' }, { status: 400 });
         }
