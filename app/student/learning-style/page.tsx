@@ -254,12 +254,13 @@ export default function VakAssessmentPage() {
                         })}
                     </div>
 
-                    {isLastQuestion && hasAnsweredCurrent && (
+                    {/* PERBAIKAN: Hapus hasAnsweredCurrent dari sini agar tombol selalu muncul di akhir */}
+                    {isLastQuestion && (
                         <div className="mt-10 flex justify-center animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <button
                                 type="button"
                                 onClick={() => {
-                                    // PERBAIKAN: Deteksi cerdas nomor urut yang belum dijawab
+                                    // Deteksi cerdas nomor urut yang belum dijawab
                                     const missingNumbers: number[] = [];
                                     questions.forEach((q, index) => {
                                         const isAnswered = answers.some((a) => a.questionId === q.id);

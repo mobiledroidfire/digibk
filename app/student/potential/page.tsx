@@ -256,12 +256,12 @@ export default function PotentialAssessmentPage() {
                         })}
                     </div>
 
-                    {isLastQuestion && hasAnsweredCurrent && (
+                    {/* PERBAIKAN: Syarat hasAnsweredCurrent dihilangkan agar selalu tampil di soal terakhir */}
+                    {isLastQuestion && (
                         <div className="mt-10 flex justify-center animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <button
                                 type="button"
                                 onClick={() => {
-                                    // PERBAIKAN: Deteksi cerdas nomor urut yang belum dijawab
                                     const missingNumbers: number[] = [];
                                     questions.forEach((q, index) => {
                                         const isAnswered = answers.some((a) => a.questionId === q.id);
@@ -271,17 +271,14 @@ export default function PotentialAssessmentPage() {
                                     });
 
                                     if (missingNumbers.length > 0) {
-                                        // Format nomor soal yang hilang dengan rapi (Mencegah teks kepanjangan jika yang kosong banyak)
                                         const displayNumbers = missingNumbers.length > 5
                                             ? `${missingNumbers.slice(0, 5).join(', ')}, dan ${missingNumbers.length - 5} soal lainnya`
                                             : missingNumbers.join(', ');
 
                                         setErrorMessage(`Tunggu sebentar! Soal nomor ${displayNumbers} belum terjawab. Kami sudah memindahkan layar Anda kembali ke soal yang kosong tersebut.`);
 
-                                        // Teleportasi otomatis ke soal PERTAMA yang kosong!
                                         setCurrentIndex(missingNumbers[0] - 1);
                                     } else {
-                                        // Jika semua aman, kirim jawaban
                                         submitAssessment(answers);
                                     }
                                 }}
