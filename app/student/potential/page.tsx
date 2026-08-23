@@ -1,11 +1,9 @@
-// Lokasi file: src/app/student/potential/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getRiasecQuestions, submitRiasecAssessment } from '@/features/assessments/actions/riasec.actions';
-import { Brain, Loader2, ArrowLeft, AlertCircle, Sparkles } from 'lucide-react';
-import Link from 'next/link';
+import { Brain, Loader2, ArrowLeft, AlertCircle, Sparkles, CheckCircle2 } from 'lucide-react';
 
 type Question = {
     id: string;
@@ -30,6 +28,7 @@ export default function PotentialAssessmentPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [isRestored, setIsRestored] = useState(false);
 
     useEffect(() => {
         async function fetchQuestions() {
@@ -37,16 +36,32 @@ export default function PotentialAssessmentPage() {
                 const data = await getRiasecQuestions();
                 setVersionId(data.versionId);
                 setQuestions(data.questions);
+
+                // Mengambil progres dari localStorage
+                const savedAnswers = localStorage.getItem('riasecProgress_answers');
+                const savedIndex = localStorage.getItem('riasecProgress_index');
+
+                if (savedAnswers) setAnswers(JSON.parse(savedAnswers));
+                if (savedIndex) setCurrentIndex(parseInt(savedIndex, 10));
+
             } catch (error) {
                 setErrorMessage('Gagal memuat soal. Silakan muat ulang halaman.');
             } finally {
                 setIsLoading(false);
+                setIsRestored(true);
             }
         }
         fetchQuestions();
     }, []);
 
-    // 1. LOGIKA BARU: Menyimpan atau menimpa jawaban agar tidak ganda
+    // Menyimpan progres ke localStorage
+    useEffect(() => {
+        if (isRestored && questions.length > 0) {
+            localStorage.setItem('riasecProgress_answers', JSON.stringify(answers));
+            localStorage.setItem('riasecProgress_index', currentIndex.toString());
+        }
+    }, [answers, currentIndex, isRestored, questions]);
+
     const handleAnswer = (value: number) => {
         const currentQ = questions[currentIndex];
         const newAnswer: Answer = {
@@ -59,28 +74,23 @@ export default function PotentialAssessmentPage() {
         setAnswers((prev) => {
             const existingIndex = prev.findIndex((a) => a.questionId === currentQ.id);
             if (existingIndex >= 0) {
-                // Jika sudah pernah dijawab, timpa jawaban lama
                 const updatedAnswers = [...prev];
                 updatedAnswers[existingIndex] = newAnswer;
                 return updatedAnswers;
             }
-            // Jika belum, tambahkan jawaban baru
             return [...prev, newAnswer];
         });
 
-        // Lanjut ke soal berikutnya atau submit
         if (currentIndex < questions.length - 1) {
             setTimeout(() => {
                 setCurrentIndex((prev) => prev + 1);
-            }, 200); // Dipercepat sedikit agar lebih responsif
+            }, 200);
         } else {
-            // Gunakan state answers terbaru ditambah jawaban terakhir
             const finalAnswers = [...answers.filter(a => a.questionId !== currentQ.id), newAnswer];
             submitAssessment(finalAnswers);
         }
     };
 
-    // 2. LOGIKA BARU: Fungsi untuk mundur satu soal
     const handlePrevious = () => {
         if (currentIndex > 0) {
             setCurrentIndex((prev) => prev - 1);
@@ -91,8 +101,10 @@ export default function PotentialAssessmentPage() {
         setIsSubmitting(true);
         setErrorMessage(null);
         try {
-            // Kita akan menyesuaikan bagian ini dengan database terbaru Anda nanti
             const resultId = await submitRiasecAssessment(versionId, finalAnswers);
+            // Hapus cache setelah beres
+            localStorage.removeItem('riasecProgress_answers');
+            localStorage.removeItem('riasecProgress_index');
             router.push(`/student/potential/result?id=${resultId}`);
         } catch (error: any) {
             console.error(error);
@@ -123,8 +135,6 @@ export default function PotentialAssessmentPage() {
     }
 
     const progressPercentage = (currentIndex / questions.length) * 100;
-
-    // Mencari apakah soal ini sudah pernah dijawab sebelumnya (untuk highlight)
     const currentAnswer = answers.find(a => a.questionId === questions[currentIndex]?.id);
 
     return (
@@ -148,16 +158,16 @@ export default function PotentialAssessmentPage() {
             )}
 
             <header className="bg-white/80 backdrop-blur-xl border-b border-white/20 px-6 py-4 flex items-center gap-4 sticky top-0 z-10 shadow-sm">
-                {/* 3. LOGIKA BARU: Tombol dinamis (Kembali ke soal sebelumnya ATAU ke Dashboard) */}
                 <button
-                    onClick={currentIndex > 0 ? handlePrevious : () => router.push('/student/dashboard')}
-                    className="p-2 bg-white shadow-sm hover:shadow-md rounded-full transition-all text-slate-500"
+                    onClick={() => router.push('/student/dashboard')}
+                    className="p-2 bg-white shadow-sm hover:shadow-md hover:bg-slate-50 rounded-full transition-all text-slate-500"
+                    title="Kembali ke Dashboard"
                 >
                     <ArrowLeft size={18} />
                 </button>
                 <div className="flex-1">
                     <h1 className="text-lg font-extrabold text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-indigo-600 flex items-center gap-2">
-                        <Brain className="text-blue-600" size={20} /> Jurus 1
+                        <Brain className="text-blue-600" size={20} /> Asesmen Potensi
                     </h1>
                 </div>
                 <div className="text-sm font-extrabold text-indigo-700 bg-indigo-50 px-4 py-2 rounded-xl ring-1 ring-indigo-600/20 shadow-inner">
@@ -173,22 +183,32 @@ export default function PotentialAssessmentPage() {
             </div>
 
             <main className="flex-1 max-w-3xl w-full mx-auto p-4 sm:p-6 md:p-12 flex flex-col justify-center">
-                <div className="bg-white/90 backdrop-blur-2xl rounded-[2.5rem] p-8 md:p-12 shadow-2xl shadow-indigo-100/50 border border-white relative">
+                <div className="bg-white/90 backdrop-blur-2xl rounded-[2.5rem] p-6 md:p-12 shadow-2xl shadow-indigo-100/50 border border-white relative flex flex-col">
 
-                    {/* Tombol Bantuan Mundur Ekstra di Atas Soal (Opsional, khusus Desktop) */}
-                    {currentIndex > 0 && (
-                        <button
-                            onClick={handlePrevious}
-                            className="hidden md:flex absolute -top-5 left-1/2 -translate-x-1/2 items-center gap-1.5 px-4 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-500 hover:text-blue-600 hover:border-blue-300 shadow-sm transition-all"
-                        >
-                            <ArrowLeft size={14} /> Ke Soal Sebelumnya
-                        </button>
-                    )}
+                    {/* Desain Header Kartu: Tombol Kembali & Label */}
+                    <div className="flex flex-col-reverse sm:flex-row items-center justify-between mb-8 gap-4 w-full">
+                        <div className="w-full sm:w-1/3 flex justify-start">
+                            {currentIndex > 0 && (
+                                <button
+                                    onClick={handlePrevious}
+                                    className="flex items-center gap-1.5 px-4 py-2 w-full sm:w-auto justify-center bg-slate-50 border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 shadow-sm transition-all"
+                                >
+                                    <ArrowLeft size={14} /> Ke Soal Sebelumnya
+                                </button>
+                            )}
+                        </div>
 
-                    <div className="flex justify-center mb-6 mt-2">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-bold uppercase tracking-widest ring-1 ring-blue-600/20">
-                            <Sparkles size={14} /> Aktivitas
-                        </span>
+                        <div className="w-full sm:w-1/3 flex justify-center">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-bold uppercase tracking-widest ring-1 ring-blue-600/20">
+                                <Sparkles size={14} /> Aktivitas
+                            </span>
+                        </div>
+
+                        <div className="w-full sm:w-1/3 flex justify-end">
+                            <div className="hidden md:flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                                <CheckCircle2 size={14} className="text-blue-500" /> Tersimpan
+                            </div>
+                        </div>
                     </div>
 
                     <h2 className="text-2xl md:text-4xl font-black text-slate-800 text-center leading-tight mb-12">
@@ -203,7 +223,6 @@ export default function PotentialAssessmentPage() {
                             { value: 4, label: 'Suka', emoji: '🙂', activeColor: 'bg-blue-100 border-blue-400 ring-4 ring-blue-100', hoverColor: 'hover:bg-blue-50 hover:border-blue-300' },
                             { value: 5, label: 'Sangat Suka', emoji: '🤩', activeColor: 'bg-emerald-100 border-emerald-400 ring-4 ring-emerald-100', hoverColor: 'hover:bg-emerald-50 hover:border-emerald-300' }
                         ].map((option) => {
-                            // 4. LOGIKA BARU: Cek apakah opsi ini adalah opsi yang dipilih sebelumnya
                             const isSelected = currentAnswer?.value === option.value;
 
                             return (
@@ -214,7 +233,7 @@ export default function PotentialAssessmentPage() {
                                         ${option.value === 3 ? 'col-span-2 md:col-span-1' : ''} 
                                         ${isSelected ? option.activeColor : `bg-white border-slate-100 ${option.hoverColor}`}`}
                                 >
-                                    <div className={`text-3xl transition-transform duration-200 ${isSelected ? 'scale-125' : 'group-hover:scale-110'}`}>
+                                    <div className={`text-3xl transition-transform duration-200 ${isSelected ? 'scale-125' : 'hover:scale-110'}`}>
                                         {option.emoji}
                                     </div>
                                     <span className={`text-xs sm:text-sm font-bold text-center leading-tight ${isSelected ? 'text-slate-800' : 'text-slate-600'}`}>
