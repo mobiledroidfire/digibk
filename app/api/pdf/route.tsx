@@ -1,4 +1,3 @@
-// Lokasi file: src/app/api/pdf/route.tsx
 import { NextResponse } from 'next/server';
 import { renderToBuffer, Text, View, StyleSheet } from '@react-pdf/renderer';
 import MasterPdfTemplate from '@/components/pdf/MasterPdfTemplate';
@@ -89,7 +88,16 @@ export async function POST(request: Request) {
         const schoolObj = student.schools;
         const schoolName = schoolObj && typeof schoolObj === 'object' && 'name' in schoolObj ? String(schoolObj.name) : 'Sekolah Anda';
         const eduLvl = student.education_level || 'SD';
-        const grade = student.grade_level || 7;
+
+        // FIX BUG 1: Logika Fallback Cerdas untuk Kelas
+        // Jika database grade_level kosong, default akan menyesuaikan jenjang pendidikan, bukan dipaksa '7'
+        let defaultGrade = 7;
+        if (eduLvl === 'SD' || eduLvl === 'MI') defaultGrade = 6;
+        else if (eduLvl === 'SMA' || eduLvl === 'MA' || eduLvl === 'SMK') defaultGrade = 12;
+        else defaultGrade = 9; // SMP/MTs
+
+        // Menggunakan nullish coalescing (??) agar nilai 0 tetap valid, atau fallback ke defaultGrade jika null
+        const grade = student.grade_level ?? defaultGrade;
 
         let phaseKey = 'SD_Transisi';
         let bannerTitle = 'Fase Penjelajahan Minat';
@@ -102,6 +110,12 @@ export async function POST(request: Request) {
         } else if (eduLvl === 'SMP' || eduLvl === 'MTs') {
             if (grade <= 8) { phaseKey = 'SMP_Awal'; bannerMessage = "Fase Pencarian Jati Diri: Eksplorasi ekstrakurikuler dan organisasi."; }
             else { phaseKey = 'SMP_Transisi'; bannerTitle = "Fase Transisi Pendidikan"; bannerMessage = "Penentuan Jalur Menengah Atas: Gunakan data ini untuk mantap memilih SMA, MA, atau SMK!"; }
+        } else if (eduLvl === 'SMA' || eduLvl === 'MA') {
+            if (grade <= 11) { phaseKey = 'SMA_Awal'; bannerMessage = "Fase Peminatan: Perdalam portofolio akademik dan organisasi."; }
+            else { phaseKey = 'SMA_Transisi'; bannerTitle = "Fase Transisi Pendidikan"; bannerMessage = "Fokus Lanjutan: Panduan menentukan prodi PTN dan strategi karir masa depan."; }
+        } else if (eduLvl === 'SMK') {
+            if (grade <= 11) { phaseKey = 'SMK_Awal'; bannerMessage = "Fase Vokasi: Fokus pengembangan skill praktis dan persiapan PKL."; }
+            else { phaseKey = 'SMK_Transisi'; bannerTitle = "Fase Transisi Pendidikan"; bannerMessage = "Persiapan Lulusan: Perkuat uji kompetensi dan kesiapan wawancara kerja."; }
         }
 
         let ModuleContent;
@@ -113,7 +127,6 @@ export async function POST(request: Request) {
         if (moduleType === 'RIASEC') {
             moduleTitle = `Kenali Potensi (${schoolName} - Kelas ${grade})`;
 
-            // PERBAIKAN SSOT: Ambil primary, secondary, tertiary code langsung dari database
             const { data: results } = await supabase
                 .from('assessment_results')
                 .select(`
@@ -128,8 +141,6 @@ export async function POST(request: Request) {
                 .order('calculated_at', { ascending: false });
 
             const validResult = results?.find(r => r.riasec_profiles && (Array.isArray(r.riasec_profiles) ? r.riasec_profiles.length > 0 : true));
-
-            // Terapkan SSOT Casting
             const typedResult = validResult as unknown as AssessmentResult;
             const rawProfile = typedResult ? (Array.isArray(typedResult.riasec_profiles) ? typedResult.riasec_profiles[0] : typedResult.riasec_profiles) : null;
             const actualProfile = rawProfile as RiasecProfile | null;
@@ -138,10 +149,8 @@ export async function POST(request: Request) {
                 ModuleContent = <View><Text style={{ fontSize: 10 }}>Data hasil RIASEC belum tersedia.</Text></View>;
             } else {
                 const rawResults = actualProfile.riasec_results || [];
-                // Sorting ini HANYA untuk tampilan progress bar (visual), bukan untuk menentukan profil
                 const sortedScores = [...rawResults].sort((a, b) => Number(b.raw_score) - Number(a.raw_score));
 
-                // MENGGUNAKAN SINGLE SOURCE OF TRUTH DARI DATABASE
                 const code1 = cleanCode(actualProfile.primary_code) || 'C';
                 const code2 = cleanCode(actualProfile.secondary_code) || 'S';
                 const code3 = cleanCode(actualProfile.tertiary_code) || 'I';
@@ -151,18 +160,21 @@ export async function POST(request: Request) {
                 const data2 = riasecDictionary[code2] || riasecDictionary['S'];
                 const data3 = riasecDictionary[code3] || riasecDictionary['I'];
 
+                // Gunakan TypeScript "as any" untuk mengakses data bertingkat dari LevelData dengan key dinamis
                 const phase1: RiasecPhaseData = (data1.levels as any)[phaseKey] || data1.levels['SD_Transisi'];
                 const phase2: RiasecPhaseData = (data2.levels as any)[phaseKey] || data2.levels['SD_Transisi'];
                 const phase3: RiasecPhaseData = (data3.levels as any)[phaseKey] || data3.levels['SD_Transisi'];
 
-                const mixedEdu1 = blendArrays(phase1.eduList1, phase2.eduList1, phase3.eduList1, 4);
-                const mixedEdu2 = blendArrays(phase1.eduList2, phase2.eduList2, phase3.eduList2, 4);
-                const mixedKarir = blendArrays(data1.karir, data2.karir, data3.karir, 4);
-                const mixedFreelance = blendArrays(data1.freelance, data2.freelance, data3.freelance, 4);
-                const mixedMateri = blendArrays(phase1.materi, phase2.materi, phase3.materi, 4);
-                const mixedLayanan = blendArrays(phase1.layanan, phase2.layanan, phase3.layanan, 3);
-                const mixedGuruBk = blendArrays(phase1.guruBk, phase2.guruBk, phase3.guruBk, 3);
-                const mixedSiswa = blendArrays(phase1.siswa, phase2.siswa, phase3.siswa, 3);
+                // FIX BUG 2: Menyamakan limit maxItems dengan versi Web.
+                // Karir ditingkatkan menjadi 7, Edu 5, Materi 6, dst agar lebih lengkap di PDF
+                const mixedEdu1 = blendArrays(phase1.eduList1, phase2.eduList1, phase3.eduList1, 5);
+                const mixedEdu2 = blendArrays(phase1.eduList2, phase2.eduList2, phase3.eduList2, 5);
+                const mixedKarir = blendArrays(data1.karir, data2.karir, data3.karir, 7);
+                const mixedFreelance = blendArrays(data1.freelance, data2.freelance, data3.freelance, 5);
+                const mixedMateri = blendArrays(phase1.materi, phase2.materi, phase3.materi, 6);
+                const mixedLayanan = blendArrays(phase1.layanan, phase2.layanan, phase3.layanan, 5);
+                const mixedGuruBk = blendArrays(phase1.guruBk, phase2.guruBk, phase3.guruBk, 4);
+                const mixedSiswa = blendArrays(phase1.siswa, phase2.siswa, phase3.siswa, 4);
 
                 const scoreRows = [];
                 for (let i = 0; i < sortedScores.length; i += 2) {
@@ -225,14 +237,15 @@ export async function POST(request: Request) {
                             ))}
                         </View>
 
-                        <View style={styles.gridRow3} wrap={false}>
+                        {/* wrap={false} dihilangkan sedikit agar kolom daftar tidak terpotong jika kontennya panjang */}
+                        <View style={styles.gridRow3}>
                             <View style={styles.gridCol3}>
                                 <Text style={styles.colHeader}>Aktivitas & Ekstrakurikuler</Text>
-                                <Text style={styles.colSubHeader}>TARGET LINGKUNGAN SMP</Text>
+                                <Text style={styles.colSubHeader}>PENGEMBANGAN DIRI & STUDI</Text>
                                 {mixedEdu1.map((item, i) => (
                                     <View key={`edu1-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
                                 ))}
-                                <Text style={styles.colSubHeader}>PERSIAPAN EKSKUL SMP</Text>
+                                <Text style={styles.colSubHeader}>PERSIAPAN AKTIVITAS/EKSKUL</Text>
                                 {mixedEdu2.map((item, i) => (
                                     <View key={`edu2-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
                                 ))}
@@ -287,7 +300,6 @@ export async function POST(request: Request) {
         else if (moduleType === 'VAK') {
             moduleTitle = `Gaya Belajar (${schoolName} - Kelas ${grade})`;
 
-            // PERBAIKAN SSOT: Ambil dominant_code langsung dari database
             const { data: results } = await supabase
                 .from('assessment_results')
                 .select(`
@@ -302,8 +314,6 @@ export async function POST(request: Request) {
                 .order('calculated_at', { ascending: false });
 
             const validResult = results?.find(r => r.vak_profiles && (Array.isArray(r.vak_profiles) ? r.vak_profiles.length > 0 : true));
-
-            // Terapkan SSOT Casting
             const typedResult = validResult as unknown as AssessmentResultVak;
             const rawProfile = typedResult ? (Array.isArray(typedResult.vak_profiles) ? typedResult.vak_profiles[0] : typedResult.vak_profiles) : null;
             const actualProfile = rawProfile as VakProfile | null;
@@ -314,7 +324,6 @@ export async function POST(request: Request) {
                 const rawResults = actualProfile.vak_results || [];
                 const sortedScores = [...rawResults].sort((a, b) => Number(b.raw_score) - Number(a.raw_score));
 
-                // MENGGUNAKAN SINGLE SOURCE OF TRUTH DARI DATABASE
                 const domCode = cleanCode(actualProfile.dominant_code) || 'V';
                 const domData = vakDictionary[domCode] || vakDictionary['V'];
                 const phaseData: VakPhaseData = (domData.levels as any)[phaseKey] || domData.levels['SD_Transisi'];
