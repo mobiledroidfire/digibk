@@ -4,29 +4,29 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { logoutAction } from '@/features/auth/actions/auth.actions';
 import {
-    User,
-    GraduationCap,
-    School,
-    PlayCircle,
-    CheckCircle2,
-    FileText,
-    LogOut,
-    BrainCircuit,
-    Clock
+    User, GraduationCap, School, PlayCircle,
+    CheckCircle2, FileText, LogOut, BrainCircuit,
+    Clock, Lock, BookOpen, Activity, ShieldCheck,
+    Target, Users, Handshake, Lightbulb
 } from 'lucide-react';
 import Link from 'next/link';
 
-// 1. Mendefinisikan Tipe Data dengan Ketat (Tanpa 'any')
-// Ini memberitahu TypeScript bentuk pasti dari data yang akan kita terima dari Supabase
+// 1. Mendefinisikan Tipe Data
 type StudentData = {
     id: string;
     full_name: string;
     student_code: string;
     schools: { name: string } | null;
-    class_memberships: {
-        classes: { name: string } | null
-    }[] | null;
+    class_memberships: { classes: { name: string } | null }[] | null;
 };
+
+type SessionData = {
+    status: string;
+    assessment_versions: { assessments: { code: string; } }
+};
+
+// Tipe khusus untuk mengatasi Error Overlap TypeScript
+type AssessmentStatusType = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
 
 export default async function StudentDashboardPage() {
     const supabase = await createClient();
@@ -35,81 +35,83 @@ export default async function StudentDashboardPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect('/login');
 
-    // 3. Ambil Data Profil Siswa (Join dengan tabel schools dan class_memberships)
-    const { data, error: studentError } = await supabase
+    // 3. Ambil Data Profil Siswa
+    const { data: studentRaw, error: studentError } = await supabase
         .from('students')
         .select(`
-            id,
-            full_name,
-            student_code,
-            schools ( name ),
-            class_memberships (
-                classes ( name )
-            )
+            id, full_name, student_code,
+            schools ( name ), class_memberships ( classes ( name ) )
         `)
         .eq('user_id', user.id)
         .single();
 
-    if (studentError || !data) {
-        // Jika data tidak ditemukan, bersihkan sesi yang nyangkut
+    if (studentError || !studentRaw) {
         await supabase.auth.signOut();
-        redirect('/login?error=Data siswa tidak ditemukan. Silakan login kembali.');
+        redirect('/login?error=Data siswa tidak ditemukan.');
     }
 
-    // 4. Casting Tipe Data: Kita pastikan data sesuai dengan tipe 'StudentData'
-    const studentData = data as unknown as StudentData;
+    const studentData = studentRaw as unknown as StudentData;
+    const schoolName = studentData.schools?.name || 'Sekolah Belum Diatur';
+    const className = studentData.class_memberships?.[0]?.classes?.name || 'Kelas Belum Diatur';
 
-    // 5. Ekstraksi Data dengan Aman (TypeScript sekarang paham strukturnya)
-    // Supabase mengembalikan object untuk relasi 1-to-1 (schools)
-    const schoolName = studentData.schools
-        ? studentData.schools.name
-        : 'Sekolah Belum Diatur';
+    // 4. Inisialisasi Status Asesmen
+    let riasecStatus: AssessmentStatusType = 'NOT_STARTED';
+    let vakStatus: AssessmentStatusType = 'NOT_STARTED';
 
-    // Supabase mengembalikan array untuk relasi 1-to-many (class_memberships)
-    const className = studentData.class_memberships && studentData.class_memberships.length > 0 && studentData.class_memberships[0].classes
-        ? studentData.class_memberships[0].classes.name
-        : 'Kelas Belum Diatur';
+    const { data: sessionsRaw } = await supabase
+        .from('assessment_sessions')
+        .select(`
+            status,
+            assessment_versions!inner ( assessments!inner ( code ) )
+        `)
+        .eq('student_id', studentData.id);
 
-    // 6. Ambil Status Asesmen RIASEC
-    let assessmentStatus: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' = 'NOT_STARTED';
+    if (sessionsRaw) {
+        const sessions = sessionsRaw as unknown as SessionData[];
 
-    const { data: riasecVersion } = await supabase
-        .from('assessment_versions')
-        .select('id')
-        .eq('version_code', 'RIASEC-MVP-v1')
-        .single();
+        // PERBAIKAN: Menggunakan for...of agar TypeScript bisa melacak perubahan nilai
+        for (const session of sessions) {
+            const code = session.assessment_versions?.assessments?.code;
+            const currentStatus = session.status;
 
-    if (riasecVersion) {
-        const { data: sessionData } = await supabase
-            .from('assessment_sessions')
-            .select('status, completed_at')
-            .eq('student_id', studentData.id)
-            .eq('assessment_version_id', riasecVersion.id)
-            .order('started_at', { ascending: false })
-            .limit(1)
-            .single();
-
-        if (sessionData) {
-            assessmentStatus = sessionData.status === 'COMPLETED' ? 'COMPLETED' : 'IN_PROGRESS';
+            // Pengecekan Status RIASEC
+            if (code === 'RIASEC') {
+                if (currentStatus === 'COMPLETED') riasecStatus = 'COMPLETED';
+                else if (riasecStatus !== 'COMPLETED' && currentStatus === 'IN_PROGRESS') riasecStatus = 'IN_PROGRESS';
+            }
+            // Pengecekan Status VAK
+            else if (code === 'VAK') {
+                if (currentStatus === 'COMPLETED') vakStatus = 'COMPLETED';
+                else if (vakStatus !== 'COMPLETED' && currentStatus === 'IN_PROGRESS') vakStatus = 'IN_PROGRESS';
+            }
         }
     }
 
-    // 7. Render Tampilan (UI Premium)
+    // 5. Data Konfigurasi untuk Jurus 2 sampai 7 (Terkunci, agar menghasilkan 6 kotak genap)
+    const lockedJurus = [
+        { id: 2, title: "Kelola Emosi", icon: Activity, color: "text-rose-500", bg: "bg-rose-50" },
+        { id: 3, title: "Tumbuhkan Resiliensi", icon: ShieldCheck, color: "text-orange-500", bg: "bg-orange-50" },
+        { id: 4, title: "Jaga Konsistensi", icon: Target, color: "text-emerald-500", bg: "bg-emerald-50" },
+        { id: 5, title: "Jalin Koneksi", icon: Users, color: "text-purple-500", bg: "bg-purple-50" },
+        { id: 6, title: "Bangun Kolaborasi", icon: Handshake, color: "text-blue-500", bg: "bg-blue-50" },
+        { id: 7, title: "Menata Situasi", icon: Lightbulb, color: "text-amber-500", bg: "bg-amber-50" },
+    ];
+
+    // 6. Render Tampilan UI Modern
     return (
-        <div className="min-h-screen bg-slate-50 pb-12">
+        <div className="min-h-screen bg-slate-50 pb-16 font-sans text-slate-900">
             {/* HEADER NAVBAR */}
-            <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <header className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-xs">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <GraduationCap className="h-6 w-6 text-blue-600" />
-                        <span className="font-bold text-lg tracking-tight text-slate-900">DIGIBK</span>
+                        <div className="bg-blue-600 p-1.5 rounded-lg">
+                            <GraduationCap className="h-5 w-5 text-white" />
+                        </div>
+                        <span className="font-bold text-xl tracking-tight text-slate-900">DIGIBK</span>
                     </div>
 
                     <form action={logoutAction}>
-                        <button
-                            type="submit"
-                            className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-red-600 transition-colors"
-                        >
+                        <button type="submit" className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-red-600 transition-colors bg-slate-100 hover:bg-red-50 px-3 py-2 rounded-lg">
                             <LogOut className="h-4 w-4" />
                             <span className="hidden sm:inline">Keluar</span>
                         </button>
@@ -117,110 +119,133 @@ export default async function StudentDashboardPage() {
                 </div>
             </header>
 
-            <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 space-y-8">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 space-y-8">
 
                 {/* KARTU PROFIL SISWA */}
-                <section className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                    <div className="h-20 w-20 rounded-full bg-blue-100 flex items-center justify-center shrink-0 ring-4 ring-slate-50">
+                <section className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center gap-6 relative overflow-hidden">
+                    <div className="absolute right-0 top-0 w-64 h-64 bg-blue-50 rounded-full blur-3xl -mr-20 -mt-20 opacity-60 z-0"></div>
+                    <div className="h-20 w-20 rounded-full bg-linear-to-br from-blue-100 to-indigo-100 flex items-center justify-center shrink-0 border border-blue-200 z-10 shadow-inner">
                         <User className="h-10 w-10 text-blue-600" />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 z-10">
                         <h1 className="text-2xl font-bold text-slate-900">{studentData.full_name}</h1>
-                        <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-sm text-slate-600">
-                            <div className="flex items-center gap-2">
-                                <School className="h-4 w-4 text-slate-400" />
+                        <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-sm text-slate-600 font-medium">
+                            <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-md">
+                                <School className="h-4 w-4 text-blue-500" />
                                 <span>{schoolName}</span>
                             </div>
-                            <div className="hidden sm:block w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-                            <div className="flex items-center gap-2">
-                                <GraduationCap className="h-4 w-4 text-slate-400" />
+                            <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-md">
+                                <GraduationCap className="h-4 w-4 text-indigo-500" />
                                 <span>Kelas {className}</span>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* DAFTAR ASESMEN */}
                 <section>
-                    <h2 className="text-lg font-bold text-slate-900 mb-4">Tugas & Asesmen Anda</h2>
+                    <h2 className="text-xl font-bold text-slate-800 mb-6">Peta Perjalananmu (7 Jurus)</h2>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-6">
 
-                        {/* KARTU JURUS 1: RIASEC */}
-                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col h-full">
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-                                        <BrainCircuit className="h-5 w-5" />
+                        {/* ========================================================= */}
+                        {/* JURUS 1: SATU BINGKAI BESAR UNTUK RIASEC & VAK */}
+                        {/* ========================================================= */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div className="bg-slate-900 p-5 md:p-6 flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-xl bg-blue-500/20 flex items-center justify-center border border-blue-500/30 shrink-0">
+                                    <BrainCircuit className="h-6 w-6 text-blue-400" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-white">Jurus 1: Kenali Potensi</h3>
+                                    <p className="text-sm text-slate-400 mt-1">Selesaikan dua asesmen dasar ini untuk membuka kunci ke jurus berikutnya.</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+                                {/* Modul 1: RIASEC */}
+                                <div className="p-6 md:p-8 flex flex-col h-full bg-slate-50/50">
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div>
+                                            <h4 className="font-bold text-slate-800 text-lg">1. Minat & Bakat (RIASEC)</h4>
+                                            <p className="text-sm text-slate-500 mt-1 mb-6">Kenali potensi karir dan penjurusan yang sesuai dengan kepribadianmu.</p>
+                                        </div>
+                                        {riasecStatus === 'COMPLETED' ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200"><CheckCircle2 className="h-4 w-4" /> Selesai</span> : null}
+                                        {riasecStatus === 'IN_PROGRESS' ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200"><Clock className="h-4 w-4" /> Tertunda</span> : null}
+                                        {riasecStatus === 'NOT_STARTED' ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">Belum</span> : null}
                                     </div>
-                                    <div>
-                                        <h3 className="font-bold text-slate-900">Jurus 1: Kenali Potensi</h3>
-                                        <p className="text-xs text-slate-500 mt-0.5">Tes Minat Bakat RIASEC</p>
+                                    <div className="mt-auto flex flex-col sm:flex-row gap-3">
+                                        {riasecStatus !== 'COMPLETED' ? (
+                                            <Link href="/student/potential" className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm">
+                                                <PlayCircle className="h-4 w-4" /> {riasecStatus === 'IN_PROGRESS' ? 'Lanjutkan' : 'Mulai Tes'}
+                                            </Link>
+                                        ) : (
+                                            <>
+                                                <Link href="/student/potential/result" className="flex-1 inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-sm font-bold py-2.5 px-4 rounded-xl transition-colors">
+                                                    Lihat Hasil
+                                                </Link>
+                                                <button disabled className="flex-1 inline-flex items-center justify-center gap-2 bg-slate-800 text-white text-sm font-bold py-2.5 px-4 rounded-xl opacity-50 cursor-not-allowed">
+                                                    <FileText className="h-4 w-4" /> Unduh PDF
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
 
-                                {/* BADGE STATUS */}
-                                {assessmentStatus === 'COMPLETED' && (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">
-                                        <CheckCircle2 className="h-3 w-3" /> Selesai
-                                    </span>
-                                )}
-                                {assessmentStatus === 'IN_PROGRESS' && (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20">
-                                        <Clock className="h-3 w-3" /> Belum Selesai
-                                    </span>
-                                )}
-                                {assessmentStatus === 'NOT_STARTED' && (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-                                        Belum Dimulai
-                                    </span>
-                                )}
-                            </div>
-
-                            <p className="text-sm text-slate-600 mb-6 flex-1">
-                                Kenali aktivitas apa saja yang paling cocok dengan kepribadianmu untuk merencanakan masa depan.
-                            </p>
-
-                            {/* ACTION BUTTONS */}
-                            <div className="mt-auto pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
-                                {assessmentStatus !== 'COMPLETED' ? (
-                                    <Link
-                                        href="/student/potential"
-                                        className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2.5 px-4 rounded-xl transition-colors"
-                                    >
-                                        <PlayCircle className="h-4 w-4" />
-                                        {assessmentStatus === 'IN_PROGRESS' ? 'Lanjutkan Asesmen' : 'Mulai Asesmen'}
-                                    </Link>
-                                ) : (
-                                    <>
-                                        <Link
-                                            href="/student/potential/result"
-                                            className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-semibold py-2.5 px-4 rounded-xl transition-colors"
-                                        >
-                                            Lihat Hasil
-                                        </Link>
-                                        <button
-                                            disabled // Kita disable dulu karena fitur PDF akan kita buat nanti
-                                            className="flex-1 inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold py-2.5 px-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                            title="Fitur Cetak PDF akan segera hadir"
-                                        >
-                                            <FileText className="h-4 w-4" />
-                                            Unduh PDF
-                                        </button>
-                                    </>
-                                )}
+                                {/* Modul 2: VAK */}
+                                <div className="p-6 md:p-8 flex flex-col h-full bg-white">
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div>
+                                            <h4 className="font-bold text-slate-800 text-lg">2. Gaya Belajar (VAK)</h4>
+                                            <p className="text-sm text-slate-500 mt-1 mb-6">Ketahui cara belajar paling efektif: Visual, Auditori, atau Kinestetik.</p>
+                                        </div>
+                                        {vakStatus === 'COMPLETED' ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200"><CheckCircle2 className="h-4 w-4" /> Selesai</span> : null}
+                                        {vakStatus === 'IN_PROGRESS' ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200"><Clock className="h-4 w-4" /> Tertunda</span> : null}
+                                        {vakStatus === 'NOT_STARTED' ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">Belum</span> : null}
+                                    </div>
+                                    <div className="mt-auto flex flex-col sm:flex-row gap-3">
+                                        {vakStatus !== 'COMPLETED' ? (
+                                            <Link href="/student/learning-style" className="flex-1 inline-flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm">
+                                                <PlayCircle className="h-4 w-4" /> {vakStatus === 'IN_PROGRESS' ? 'Lanjutkan' : 'Mulai Tes'}
+                                            </Link>
+                                        ) : (
+                                            <>
+                                                <Link href="/student/learning-style/result" className="flex-1 inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-sm font-bold py-2.5 px-4 rounded-xl transition-colors">
+                                                    Lihat Hasil
+                                                </Link>
+                                                <button disabled className="flex-1 inline-flex items-center justify-center gap-2 bg-slate-800 text-white text-sm font-bold py-2.5 px-4 rounded-xl opacity-50 cursor-not-allowed">
+                                                    <FileText className="h-4 w-4" /> Unduh PDF
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Ruang untuk Jurus 2: Kelola Emosi */}
-                        <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200 border-dashed flex flex-col items-center justify-center text-center h-full min-h-62.5">
-                            <div className="h-12 w-12 rounded-full bg-slate-200 flex items-center justify-center mb-3">
-                                <span className="text-xl text-slate-400">🔒</span>
-                            </div>
-                            <h3 className="font-bold text-slate-700">Jurus 2: Kelola Emosi</h3>
-                            <p className="text-sm text-slate-500 mt-2 max-w-50">
-                                Akan terbuka setelah kamu menyelesaikan Jurus 1.
-                            </p>
+                        {/* ========================================================= */}
+                        {/* JURUS 2 SAMPAI 7 (TERKUNCI, DIBUAT 3 KOLOM SEHINGGA GENAP 2 BARIS) */}
+                        {/* ========================================================= */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {lockedJurus.map((jurus) => {
+                                const IconComponent = jurus.icon;
+                                return (
+                                    <div key={jurus.id} className="bg-slate-100/50 rounded-2xl p-6 border border-slate-200 border-dashed flex flex-col h-full min-h-64 relative group overflow-hidden">
+                                        <div className="absolute top-4 right-4 p-2 bg-white/50 rounded-lg">
+                                            <Lock className="h-4 w-4 text-slate-400" />
+                                        </div>
+                                        <div className="flex-1 flex flex-col items-center justify-center text-center">
+                                            <div className={`h-16 w-16 rounded-2xl ${jurus.bg} flex items-center justify-center mb-4 border border-white shadow-xs`}>
+                                                <IconComponent className={`h-8 w-8 ${jurus.color} opacity-60`} />
+                                            </div>
+                                            <h3 className="font-bold text-lg text-slate-600">Jurus {jurus.id}</h3>
+                                            <p className="font-semibold text-slate-700 mt-1">{jurus.title}</p>
+                                            <span className="text-xs font-medium bg-slate-200 text-slate-500 px-3 py-1 rounded-full mt-4">
+                                                Segera Hadir
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
 
                     </div>

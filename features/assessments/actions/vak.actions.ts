@@ -1,13 +1,12 @@
-// Lokasi file: src/features/assessments/actions/riasec.actions.ts
+// Lokasi file: src/features/assessments/actions/vak.actions.ts
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
 // ============================================================================
-// 1. DEFINISI TIPE DATA YANG KETAT (MENGHINDARI 'any')
+// 1. DEFINISI TIPE DATA YANG KETAT
 // ============================================================================
-// Ini memberi tahu TypeScript bentuk pasti dari data yang akan dikembalikan oleh database
 type DimensionRecord = {
     code: string;
 };
@@ -16,23 +15,20 @@ type QuestionRecord = {
     id: string;
     question_text: string;
     dimension_id: string;
-    // Mengantisipasi Supabase yang kadang mengembalikan object tunggal atau array
     assessment_dimensions: DimensionRecord | DimensionRecord[] | null;
 };
 
 // ============================================================================
-// 2. FUNGSI MENGAMBIL SOAL RIASEC (DINAMIS SESUAI JENJANG)
+// 2. FUNGSI MENGAMBIL SOAL VAK (DINAMIS SESUAI JENJANG)
 // ============================================================================
-export async function getRiasecQuestions() {
+export async function getVakQuestions() {
     const supabase = await createClient();
 
-    // Pastikan user sudah login
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
         throw new Error('User belum login');
     }
 
-    // Ambil jenjang pendidikan siswa saat ini
     const { data: student, error: studentError } = await supabase
         .from('students')
         .select('education_level')
@@ -45,15 +41,15 @@ export async function getRiasecQuestions() {
 
     const eduLevel = student.education_level;
 
-    // PETA JENJANG: Mencocokkan jenjang siswa dengan versi soal di database
+    // PETA JENJANG VAK: Mencocokkan jenjang siswa dengan versi soal VAK
     const versionMap: Record<string, string> = {
-        'SD': 'RIASEC-SD-v1',
-        'MI': 'RIASEC-MI-v1',
-        'SMP': 'RIASEC-SMP-SMA-v1',
-        'MTs': 'RIASEC-MTS-v1',
-        'SMA': 'RIASEC-SMP-SMA-v1',
-        'MA': 'RIASEC-MA-v1',
-        'SMK': 'RIASEC-SMP-SMA-v1' // SMK menggunakan soal setara SMA
+        'SD': 'VAK-SD-v1',
+        'MI': 'VAK-MI-v1',
+        'SMP': 'VAK-SMP-SMA-v1',
+        'MTs': 'VAK-MTS-v1',
+        'SMA': 'VAK-SMP-SMA-v1',
+        'MA': 'VAK-MA-v1',
+        'SMK': 'VAK-SMP-SMA-v1'
     };
 
     const targetVersionCode = versionMap[eduLevel as string];
@@ -61,7 +57,6 @@ export async function getRiasecQuestions() {
         throw new Error(`Sistem belum memiliki versi soal untuk jenjang: ${eduLevel}`);
     }
 
-    // Ambil ID dari versi asesmen yang terpilih
     const { data: version } = await supabase
         .from('assessment_versions')
         .select('id')
@@ -70,7 +65,6 @@ export async function getRiasecQuestions() {
 
     if (!version) throw new Error(`Versi asesmen ${targetVersionCode} tidak ditemukan`);
 
-    // Ambil daftar pertanyaan dari database, diurutkan berdasarkan display_order
     const { data: questions, error } = await supabase
         .from('questions')
         .select(`
@@ -82,16 +76,13 @@ export async function getRiasecQuestions() {
         .eq('assessment_version_id', version.id)
         .order('display_order');
 
-    if (error || !questions) throw new Error('Gagal mengambil daftar soal');
+    if (error || !questions) throw new Error('Gagal mengambil daftar soal VAK');
 
-    // Menerapkan tipe data secara aman tanpa 'any'
-    const rawQuestions = questions as unknown as QuestionRecord[];
+    const typedQuestions = questions as unknown as QuestionRecord[];
 
-    // Format ulang data agar rapi saat dikirim ke komponen Frontend (UI)
     return {
         versionId: version.id,
-        questions: rawQuestions.map((q) => {
-            // Ambil kode dimensi secara aman (apakah itu array atau objek tunggal)
+        questions: typedQuestions.map((q) => {
             const dim = q.assessment_dimensions;
             const dimCode = Array.isArray(dim) ? dim[0]?.code : dim?.code;
 
@@ -106,9 +97,9 @@ export async function getRiasecQuestions() {
 }
 
 // ============================================================================
-// 3. FUNGSI MENYIMPAN JAWABAN & MENGHITUNG SKOR RIASEC
+// 3. FUNGSI MENYIMPAN JAWABAN & MENGHITUNG SKOR VAK
 // ============================================================================
-export async function submitRiasecAssessment(
+export async function submitVakAssessment(
     versionId: string,
     answers: { questionId: string; dimensionId: string; dimensionCode: string; value: number }[]
 ) {
@@ -125,7 +116,7 @@ export async function submitRiasecAssessment(
 
     if (!student) throw new Error('Data siswa tidak ditemukan');
 
-    // Langkah A: Catat sesi pengerjaan asesmen
+    // Langkah A: Buat Sesi Asesmen
     const { data: session, error: sessionError } = await supabase
         .from('assessment_sessions')
         .insert({
@@ -137,10 +128,10 @@ export async function submitRiasecAssessment(
         .select('id')
         .single();
 
-    if (sessionError || !session) throw new Error('Gagal membuat sesi asesmen');
+    if (sessionError || !session) throw new Error('Gagal membuat sesi asesmen VAK');
     const sessionId = session.id;
 
-    // Langkah B: Simpan semua jawaban pilihan siswa (skala 1-5 misalnya)
+    // Langkah B: Simpan jawaban detail ke tabel assessment_responses
     const responsesToInsert = answers.map((ans) => ({
         session_id: sessionId,
         question_id: ans.questionId,
@@ -148,8 +139,8 @@ export async function submitRiasecAssessment(
     }));
     await supabase.from('assessment_responses').insert(responsesToInsert);
 
-    // Langkah C: Hitung total skor untuk masing-masing dimensi (R, I, A, S, E, C)
-    const scores: Record<string, number> = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+    // Langkah C: Hitung Skor V, A, dan K
+    const scores: Record<string, number> = { V: 0, A: 0, K: 0 };
     answers.forEach((ans) => {
         const code = ans.dimensionCode?.trim().toUpperCase();
         if (code && scores[code] !== undefined) {
@@ -157,54 +148,59 @@ export async function submitRiasecAssessment(
         }
     });
 
-    // Langkah D: Simpan hasil asesmen induk (total keseluruhan skor)
+    // Langkah D: Buat Hasil Asesmen Induk
     const { data: result, error: resultError } = await supabase
         .from('assessment_results')
         .insert({
             session_id: sessionId,
             student_id: student.id,
             assessment_version_id: versionId,
-            scoring_version: 'RIASEC-SCORING-v1',
+            scoring_version: 'VAK-SCORING-v1',
             total_score: Object.values(scores).reduce((a, b) => a + b, 0)
         })
         .select('id')
         .single();
 
-    if (resultError || !result) throw new Error(`Gagal menyimpan hasil utama: ${resultError.message}`);
+    if (resultError || !result) throw new Error(`Gagal menyimpan hasil VAK: ${resultError.message}`);
     const resultId = result.id;
 
-    // Langkah E: Urutkan skor dari yang paling tinggi ke rendah untuk mencari 3 besar
+    // Langkah E: Cari Gaya Belajar Dominan
+    // DITAMBAHKAN TIE-BREAKER ALFABET AGAR KONSISTEN JIKA SKOR SERI
     const sortedScores = Object.entries(scores).sort((a, b) => {
-        if (b[1] !== a[1]) return b[1] - a[1]; // Urutkan berdasarkan nilai
-        return a[0].localeCompare(b[0]);       // Jika nilai sama, urutkan alfabet (A-Z)
+        if (b[1] !== a[1]) return b[1] - a[1]; // Urutkan skor dari tertinggi ke terendah
+        return a[0].localeCompare(b[0]);       // Jika seri, urutkan berdasarkan abjad (A, K, V)
     });
 
-    // Gabungkan 3 kode tertinggi (Misal: S-A-E -> SAE)
-    const top3Code = sortedScores.slice(0, 3).map((s) => s[0]).join('');
+    const dominantCode = sortedScores[0][0]; // Juara 1
+    const secondaryCode = sortedScores[1][0]; // Juara 2
+    const tertiaryCode = sortedScores[2][0]; // Juara 3
 
-    // Langkah F: Simpan ke tabel khusus riasec_profiles
+    // Gabungkan kode (contoh: VAK, AVK, KVA)
+    const profileCode = sortedScores.map(s => s[0]).join('');
+
+    // Langkah F: Simpan ke tabel KHUSUS vak_profiles (Fitur V2 Database Anda)
     const { data: profile, error: profileError } = await supabase
-        .from('riasec_profiles')
+        .from('vak_profiles')
         .insert({
             result_id: resultId,
-            code: top3Code,
-            primary_code: sortedScores[0][0],
-            secondary_code: sortedScores[1][0],
-            tertiary_code: sortedScores[2][0]
+            code: profileCode,
+            dominant_code: dominantCode,
+            secondary_code: secondaryCode,
+            tertiary_code: tertiaryCode
         })
         .select('id')
         .single();
 
-    if (profileError || !profile) throw new Error('Gagal menyimpan profil RIASEC.');
+    if (profileError || !profile) throw new Error('Gagal menyimpan profil VAK.');
     const profileId = profile.id;
 
-    // Langkah G: Simpan detail skor tiap dimensi (R=20, I=15, dll) ke tabel riasec_results
-    const riasecResultsToInsert = Object.entries(scores).map(([code, score]) => ({
-        riasec_profile_id: profileId,
+    // Langkah G: Simpan detail skor V, A, dan K ke tabel KHUSUS vak_results
+    const vakResultsToInsert = Object.entries(scores).map(([code, score]) => ({
+        vak_profile_id: profileId,
         code: code,
         raw_score: score
     }));
-    await supabase.from('riasec_results').insert(riasecResultsToInsert);
+    await supabase.from('vak_results').insert(vakResultsToInsert);
 
-    return resultId; // Kembalikan ID untuk diarahkan ke halaman hasil (Summary)
+    return resultId; // Mengembalikan ID untuk diarahkan ke halaman hasil
 }

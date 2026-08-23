@@ -13,15 +13,25 @@ export type PhaseData = {
 };
 
 export type LevelData = {
-    SD_Awal: PhaseData;     // Kelas 1-3 (Fase Bermain & Dasar)
-    SD_Akhir: PhaseData;    // Kelas 4-5 (Fase Eksplorasi)
-    SD_Transisi: PhaseData; // Kelas 6 (Fase Persiapan SMP)
-    SMP_Awal: PhaseData;    // Kelas 7-8 (Fase Organisasi & Jati Diri)
-    SMP_Transisi: PhaseData;// Kelas 9 (Fase Penjurusan Menengah Atas)
-    SMA_Awal: PhaseData;    // Kelas 10-11 SMA (Eksplorasi Mapel/Fase E-F)
-    SMA_Transisi: PhaseData;// Kelas 12 SMA (Fokus UTBK/Kuliah)
-    SMK_Awal: PhaseData;    // Kelas 10-11 SMK (Praktek Vokasi & PKL)
-    SMK_Transisi: PhaseData;// Kelas 12 SMK (Fokus Rekrutmen Kerja)
+    // Jenjang Umum
+    SD_Awal: PhaseData;     // Kelas 1-3
+    SD_Akhir: PhaseData;    // Kelas 4-5
+    SD_Transisi: PhaseData; // Kelas 6
+    SMP_Awal: PhaseData;    // Kelas 7-8
+    SMP_Transisi: PhaseData;// Kelas 9
+    SMA_Awal: PhaseData;    // Kelas 10-11
+    SMA_Transisi: PhaseData;// Kelas 12
+    SMK_Awal: PhaseData;    // Kelas 10-11
+    SMK_Transisi: PhaseData;// Kelas 12
+
+    // Tambahan Jenjang Madrasah (MI, MTs, MA)
+    MI_Awal: PhaseData;     // Kelas 1-3 MI
+    MI_Akhir: PhaseData;    // Kelas 4-5 MI
+    MI_Transisi: PhaseData; // Kelas 6 MI
+    MTs_Awal: PhaseData;    // Kelas 7-8 MTs
+    MTs_Transisi: PhaseData;// Kelas 9 MTs
+    MA_Awal: PhaseData;     // Kelas 10-11 MA
+    MA_Transisi: PhaseData; // Kelas 12 MA
 };
 
 export type ProfileDetail = {
@@ -45,6 +55,7 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
         desc: "Kamu senang berinteraksi, menolong, dan membimbing orang lain. Kamu sangat peka pada perasaan orang di sekitarmu.",
         karir: ["Guru", "Psikolog", "Perawat", "Pekerja Sosial", "HRD"], freelance: ["Tutor", "Relawan"],
         levels: {
+            // -- SD --
             SD_Awal: {
                 eduTitle1: "Aktivitas Bermain", eduList1: ["Bermain peran (Roleplay)", "Berbagi mainan"],
                 eduTitle2: "Karakter Dasar", eduList2: ["Menyapa teman", "Mengantri dengan sabar"],
@@ -63,6 +74,26 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
                 materi: ["Persiapan Adaptasi Lingkungan Baru", "Etika Pergaulan"], layanan: ["Bimbingan transisi remaja awal"],
                 guruBk: ["Siapkan mental anak menghadapi ragam karakter di SMP"], siswa: ["Belajar beradaptasi dengan teman dari beda sekolah"]
             },
+            // -- MI --
+            MI_Awal: {
+                eduTitle1: "Aktivitas Bermain Islami", eduList1: ["Bermain peran tokoh teladan", "Berbagi bekal dengan teman"],
+                eduTitle2: "Karakter Dasar", eduList2: ["Mengucapkan salam", "Membiasakan antre tertib"],
+                materi: ["Akhlak Terpuji", "Pengenalan Emosi Dasar"], layanan: ["Bimbingan klasikal bermain kelompok"],
+                guruBk: ["Latih anak berempati ala kisah Nabi", "Beri apresiasi saat mau berbagi"], siswa: ["Bertegur sapalah dengan teman di kelas"]
+            },
+            MI_Akhir: {
+                eduTitle1: "Ekskul Pilihan", eduList1: ["Pramuka Madrasah/SIT", "Dokter Kecil Madrasah"],
+                eduTitle2: "Tanggung Jawab", eduList2: ["Membantu teman menghafal (Tutor sebaya)", "Piket kebersihan kelas/masjid"],
+                materi: ["Akidah Akhlak", "Bahasa (Diskusi Kelompok)"], layanan: ["Konseling pengembangan empati"],
+                guruBk: ["Berikan penugasan berbasis kerja sama", "Ajarkan adab mendengarkan"], siswa: ["Bantulah temanmu yang kesulitan belajar atau menghafal"]
+            },
+            MI_Transisi: {
+                eduTitle1: "Target Lingkungan MTs/SMP", eduList1: ["MTs/SMP dengan lingkungan sosial yang baik", "MTs berbasis asrama/pesantren"],
+                eduTitle2: "Persiapan Ekskul", eduList2: ["PMR/UKS", "Remaja Masjid (Klub Sosial)"],
+                materi: ["Persiapan Adaptasi Remaja", "Etika Pergaulan Islami"], layanan: ["Bimbingan transisi remaja (Baligh)"],
+                guruBk: ["Siapkan mental siswa menghadapi keragaman di jenjang berikutnya"], siswa: ["Siapkan dirimu untuk berteman dengan banyak orang baru dari berbagai daerah"]
+            },
+            // -- SMP --
             SMP_Awal: {
                 eduTitle1: "Pengembangan Diri", eduList1: ["Aktif di PMR/Pramuka", "Panitia acara kelas"],
                 eduTitle2: "Eksplorasi Komunitas", eduList2: ["Relawan kebersihan sekolah", "Klub duta sekolah"],
@@ -70,11 +101,25 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
                 guruBk: ["Jadikan siswa sebagai mediator konflik antar teman", "Dukung ikut OSIS Sekbid Sosial"], siswa: ["Jadilah pendengar yang baik bagi teman"]
             },
             SMP_Transisi: {
-                eduTitle1: "Pilihan Jurusan SMA", eduList1: ["IPS (Fokus Sosiologi)", "MIPA (Untuk Kedokteran/Kesehatan)"],
+                eduTitle1: "Pilihan Jurusan SMA/MA", eduList1: ["IPS (Fokus Sosiologi)", "MIPA (Untuk Kedokteran/Kesehatan)"],
                 eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Keperawatan/Kesehatan Masyarakat", "Pekerjaan Sosial"],
                 materi: ["Bimbingan Karier Dasar", "Psikologi Dasar"], layanan: ["Konsultasi penjurusan minat"],
                 guruBk: ["Bantu siswa memetakan karir di bidang kesehatan atau sosial"], siswa: ["Cari tahu perbedaan SMA dan SMK di bidang kesehatan/sosial"]
             },
+            // -- MTs --
+            MTs_Awal: {
+                eduTitle1: "Pengembangan Diri", eduList1: ["Aktif di PMR/Pramuka Madrasah", "Pengurus Kelas/Anggota OSIM"],
+                eduTitle2: "Eksplorasi Komunitas", eduList2: ["Panitia Zakat/Kurban Sekolah", "Remaja Masjid"],
+                materi: ["Fikih Sosial (Muamalah Dasar)", "Adab Pergaulan Remaja"], layanan: ["Latihan konseling teman sebaya Islami"],
+                guruBk: ["Fasilitasi siswa menjadi penengah/mediator konflik di kelas"], siswa: ["Jadilah teman curhat yang bisa dipercaya bagi temanmu"]
+            },
+            MTs_Transisi: {
+                eduTitle1: "Pilihan Jurusan MA/SMA", eduList1: ["IPS / Ilmu Sosial", "Keagamaan (Menjadi penyuluh/guru)"],
+                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Layanan Kesehatan/Keperawatan", "Pekerjaan Sosial"],
+                materi: ["Bimbingan Karir & Profesi Pelayanan", "Dasar Ilmu Komunikasi"], layanan: ["Konsultasi peminatan MA/SMK"],
+                guruBk: ["Bantu petakan prospek jurusan yang banyak berinteraksi dengan masyarakat"], siswa: ["Mulai cari tahu perbedaan belajar sosiologi di MA dengan praktik kesehatan di SMK"]
+            },
+            // -- SMA --
             SMA_Awal: {
                 eduTitle1: "Fokus Portofolio (Fase E/F)", eduList1: ["Proyek Penguatan Profil Pelajar Pancasila (Sosial)", "Relawan Panti Asuhan"],
                 eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Latihan Public Speaking", "Manajemen Konflik"],
@@ -87,6 +132,20 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
                 materi: ["Persiapan Tes Skolastik (UTBK)", "Psikologi Lanjutan"], layanan: ["Konsultasi pemilihan prodi PTN"],
                 guruBk: ["Arahkan strategi SNBP/SNBT untuk prodi Pendidikan/Kesehatan"], siswa: ["Perbanyak latihan soal UTBK bidang Soshum/Saintek sesuai target"]
             },
+            // -- MA --
+            MA_Awal: {
+                eduTitle1: "Fokus Portofolio (Fase E/F)", eduList1: ["Proyek P5 / Baksos Madrasah", "Tutor Ngaji (TPQ) untuk Adik Kelas"],
+                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Komunikasi Massa (Berdakwah/MC)", "Manajemen Konflik Resolusi"],
+                materi: ["Sosiologi Lanjut", "Antropologi Agama"], layanan: ["Pelatihan kecerdasan emosi dan empati"],
+                guruBk: ["Libatkan siswa sebagai mentor/kakak asuh MOS (Matsama)"], siswa: ["Gabunglah dengan relawan kemanusiaan atau kepemudaan di luar jam sekolah"]
+            },
+            MA_Transisi: {
+                eduTitle1: "Fokus Studi PTN/PTKIN", eduList1: ["Psikologi Islam", "Pendidikan Guru/Agama (Tarbiyah)", "Sosiologi Agama", "Keperawatan"],
+                eduTitle2: "Alternatif Karier Lulusan", eduList2: ["Staf Yayasan Sosial/Amil Zakat", "Pelayanan Pelanggan (CS)"],
+                materi: ["Persiapan Penalaran Skolastik (UTBK)", "Strategi Jalur SPAN-PTKIN/SNBT"], layanan: ["Konsultasi pemilihan kampus UIN/PTN"],
+                guruBk: ["Arahkan pemilihan prodi rumpun Ilmu Kependidikan atau Sosial-Humaniora"], siswa: ["Perbanyak latihan soal literasi bahasa dan sosiologi untuk persiapan tes kampus impian!"]
+            },
+            // -- SMK --
             SMK_Awal: {
                 eduTitle1: "Fokus Praktik Kejuruan", eduList1: ["Praktik Pelayanan Pasien (Kesehatan)", "Simulasi Layanan Sosial"],
                 eduTitle2: "Persiapan Magang/PKL", eduList2: ["Pelatihan Komunikasi Terapeutik", "Etika Profesi Pelayanan"],
@@ -124,6 +183,24 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
                 materi: ["Matematika Terapan Dasar", "Manajemen Waktu Awal"], layanan: ["Bimbingan transisi kedisiplinan"],
                 guruBk: ["Ajarkan anak sistem pengarsipan tugas mandiri untuk SMP"], siswa: ["Beli buku catatan terpisah untuk setiap mata pelajaran SMP nanti"]
             },
+            MI_Awal: {
+                eduTitle1: "Aktivitas Dasar", eduList1: ["Menyusun puzzle huruf Hijaiyah", "Permainan pengelompokan benda"],
+                eduTitle2: "Karakter Dasar", eduList2: ["Merapikan buku Iqro/Juz Amma", "Menulis rapi di garis buku"],
+                materi: ["Mengenal Angka Dasar", "Latihan Motorik Menulis"], layanan: ["Bimbingan kedisiplinan ringan"],
+                guruBk: ["Bantu anak membuat jadwal kegiatan harian sederhana"], siswa: ["Kembalikan bukumu ke rak setelah selesai dibaca"]
+            },
+            MI_Akhir: {
+                eduTitle1: "Ekskul Pilihan", eduList1: ["Pengenalan TIK/Komputer Dasar", "Pramuka (Fokus Administrasi Regu)"],
+                eduTitle2: "Tanggung Jawab", eduList2: ["Bendahara/Pencatat Infaq Kelas", "Petugas Absensi Kelas"],
+                materi: ["Aritmatika Dasar", "Latihan Mengetik/Menyalin Teks"], layanan: ["Latihan fokus belajar"],
+                guruBk: ["Berikan tugas pendataan ringan agar ketelitiannya terasah"], siswa: ["Catatlah tugas-tugas dari guru agar tidak terlupa"]
+            },
+            MI_Transisi: {
+                eduTitle1: "Target Lingkungan MTs/SMP", eduList1: ["MTs dengan kedisiplinan tinggi", "MTs dengan Lab Komputer/Bahasa yang bagus"],
+                eduTitle2: "Persiapan Ekskul", eduList2: ["Klub Jurnalistik/Mading", "Klub Komputer"],
+                materi: ["Pengantar Matematika Lanjut", "Manajemen Waktu"], layanan: ["Konseling transisi kedisiplinan belajar"],
+                guruBk: ["Ajarkan teknik mengatur jadwal hafalan dan tugas harian mandiri"], siswa: ["Siapkan catatan pelajaran yang terpisah dan rapi untuk tiap mapel di MTs nanti"]
+            },
             SMP_Awal: {
                 eduTitle1: "Pengembangan Diri", eduList1: ["Sekretaris/Bendahara OSIS", "Klub TIK (Teknologi Informasi)"],
                 eduTitle2: "Eksplorasi Keterampilan", eduList2: ["Latihan Menggunakan Excel/Spreadsheet", "Pengorganisasian Data Kelas"],
@@ -136,6 +213,18 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
                 materi: ["Ekonomi Dasar", "Pengantar Akuntansi"], layanan: ["Konsultasi karir bidang data/keuangan"],
                 guruBk: ["Arahkan siswa melihat potensi karir di dunia perbankan/perkantoran"], siswa: ["Eksplorasi minatmu, apakah lebih suka mengelola uang (Akuntansi) atau data (Admin)"]
             },
+            MTs_Awal: {
+                eduTitle1: "Pengembangan Diri", eduList1: ["Sekretaris/Bendahara OSIM", "Klub TIK Madrasah"],
+                eduTitle2: "Eksplorasi Keterampilan", eduList2: ["Menyusun laporan/proposal kegiatan", "Manajemen kas kelas"],
+                materi: ["Matematika Dasar", "TIK Pengolah Angka (Excel)"], layanan: ["Bimbingan administrasi siswa"],
+                guruBk: ["Fasilitasi siswa dalam mengurus surat-menyurat OSIM"], siswa: ["Rapikan catatan belajar dan jadwal hafalanmu setiap minggu"]
+            },
+            MTs_Transisi: {
+                eduTitle1: "Pilihan Jurusan MA/SMA", eduList1: ["IPS (Fokus Akuntansi/Ekonomi)", "Keagamaan (Fokus Faraid/Data)"],
+                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Akuntansi", "Manajemen Perkantoran (OTKP)"],
+                materi: ["Pengantar Ilmu Ekonomi Dasar", "Logika Matematika Dasar"], layanan: ["Konsultasi peminatan bidang manajerial"],
+                guruBk: ["Kenalkan prospek karir di lembaga keuangan syariah atau administrasi"], siswa: ["Cari tahu perbedaan belajar akuntansi/ekonomi di MA dengan SMK"]
+            },
             SMA_Awal: {
                 eduTitle1: "Fokus Portofolio (Fase E/F)", eduList1: ["Kepanitiaan Seksi Kesekretariatan", "Proyek Analisis Data (Survei Sekolah)"],
                 eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Sertifikasi Microsoft Office Specialist", "Kursus Pembukuan"],
@@ -147,6 +236,18 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
                 eduTitle2: "Alternatif Karier Lulusan SMA", eduList2: ["Staf Administrasi Entry-Level", "Data Entry Clerk"],
                 materi: ["Persiapan Penalaran Matematika (UTBK)", "Matematika Keuangan"], layanan: ["Tryout intensif penalaran kuantitatif"],
                 guruBk: ["Bantu susun strategi rasional memilih prodi berdasarkan keketatan data"], siswa: ["Latih kecepatan dan ketelitian menjawab soal matematika dasar UTBK"]
+            },
+            MA_Awal: {
+                eduTitle1: "Fokus Portofolio (Fase E/F)", eduList1: ["Tim Kesekretariatan Kegiatan Madrasah", "Pengolah Data/Survei P5"],
+                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Penguasaan MS Office Lanjut (Word/Excel)", "Sistem Pembukuan Kas"],
+                materi: ["Akuntansi/Ekonomi Fase F", "Statistika Terapan Dasar"], layanan: ["Bimbingan keterampilan manajerial acara"],
+                guruBk: ["Berikan tugas pengelolaan dokumen beasiswa/KIP secara teliti"], siswa: ["Pelajari cara mengolah data menggunakan rumus spreadsheet (Excel)"]
+            },
+            MA_Transisi: {
+                eduTitle1: "Fokus Studi PTN/PTKIN", eduList1: ["Akuntansi (Umum/Syariah)", "Perbankan Syariah", "Ilmu Administrasi", "Statistika"],
+                eduTitle2: "Alternatif Karier Lulusan", eduList2: ["Staf Admin Entry-Level", "Data Entry BMT/Koperasi"],
+                materi: ["Penalaran Matematika (UTBK)", "Literasi Keuangan"], layanan: ["Tryout kuantitatif dan penalaran matematis"],
+                guruBk: ["Bantu susun strategi seleksi PTN berbasis analisis data peluang rasional"], siswa: ["Latih kecepatan dan keakuratan berhitungmu untuk menjawab tes seleksi masuk kuliah"]
             },
             SMK_Awal: {
                 eduTitle1: "Fokus Praktik Kejuruan", eduList1: ["Praktik Jurnal Akuntansi", "Simulasi Manajemen Arsip Kantor"],
@@ -185,6 +286,24 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
                 materi: ["Metode Ilmiah Pemula", "Matematika Terapan"], layanan: ["Bimbingan transisi peminatan sains"],
                 guruBk: ["Kenalkan informasi ajang kompetisi sains SMP"], siswa: ["Mulai berlatih memecahkan soal logika yang lebih rumit"]
             },
+            MI_Awal: {
+                eduTitle1: "Eksplorasi Pengetahuan", eduList1: ["Eksperimen warna/alam sederhana", "Membaca kisah sains Islam (Ensiklopedia)"],
+                eduTitle2: "Karakter Dasar", eduList2: ["Banyak bertanya 'Mengapa' dan 'Bagaimana'", "Menyelesaikan puzzle logika"],
+                materi: ["Pengenalan Sains Dasar", "Matematika Logika Pemula"], layanan: ["Pendampingan rasa ingin tahu (Inkuiri)"],
+                guruBk: ["Berikan jawaban logis dan dorong anak untuk mencari tahu lebih dalam"], siswa: ["Perbanyak baca buku tentang hewan, tumbuhan, atau luar angkasa"]
+            },
+            MI_Akhir: {
+                eduTitle1: "Ekskul Pilihan", eduList1: ["Klub Sains/Robotik", "Klub Jurnalistik Dasar"],
+                eduTitle2: "Tanggung Jawab/Prestasi", eduList2: ["Persiapan KSM (Kompetisi Sains Madrasah)", "Percobaan IPA mandiri di kelas"],
+                materi: ["IPA Dasar", "Matematika Logika"], layanan: ["Fasilitasi Lab mini atau eksperimen kelas"],
+                guruBk: ["Berikan tantangan teka-teki logika atau puzzle yang sedikit sulit"], siswa: ["Lakukan percobaan sains yang aman di rumah bersama orang tuamu"]
+            },
+            MI_Transisi: {
+                eduTitle1: "Target Lingkungan MTs/SMP", eduList1: ["MTs dengan program kelas unggulan/Sains", "MTs yang berprestasi di MYRES/KSM"],
+                eduTitle2: "Persiapan Ekskul", eduList2: ["KIR (Karya Ilmiah Remaja) Dasar", "Komputer/TIK Dasar"],
+                materi: ["Metodologi Penelitian Sederhana", "Matematika Terapan Menengah"], layanan: ["Bimbingan minat bakat Sains"],
+                guruBk: ["Kenalkan peluang kompetisi riset atau olimpiade tingkat menengah"], siswa: ["Berlatih soal-soal logika dasar untuk persiapan masuk program unggulan"]
+            },
             SMP_Awal: {
                 eduTitle1: "Pengembangan Diri", eduList1: ["Ikut Karya Ilmiah Remaja (KIR)", "Klub Coding Pemula"],
                 eduTitle2: "Eksplorasi", eduList2: ["Eksperimen Biologi/Fisika", "Analisis Data Lingkungan Sekolah"],
@@ -197,6 +316,18 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
                 materi: ["Sains Terpadu Lanjutan", "Pengantar Teknologi Informasi"], layanan: ["Tes penjurusan eksakta"],
                 guruBk: ["Diskusikan perbedaan antara bekerja di lab (Sains murni) dan IT"], siswa: ["Pikirkan apakah kamu lebih suka meneliti alam/obat atau membuat program komputer"]
             },
+            MTs_Awal: {
+                eduTitle1: "Pengembangan Diri", eduList1: ["Klub Sains Madrasah (KIR)", "Klub Coding/TIK Dasar"],
+                eduTitle2: "Eksplorasi", eduList2: ["Eksperimen Lab Sederhana", "Riset Data Mini"],
+                materi: ["Fisika/Biologi Dasar", "Algoritma Dasar"], layanan: ["Bimbingan olimpiade sains madrasah"],
+                guruBk: ["Persiapkan dan seleksi siswa untuk ajang KSM (Kompetisi Sains Madrasah)"], siswa: ["Mulailah belajar dasar-dasar coding (pemrograman) lewat internet"]
+            },
+            MTs_Transisi: {
+                eduTitle1: "Pilihan Jurusan MA/SMA", eduList1: ["MIPA (Fokus Sains/Kedokteran)", "Ilmu Falak/Astronomik Islam"],
+                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["IT (Rekayasa Perangkat Lunak)", "Farmasi/Kesehatan"],
+                materi: ["Sains Terpadu", "Pengantar Teknologi Terkini"], layanan: ["Tes Minat Bakat Sains/IT"],
+                guruBk: ["Bantu petakan kemampuan spesifik: apakah kuat di hitungan, hafalan biologi, atau logika coding"], siswa: ["Pikirkan mimpimu: Menjadi dokter, ahli komputer, atau peneliti madrasah?"]
+            },
             SMA_Awal: {
                 eduTitle1: "Fokus Portofolio (Fase E/F)", eduList1: ["Proyek Riset Independen", "Olimpiade Sains (OSN/KSN)"],
                 eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Pelatihan Bahasa Pemrograman (Python/Java)", "Penulisan Jurnal Ilmiah"],
@@ -208,6 +339,18 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
                 eduTitle2: "Alternatif Karier Lulusan SMA", eduList2: ["Asisten Laboratorium Sekolah", "Staf IT Support Junior"],
                 materi: ["Persiapan TPS Penalaran Umum", "Soal Saintek Lanjutan"], layanan: ["Tryout Saintek/Logika Terpusat"],
                 guruBk: ["Arahkan siswa mencari beasiswa khusus program sains dan teknologi"], siswa: ["Fokus berlatih pada soal-soal HOTS bidang Saintek dan Penalaran Umum"]
+            },
+            MA_Awal: {
+                eduTitle1: "Fokus Portofolio (Fase E/F)", eduList1: ["Penulisan Karya Ilmiah Remaja (MYRES)", "Delegasi Olimpiade (KSM/OSN)"],
+                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Dasar Bahasa Pemrograman (Koding)", "Metodologi Riset Kuantitatif"],
+                materi: ["Saintek Terpadu (Fase F)", "Matematika/Fisika Lanjutan"], layanan: ["Fasilitasi laboratorium riset madrasah"],
+                guruBk: ["Sambungkan siswa dengan guru pembimbing khusus ajang MYRES/KSM tingkat nasional"], siswa: ["Buat proyek inovasi atau riset mini yang bermanfaat bagi masyarakat sekitarmu"]
+            },
+            MA_Transisi: {
+                eduTitle1: "Fokus Studi PTN/PTKIN", eduList1: ["Kedokteran", "Teknik Informatika (IT)", "Statistika/Sains Data", "Ilmu Sains Murni"],
+                eduTitle2: "Alternatif Karier Lulusan", eduList2: ["Asisten Laboratorium", "Staf IT Support Entry-Level"],
+                materi: ["Penalaran Kognitif & Saintek (UTBK)", "Analisis Jurnal Riset Dasar"], layanan: ["Tryout Intensif Penalaran Saintek/TPS"],
+                guruBk: ["Arahkan penelusuran beasiswa BIM (Beasiswa Indonesia Maju) atau program prestasi riset"], siswa: ["Fokuskan belajarmu pada pemecahan soal-soal HOTS (High Order Thinking Skills)"]
             },
             SMK_Awal: {
                 eduTitle1: "Fokus Praktik Kejuruan", eduList1: ["Praktikum Kimia Analisis", "Coding Website/Aplikasi"],
@@ -246,6 +389,24 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
                 materi: ["Pengenalan Alat & Mesin Dasar", "Kesehatan Fisik dan Gizi"], layanan: ["Orientasi ekstrakurikuler lapangan SMP"],
                 guruBk: ["Kenalkan macam-macam ekskul fisik yang ada di tingkat SMP"], siswa: ["Jaga kebugaran tubuhmu untuk mengikuti seleksi ekskul olahraga di SMP"]
             },
+            MI_Awal: {
+                eduTitle1: "Aktivitas Fisik Dasar", eduList1: ["Olahraga ringan / Senam sehat", "Bermain balok kayu/lego"],
+                eduTitle2: "Karakter Dasar", eduList2: ["Berkebun di halaman madrasah", "Membersihkan tempat shalat"],
+                materi: ["Pendidikan Jasmani & Kesehatan", "Prakarya Dasar"], layanan: ["Fasilitas lapangan bermain yang aman"],
+                guruBk: ["Pastikan energi fisik anak tersalurkan dengan baik dan aman di jam istirahat"], siswa: ["Aktiflah bergerak dan bermain di luar kelas bersama teman"]
+            },
+            MI_Akhir: {
+                eduTitle1: "Ekskul Pilihan", eduList1: ["Pramuka Siaga/Penggalang (Prakarya)", "Olahraga (Futsal, Bulutangkis)"],
+                eduTitle2: "Tanggung Jawab/Prestasi", eduList2: ["Lomba Olahraga Antar MI (PORSENI)", "Merakit kerajinan tangan tugas kelas"],
+                materi: ["Keterampilan Motorik Kasar", "Kerajinan Tangan (Prakarya)"], layanan: ["Pembinaan ekstrakurikuler olahraga"],
+                guruBk: ["Pantau asupan gizi anak dan dukung partisipasinya di ajang olahraga PORSENI"], siswa: ["Bantulah orang tua mengerjakan pekerjaan fisik ringan di rumah"]
+            },
+            MI_Transisi: {
+                eduTitle1: "Target Lingkungan MTs/SMP", eduList1: ["MTs dengan fasilitas olahraga baik", "SMP KKO (Kelas Khusus Olahraga)"],
+                eduTitle2: "Persiapan Ekskul", eduList2: ["Bela Diri (Pencak Silat/Tapak Suci)", "Pramuka Inti (Tali temali)"],
+                materi: ["Kesehatan & Kebugaran Jasmani Dasar", "Pengenalan Alat Perkakas"], layanan: ["Bimbingan pemilihan ekskul lapangan"],
+                guruBk: ["Kenalkan ragam kegiatan fisik dan keolahragaan di jenjang pendidikan menengah"], siswa: ["Mulai rutinkan olahraga sore agar staminamu siap masuk ekskul fisik/bela diri nanti"]
+            },
             SMP_Awal: {
                 eduTitle1: "Pengembangan Diri", eduList1: ["Bergabung dengan Pecinta Alam", "Tim Inti Olahraga Sekolah"],
                 eduTitle2: "Eksplorasi Keterampilan", eduList2: ["Prakarya Kelistrikan Dasar", "Kerajinan dari Kayu/Bambu"],
@@ -258,6 +419,18 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
                 materi: ["Bimbingan Penjurusan Teknik/Fisik", "Kesehatan Jasmani Menengah"], layanan: ["Tes minat bakat teknikal/mekanikal"],
                 guruBk: ["Diskusikan dengan orang tua terkait prospek sekolah kedinasan (militer) atau SMK Teknik"], siswa: ["Mantapkan pilihanmu: Apakah ingin belajar teori sains di SMA atau langsung praktik menggunakan alat berat di SMK?"]
             },
+            MTs_Awal: {
+                eduTitle1: "Pengembangan Diri", eduList1: ["Tim Inti Olahraga Madrasah", "Pencak Silat/Pagar Nusa/Tapak Suci"],
+                eduTitle2: "Eksplorasi Keterampilan", eduList2: ["Prakarya/Kerajinan Tangan", "Pramuka Penggalang (Teknik Kepramukaan)"],
+                materi: ["Pendidikan Jasmani", "Prakarya Rekayasa Dasar"], layanan: ["Pembinaan khusus kontingen atlet PORSENI"],
+                guruBk: ["Pantau perkembangan fisik dan akademik para siswa atlet madrasah"], siswa: ["Jaga kebugaran dengan olahraga rutin setiap sore"]
+            },
+            MTs_Transisi: {
+                eduTitle1: "Pilihan Jurusan MA/SMA", eduList1: ["MIPA (Fokus Ilmu Terapan)", "MA Keterampilan (Tata Busana/Elektronika)"],
+                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Teknik Otomotif/Mesin", "Tata Boga/Kelistrikan"],
+                materi: ["Konseling Pemilihan Sekolah Vokasi", "Kesehatan Fisik Calon Atlet"], layanan: ["Tes kecerdasan mekanikal dasar"],
+                guruBk: ["Jelaskan perbedaan mendalam antara MA reguler, MA Plus Keterampilan, dan SMK Teknika"], siswa: ["Apakah kamu ingin masuk ke sekolah militer, jadi atlet, atau ahli mekanik mesin? Tentukan dari sekarang!"]
+            },
             SMA_Awal: {
                 eduTitle1: "Fokus Portofolio (Fase E/F)", eduList1: ["Kejuaraan Olahraga Tingkat Pelajar (O2SN)", "Proyek Rancang Bangun Fisika (Membuat Maket)"],
                 eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Pelatihan P3K Lanjutan", "Sertifikasi Bela Diri Tingkat Lanjut"],
@@ -269,6 +442,18 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
                 eduTitle2: "Alternatif Karier Lulusan SMA", eduList2: ["Atlet/Pelatih Olahraga Muda", "Mekanik Bengkel Magang"],
                 materi: ["Persiapan Tes Kesamaptaan Jasmani", "Fisika Kinematika (UTBK)"], layanan: ["Tryout Gabungan Kesamaptaan & Psikologi Kedinasan"],
                 guruBk: ["Fasilitasi siswa dalam persiapan kesehatan (Cek buta warna, kesehatan gigi, postur tulang)"], siswa: ["Perkuat latihan fisik seperti lari, pull-up, sit-up, dan renang secara konsisten"]
+            },
+            MA_Awal: {
+                eduTitle1: "Fokus Portofolio (Fase E/F)", eduList1: ["Sertifikasi Sabuk/Tingkat Bela Diri", "Kejuaraan Olahraga PORSENI/AKSIOMA"],
+                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Kecakapan Bertahan Hidup (Survival Alam)", "Pelatihan Pertolongan Pertama (PMR)"],
+                materi: ["Fisika Mekanika Lanjut", "Geografi Lapangan"], layanan: ["Pengecekan fisik dasar (TB/BB, mata, gigi) berkala"],
+                guruBk: ["Identifikasi sejak dini siswa yang berminat pada sekolah ikatan dinas (Militer/Polisi)"], siswa: ["Pastikan postur, tinggi badan, dan kesehatan matamu terjaga (hindari gadget berlebihan)"]
+            },
+            MA_Transisi: {
+                eduTitle1: "Fokus Studi PTN/Kedinasan", eduList1: ["Akmil/Akpol (TNI/Polri)", "Keolahragaan (FIK)", "Teknik Sipil/Mesin"],
+                eduTitle2: "Alternatif Karier Lulusan", eduList2: ["Pelatih/Wasit Olahraga Pemula", "Mekanik/Perakit Pemula"],
+                materi: ["Latihan Kesamaptaan Jasmani", "Tes Psikologi TNI/Polri Dasar"], layanan: ["Fasilitasi simulasi tes fisik kesamaptaan"],
+                guruBk: ["Pastikan persiapan administrasi dan fisik siswa untuk tes kedinasan dilakukan jauh-jauh hari"], siswa: ["Rutin lari pagi, pull-up, push-up, dan cek kesehatan gigimu secara mandiri!"]
             },
             SMK_Awal: {
                 eduTitle1: "Fokus Praktik Kejuruan", eduList1: ["Praktek Bengkel Mesin / Otomotif / Las", "Praktek Memasak di Dapur Restoran (Kitchen)"],
@@ -307,6 +492,24 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
                 materi: ["Persiapan Kumpulan Portofolio Seni Awal", "Sejarah Seni Sederhana"], layanan: ["Orientasi ragam kesenian di tingkat SMP"],
                 guruBk: ["Berikan dukungan pada anak untuk tampil atau berpartisipasi dalam pementasan perpisahan SD"], siswa: ["Kumpulkan hasil gambar atau tulisan terbaikmu dalam satu map portofolio khusus"]
             },
+            MI_Awal: {
+                eduTitle1: "Aktivitas Kreatif", eduList1: ["Mewarnai kaligrafi dasar", "Menyanyikan nasyid/lagu Islami"],
+                eduTitle2: "Karakter Dasar", eduList2: ["Menggambar bebas Islami", "Bermain dengan plastisin/tanah liat"],
+                materi: ["Seni Budaya dan Prakarya Dasar", "Latihan Menulis Halus/Hijaiyah"], layanan: ["Fasilitasi ruang ekspresi (Mading mini kelas)"],
+                guruBk: ["Pajang hasil karya anak di dinding kelas untuk meningkatkan percaya dirinya"], siswa: ["Gunakan imajinasimu untuk membuat gambar atau warna yang indah"]
+            },
+            MI_Akhir: {
+                eduTitle1: "Ekskul Pilihan", eduList1: ["Kesenian Hadrah/Rebana", "Klub Seni Kaligrafi (Khat)"],
+                eduTitle2: "Lomba/Prestasi", eduList2: ["Lomba MTQ (Tilawah/Tartil)", "Lomba Puisi Islami/Pildacil"],
+                materi: ["Seni Suara/Musik Islami", "Seni Rupa Islami"], layanan: ["Bimbingan khusus lomba kesenian"],
+                guruBk: ["Dorong siswa untuk tampil dalam pentas seni perayaan hari besar Islam"], siswa: ["Mulai berlatih membuat cerita pendek (cerpen) pertamamu tentang keseharian di madrasah"]
+            },
+            MI_Transisi: {
+                eduTitle1: "Target Lingkungan MTs/SMP", eduList1: ["MTs dengan program ekstrakurikuler Kesenian kuat", "MTs dengan pembinaan bahasa/jurnalistik aktif"],
+                eduTitle2: "Persiapan Ekskul", eduList2: ["Klub Teater/Drama Islam", "Grup Marawis/Paduan Suara"],
+                materi: ["Pengumpulan Portofolio Karya Seni", "Pengantar Desain Visual"], layanan: ["Konseling orientasi bakat kreatif"],
+                guruBk: ["Dukung siswa untuk menyumbang penampilan seni di acara akhir tahun sekolah"], siswa: ["Simpan dan kumpulkan hasil karya gambar, tulisan, atau pialamu dengan baik sebagai kebanggaan!"]
+            },
             SMP_Awal: {
                 eduTitle1: "Pengembangan Diri", eduList1: ["Membentuk Grup Band Akustik Sekolah", "Bergabung dengan Ekskul Fotografi atau Jurnalistik"],
                 eduTitle2: "Eksplorasi Keterampilan", eduList2: ["Bereksperimen dengan Desain Grafis Dasar (Misal: Canva)", "Edit Video Pendek Kreatif yang Positif (Misal: Reels/TikTok Edukasi)"],
@@ -319,6 +522,18 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
                 materi: ["Pengantar Seni Sinematografi Dasar", "Pemahaman Seni Terapan"], layanan: ["Konsultasi arah bakat industri kreatif"],
                 guruBk: ["Diskusikan tentang peluang karir modern di era digital (seperti Content Creator, Desainer UI/UX) dengan siswa"], siswa: ["Tentukan pilihanmu: Ingin fokus memperdalam teori sastra/seni di SMA, atau langsung praktik mendesain digital/membuat busana di SMK?"]
             },
+            MTs_Awal: {
+                eduTitle1: "Pengembangan Diri", eduList1: ["Tim Hadrah/Qasidah/Marawis", "Klub Fotografi/Desain Grafis (Mading)"],
+                eduTitle2: "Eksplorasi Keterampilan", eduList2: ["Berlatih kaligrafi dekorasi", "Membuat video pendek positif (Dakwah)"],
+                materi: ["Seni Budaya Terapan", "Sastra dan Jurnalistik Dasar"], layanan: ["Penyediaan sarana ruang pamer karya/Mading luas"],
+                guruBk: ["Jadikan Mading sekolah wadah utama apresiasi karya puisi/gambar siswa"], siswa: ["Eksplorasi aplikasi desain digital (seperti Canva) untuk membuat poster tugas kelas"]
+            },
+            MTs_Transisi: {
+                eduTitle1: "Pilihan Jurusan MA/SMA", eduList1: ["Keagamaan (Seni Kaligrafi/Dakwah)", "Bahasa & Budaya"],
+                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Desain Komunikasi Visual (DKV)", "Multimedia/Broadcasting"],
+                materi: ["Pengantar Seni Visual Digital", "Bimbingan Karir Industri Kreatif"], layanan: ["Konsultasi peminatan SMK Seni/IT"],
+                guruBk: ["Kenalkan tren karir modern seperti Konten Kreator atau Video Editor"], siswa: ["Pikirkan! Ingin belajar teori sastra di MA atau praktik membuat animasi di SMK?"]
+            },
             SMA_Awal: {
                 eduTitle1: "Fokus Portofolio (Fase E/F)", eduList1: ["Menjadi Sutradara atau Aktor dalam Pementasan Teater Sekolah", "Menjadi Desainer Poster Utama untuk Acara Sekolah"],
                 eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Penguasaan Tool Desain Profesional (Adobe Illustrator/Photoshop)", "Teknik Penulisan Naskah Cerita (Scriptwriting)"],
@@ -330,6 +545,18 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
                 eduTitle2: "Alternatif Karier Lulusan SMA", eduList2: ["Asisten Desainer Grafis Junior", "Content Creator / Penulis Pemula"],
                 materi: ["Persiapan Ujian Praktik Keterampilan Seni (Jalur Mandiri/SNBT)", "Latihan Soal Penalaran Literasi Bahasa (UTBK)"], layanan: ["Bimbingan intensif persiapan dan kurasi Portofolio Seni untuk syarat pendaftaran PTN"],
                 guruBk: ["Bantu kurasi dan seleksi karya terbaik siswa agar memenuhi kriteria yang diminta oleh sistem portofolio SNPMB"], siswa: ["Persiapkan ujian praktik menggambar atau tes bakat secara fisik dengan matang (siapkan alat dan konsep)"]
+            },
+            MA_Awal: {
+                eduTitle1: "Fokus Portofolio (Fase E/F)", eduList1: ["Pementasan Teater Islami (Sutradara/Aktor)", "Desainer Utama Poster Acara Madrasah"],
+                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Editing Video/Foto Profesional (Adobe/Capcut)", "Teknik Kepenulisan (Karya Fiksi/Non-Fiksi)"],
+                materi: ["Seni Budaya Fase F", "Antropologi Lintas Agama/Budaya"], layanan: ["Dukungan pameran karya seni akhir semester"],
+                guruBk: ["Dorong siswa mengikuti kompetisi desain poster atau lomba film pendek tingkat nasional"], siswa: ["Mulailah mempublikasikan karya seni atau desainmu di media sosial untuk membangun portofolio digital!"]
+            },
+            MA_Transisi: {
+                eduTitle1: "Fokus Studi PTN/PTKIN", eduList1: ["Desain Komunikasi Visual (DKV)", "Arsitektur/Desain Interior", "Sastra Arab/Inggris/Indonesia", "Seni Rupa/Kriya (ISI)"],
+                eduTitle2: "Alternatif Karier Lulusan", eduList2: ["Junior Graphic Designer", "Freelance Video Editor / Penulis"],
+                materi: ["Penyiapan Portofolio Gambar/Seni (Jalur Mandiri/SNBT)", "Penalaran Literasi UTBK"], layanan: ["Bimbingan khusus kurasi Portofolio Seni SNMPTN/SNBT"],
+                guruBk: ["Kurasi secara ketat karya terbaik siswa untuk diunggah sebagai portofolio seleksi kampus jalur prestasi"], siswa: ["Persiapkan dengan matang konsep dan alat ukur untuk ujian praktik menggambar di seleksi masuk universitas (ISI/IKJ)"]
             },
             SMK_Awal: {
                 eduTitle1: "Fokus Praktik Kejuruan", eduList1: ["Produksi Film Animasi atau Video Pendek Bersama Tim", "Pembuatan Desain Kemasan Produk UMKM (Packaging)"],
@@ -368,6 +595,24 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
                 materi: ["Pengenalan Dasar Kepemimpinan (Leadership)", "Cara Berkomunikasi Efektif (Effective Communication)"], layanan: ["Bimbingan khusus teknik retorika, intonasi, dan dasar komunikasi massa"],
                 guruBk: ["Latih anak untuk berbicara dengan artikulasi yang jelas, tempo yang tepat, dan volume suara lantang"], siswa: ["Mulai biasakan berlatih berbicara atau berpidato di depan cermin agar kamu makin percaya diri"]
             },
+            MI_Awal: {
+                eduTitle1: "Aktivitas Dasar", eduList1: ["Memimpin doa atau selawat sebelum belajar", "Bermain simulasi jual-beli (Toko/Pasar Islami)"],
+                eduTitle2: "Karakter Dasar", eduList2: ["Berani tampil menceritakan hafalan pendek", "Berani unjuk tangan untuk bertanya"],
+                materi: ["Akhlak Pemimpin Dasar", "Latihan Percakapan Bahasa Arab/Indonesia Dasar"], layanan: ["Pembinaan rasa percaya diri tampil ke depan"],
+                guruBk: ["Biasakan anak diberi tanggung jawab kecil seperti menyiapkan barisan sebelum masuk kelas"], siswa: ["Jangan malu untuk mengacungkan tangan jika kamu tahu jawaban dari guru!"]
+            },
+            MI_Akhir: {
+                eduTitle1: "Ekskul Pilihan", eduList1: ["Pramuka Siaga (Sebagai Komandan Regu)", "Klub Pidato Cilik (Muhadharah)"],
+                eduTitle2: "Tanggung Jawab/Prestasi", eduList2: ["Berjualan kreasi mandiri di acara Market Day Madrasah", "Menjadi ketua kelas"],
+                materi: ["Pengenalan Ekonomi Syariah Ringan", "Latihan Retorika Dasar"], layanan: ["Simulasi permainan manajerial dan kepemimpinan"],
+                guruBk: ["Percayakan posisi koordinator kelompok kepadanya untuk mengasah insting kepemimpinannya"], siswa: ["Berlatihlah berpidato di depan cermin agar kelak kamu menjadi pembicara yang hebat"]
+            },
+            MI_Transisi: {
+                eduTitle1: "Target Lingkungan MTs/SMP", eduList1: ["MTs dengan program ekstrakurikuler organisasi (OSIM) yang sangat aktif", "Pesantren dengan latihan kemandirian dan bahasa yang baik"],
+                eduTitle2: "Persiapan Ekskul", eduList2: ["Klub Debat Bahasa", "Klub Jurnalistik / Penyiaran"],
+                materi: ["Teori Dasar Leadership Islami", "Keterampilan Komunikasi Efektif"], layanan: ["Pendampingan pengembangan public speaking"],
+                guruBk: ["Ajak anak berlatih intonasi suara dan artikulasi yang jelas saat berbicara"], siswa: ["Siapkan mentalmu untuk bersaing secara sehat menjadi pengurus organisasi di MTs nanti"]
+            },
             SMP_Awal: {
                 eduTitle1: "Pengembangan Diri", eduList1: ["Berusaha menjadi Pengurus Inti di OSIS", "Aktif dalam Kepanitiaan Acara Sekolah (Misal: Pentas Seni)"],
                 eduTitle2: "Eksplorasi Keterampilan", eduList2: ["Mencoba berjualan makanan ringan / stiker di kelas", "Mengeksplorasi cara jualan online (Menjadi dropshipper/reseller skala kecil)"],
@@ -380,6 +625,18 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
                 materi: ["Pengantar Teori Bisnis dan Manajemen", "Penguatan Keterampilan Public Speaking"], layanan: ["Layanan konsultasi untuk memetakan bakat kepemimpinan dan prospek bisnis remaja"],
                 guruBk: ["Arahkan energi siswa yang suka 'mengatur' ke hal-hal positif, seperti mengelola kas kelas atau membuat proyek wirausaha kecil"], siswa: ["Pertimbangkan masa depanmu: Ingin memperdalam teori ilmu ekonomi dan hukum (SMA) atau langsung praktik jualan dan manajemen bisnis (SMK)?"]
             },
+            MTs_Awal: {
+                eduTitle1: "Pengembangan Diri", eduList1: ["Aktif mendaftar menjadi pengurus inti OSIM", "Menjadi panitia acara besar madrasah (Class Meeting/PHBI)"],
+                eduTitle2: "Eksplorasi Keterampilan", eduList2: ["Praktek berjualan di bazar madrasah", "Bermain peran sebagai pengusaha/reseller online kecil-kecilan"],
+                materi: ["Ekonomi Dasar / Kewirausahaan", "Seni Debat dan Diskusi Kelompok"], layanan: ["Pelatihan retorika dan pidato (Muhadharah)"],
+                guruBk: ["Jadikan siswa ini sebagai juru bicara kelas atau sekolah pada event-event tertentu"], siswa: ["Beranikan dirimu untuk memimpin teman-teman saat diskusi kelompok di kelas!"]
+            },
+            MTs_Transisi: {
+                eduTitle1: "Pilihan Jurusan MA/SMA", eduList1: ["IPS (Fokus Ekonomi & Sosiologi)", "Bahasa (Untuk Modal Public Speaking Internasional)"],
+                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Bisnis Daring dan Pemasaran (BDP)", "Pariwisata / Perhotelan"],
+                materi: ["Pengantar Teori Manajerial Bisnis", "Dasar Hukum Tata Negara Singkat"], layanan: ["Konseling prospek bisnis atau ilmu hukum"],
+                guruBk: ["Salurkan bakat mengaturnya menjadi hal positif seperti membuat proyek amal untuk panti asuhan"], siswa: ["Kamu lebih suka berdebat teori hukum (MA IPS) atau langsung jualan online (SMK BDP)? Tentukan!"]
+            },
             SMA_Awal: {
                 eduTitle1: "Fokus Portofolio (Fase E/F)", eduList1: ["Menjabat sebagai Ketua Pelaksana Acara Besar Sekolah (Event Organizer Pensi)", "Mengikuti dan memenangi Lomba Debat Bahasa Indonesia/Inggris tingkat regional"],
                 eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Pelatihan Dasar-dasar Digital Marketing (SEO, Social Media Ads)", "Aktif Membangun Jaringan Pertemanan Luas (Networking)"],
@@ -391,6 +648,18 @@ export const riasecDictionary: Record<string, ProfileDetail> = {
                 eduTitle2: "Alternatif Karier Lulusan SMA", eduList2: ["Sales/Marketing Entry-Level", "Staf Junior Event Organizer (EO)", "Merintis Usaha Sendiri (Wirausaha Muda)"],
                 materi: ["Pematangan Materi Ekonomi Makro (Untuk Persiapan UTBK)", "Latihan Intensif Tes Potensi Skolastik (Fokus Pemahaman Literasi)"], layanan: ["Pelaksanaan Tryout Gabungan Soshum dan Penalaran Literasi"],
                 guruBk: ["Apabila siswa memiliki bakat debat dan analisis sosial yang sangat menonjol, arahkan minatnya pada program studi Hukum atau Hubungan Internasional"], siswa: ["Untuk menghadapi tes seleksi, perkuat dan perdalam pemahamanmu tentang logika hukum dasar serta konsep teori ekonomi makro"]
+            },
+            MA_Awal: {
+                eduTitle1: "Fokus Portofolio (Fase E/F)", eduList1: ["Ketua Pelaksana Event Madrasah / Ketua OSIM", "Delegasi Lomba Debat Bahasa Arab/Inggris/Indonesia"],
+                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Pelatihan Digital Marketing (Media Sosial)", "Networking dan Manajemen Komunitas Dakwah"],
+                materi: ["Ekonomi Syariah (Fase F)", "Fikih Siyasah (Dasar-dasar Kepemimpinan Islam)"], layanan: ["Penyediaan ekstrakurikuler inkubasi wirausaha (Student Company)"],
+                guruBk: ["Berikan kepercayaan penuh kepada siswa untuk mengelola *budget* dan mengambil keputusan di sebuah kepanitiaan"], siswa: ["Perluas relasimu (*networking*) dengan menjalin komunikasi baik lintas kelas bahkan sekolah/pesantren lain"]
+            },
+            MA_Transisi: {
+                eduTitle1: "Fokus Studi PTN/PTKIN", eduList1: ["Ilmu Hukum / Hukum Keluarga (Ahwal As-Syakhshiyyah)", "Manajemen Bisnis / Ekonomi Syariah", "Ilmu Komunikasi Dasar", "Hubungan Internasional"],
+                eduTitle2: "Alternatif Karier Lulusan", eduList2: ["Sales/Marketing BMT atau Perusahaan", "Membangun Bisnis/Start-Up Mandiri"],
+                materi: ["Materi Ekonomi Makro (UTBK)", "Latihan Skolastik (Pemahaman Bacaan & Literasi)"], layanan: ["Bimbingan intensif persiapan Hukum Dasar atau Ekonomi Bisnis"],
+                guruBk: ["Bimbing siswa untuk rasional memetakan ketatnya persaingan Ilmu Hukum atau Manajemen di Universitas Top"], siswa: ["Banyaklah berlatih kemampuan analisis bacaan/literasi, karena soal-soal jurusan Soshum sangat tebal bacaannya"]
             },
             SMK_Awal: {
                 eduTitle1: "Fokus Praktik Kejuruan", eduList1: ["Melakukan Simulasi Penjualan Retail maupun Online Market", "Aktif dalam Pengelolaan Unit Usaha Sekolah (Model Teaching Factory)"],

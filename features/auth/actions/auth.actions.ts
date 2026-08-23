@@ -26,33 +26,58 @@ export async function teacherLoginAction(
 
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
+    if (error || !data.user) {
         return { error: 'Email atau kata sandi salah. Silakan periksa kembali.', success: false };
     }
 
-    if (data.user) {
-        const { data: roleData } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', data.user.id)
-            .limit(1)
-            .single();
+    const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', data.user.id)
+        .limit(1)
+        .single();
 
-        if (roleData?.role === 'BK_COUNSELOR' || roleData?.role === 'TEACHER' || roleData?.role === 'SUPER_ADMIN') {
-            redirect('/bk/dashboard');
-        }
+    if (roleData && ['BK_COUNSELOR', 'TEACHER', 'SUPER_ADMIN'].includes(roleData.role)) {
+        // Berhasil login dan rolenya sesuai, Next.js akan memproses redirect di bawah
+    } else {
+        // Jika rolenya STUDENT atau tidak ada, paksa logout dan kembalikan error
+        await supabase.auth.signOut();
+        return { error: 'Akses ditolak. Akun Anda tidak memiliki izin untuk halaman ini.', success: false };
     }
 
-    redirect('/login?error=Akses tidak diizinkan untuk peran ini.');
+    // Redirect dilakukan di luar blok kondisional agar Next.js bisa menangkapnya
+    redirect('/bk/dashboard');
 }
 
-// Tambahkan fungsi pendeteksi tingkat sekolah ini di luar/atas fungsi studentLoginAction
-function detectEducationLevel(schoolName: string): 'SD' | 'SMP' | 'SMA' | 'SMK' {
+// ========================================================================
+// FUNGSI PENDETEKSI TINGKAT SEKOLAH (SUPER CERDAS & LENGKAP)
+// ========================================================================
+function detectEducationLevel(schoolName: string): 'SD' | 'MI' | 'SMP' | 'SMA' | 'SMK' | 'MTs' | 'MA' {
     const name = schoolName.toUpperCase();
-    if (name.includes('SD') || name.includes('MI')) return 'SD';
-    if (name.includes('SMA') || name.includes('MA')) return 'SMA';
-    if (name.includes('SMK') || name.includes('MAK')) return 'SMK';
-    return 'SMP'; // Default jika tidak terdeteksi
+    // Gunakan RegEx (\b) untuk mendeteksi batas kata. 
+    // Ini mencegah kata "SMART" terdeteksi sebagai "MA", atau "TAMTAM" terdeteksi "MT"
+
+    // 1. Deteksi Madrasah Ibtidaiyah (MI)
+    if (/\b(MI|MIN|MIS)\b/.test(name)) return 'MI';
+
+    // 2. Deteksi SD (termasuk SDIT, SDN, SDS)
+    if (/\b(SD|SDN|SDS|SDIT)\b/.test(name)) return 'SD';
+
+    // 3. Deteksi SMK (termasuk SMKN, SMKS, SMKIT, MAK, STM, SMEA)
+    if (/\b(SMK|SMKN|SMKS|SMKIT|MAK|STM|SMEA)\b/.test(name)) return 'SMK';
+
+    // 4. Deteksi MA dan MTs
+    if (/\b(MA|MAN|MAS)\b/.test(name)) return 'MA';
+    if (/\b(MTS|MTSN|MTSS)\b/.test(name)) return 'MTs';
+
+    // 5. Deteksi SMA (termasuk SMAN, SMAS, SMAIT, SMU)
+    if (/\b(SMA|SMAN|SMAS|SMAIT|SMU)\b/.test(name)) return 'SMA';
+
+    // 6. Deteksi SMP (termasuk SMPN, SMPS, SMPIT, SLTP)
+    if (/\b(SMP|SMPN|SMPS|SMPIT|SLTP)\b/.test(name)) return 'SMP';
+
+    // Default jatuh ke SMP jika nama sekolah benar-benar tidak tertebak
+    return 'SMP';
 }
 
 // ========================================================================
@@ -64,7 +89,6 @@ export async function studentLoginAction(
 ): Promise<AuthState> {
     const supabase = await createClient();
 
-    // Tangkap data dari form
     const studentCode = formData.get('studentCode')?.toString().trim() || '';
     const fullName = formData.get('fullName')?.toString().trim() || '';
     const className = formData.get('className')?.toString().trim().toUpperCase() || '';
@@ -76,23 +100,19 @@ export async function studentLoginAction(
 
     const defaultPassword = 'DigibkStudent2026!';
     let isSuccess = false;
-
-    // Deteksi tingkat pendidikan otomatis dari nama sekolah
     const detectedLevel = detectEducationLevel(schoolName);
 
     try {
         // ==========================================
-        // FASE 1: PENCARIAN SEKOLAH DAN KELAS
-        // Menggunakan .limit(1) untuk menghindari error database jika ada duplikat nama
+        // FASE 1: PENCARIAN SEKOLAH
         // ==========================================
         const { data: schools } = await supabase.from('schools').select('id').ilike('name', schoolName).limit(1);
-        let school = schools?.[0] || null;
+        let schoolId = schools?.[0]?.id || null;
+        let classId = null;
 
-        let classData = null;
-
-        if (school) {
-            const { data: classes } = await supabase.from('classes').select('id').eq('school_id', school.id).ilike('name', className).limit(1);
-            classData = classes?.[0] || null;
+        if (schoolId) {
+            const { data: classes } = await supabase.from('classes').select('id').eq('school_id', schoolId).ilike('name', className).limit(1);
+            classId = classes?.[0]?.id || null;
 
             // ==========================================
             // FASE 2: CEK APAKAH SISWA SUDAH TERDAFTAR
@@ -100,19 +120,19 @@ export async function studentLoginAction(
             const { data: existingStudents } = await supabase
                 .from('students')
                 .select('id, user_id, full_name')
-                .eq('school_id', school.id)
+                .eq('school_id', schoolId)
                 .eq('student_code', studentCode)
                 .limit(1);
 
             const existingStudent = existingStudents?.[0] || null;
 
             if (existingStudent && existingStudent.user_id) {
-                // Verifikasi nama agar absen tidak dipakai orang lain
+                // Verifikasi agar tidak ada penyusup yang memakai nomor absen orang lain
                 if (existingStudent.full_name.toLowerCase() !== fullName.toLowerCase()) {
-                    return { error: 'Nomor Absen/NISN ini sudah digunakan oleh nama siswa lain di sekolah ini.', success: false };
+                    return { error: 'Nomor Absen/NISN ini sudah digunakan oleh nama siswa lain.', success: false };
                 }
 
-                // Lakukan pemulihan sesi dengan mengambil email dari tabel users
+                // Ambil email dari tabel users
                 const { data: users } = await supabase.from('users').select('email').eq('id', existingStudent.user_id).limit(1);
                 const userData = users?.[0] || null;
 
@@ -123,20 +143,49 @@ export async function studentLoginAction(
                     });
 
                     if (signInError) {
-                        return { error: 'Gagal memulihkan sesi lama. Lapor ke Guru BK.', success: false };
+                        return { error: 'Sesi gagal dipulihkan. Silakan hubungi Guru BK.', success: false };
                     }
 
-                    // Jika berhasil memulihkan sesi, tandai sukses agar tidak masuk ke Fase 3
+                    // BUG FIX SANGAT PINTAR: Jika siswa pindah kelas (mengetik nama kelas yang berbeda dari sebelumnya)
+                    if (!classId) {
+                        const { data: newClass, error: classErr } = await supabase
+                            .from('classes')
+                            .insert({ school_id: schoolId, name: className, education_level: detectedLevel })
+                            .select('id')
+                            .single();
+                        if (!classErr && newClass) classId = newClass.id;
+                    }
+
+                    if (classId) {
+                        // Cek apakah siswa sudah tercatat di kelas ini (untuk menghindari duplikasi keanggotaan)
+                        const { data: membership } = await supabase.from('class_memberships')
+                            .select('id')
+                            .eq('student_id', existingStudent.id)
+                            .eq('class_id', classId)
+                            .limit(1)
+                            .single();
+
+                        if (!membership) {
+                            // Nonaktifkan riwayat kelas lama
+                            await supabase.from('class_memberships')
+                                .update({ is_active: false, left_at: new Date().toISOString() })
+                                .eq('student_id', existingStudent.id);
+
+                            // Masukkan ke kelas baru
+                            await supabase.from('class_memberships')
+                                .insert({ class_id: classId, student_id: existingStudent.id, is_active: true });
+                        }
+                    }
+
                     isSuccess = true;
                 } else {
-                    return { error: 'Data email tidak ditemukan untuk pemulihan.', success: false };
+                    return { error: 'Data akun tidak lengkap. Silakan hubungi Guru BK.', success: false };
                 }
             }
         }
 
         // ==========================================
-        // FASE 3: JIKA BELUM ADA, LAKUKAN PENDAFTARAN (AUTO-REGISTER)
-        // Fase ini HANYA berjalan jika isSuccess masih false
+        // FASE 3: PENDAFTARAN BARU (AUTO-REGISTER)
         // ==========================================
         if (!isSuccess) {
             const randomId = Math.random().toString(36).substring(2, 10);
@@ -154,55 +203,54 @@ export async function studentLoginAction(
 
             const userId = signUpData.user.id;
 
-            // Jika sekolah belum ada, buat baru
-            if (!school) {
+            if (!schoolId) {
                 const { data: newSchool, error: schoolErr } = await supabase
                     .from('schools').insert({ name: schoolName, code: `SCH-${randomId}`, education_level: detectedLevel })
                     .select('id').single();
                 if (schoolErr) throw schoolErr;
-                school = newSchool;
+                schoolId = newSchool.id;
             }
 
-            // Jika kelas belum ada, buat baru
-            if (!classData) {
+            if (!classId && schoolId) {
                 const { data: newClass, error: classErr } = await supabase
-                    .from('classes').insert({ school_id: school!.id, name: className })
+                    .from('classes').insert({ school_id: schoolId, name: className, education_level: detectedLevel })
                     .select('id').single();
                 if (classErr) throw classErr;
-                classData = newClass;
+                classId = newClass.id;
             }
 
-            await supabase.from('user_roles').insert({ user_id: userId, role: 'STUDENT', school_id: school!.id });
+            if (schoolId && classId) {
+                await supabase.from('user_roles').insert({ user_id: userId, role: 'STUDENT', school_id: schoolId });
 
-            // Gunakan detectedLevel untuk edukasi siswa
-            const { data: studentRecord, error: studentErr } = await supabase.from('students').insert({
-                user_id: userId,
-                school_id: school!.id,
-                student_code: studentCode,
-                full_name: fullName,
-                education_level: detectedLevel,
-            }).select('id').single();
+                const { data: studentRecord, error: studentErr } = await supabase.from('students').insert({
+                    user_id: userId,
+                    school_id: schoolId,
+                    student_code: studentCode,
+                    full_name: fullName,
+                    education_level: detectedLevel,
+                }).select('id').single();
 
-            if (studentErr) throw studentErr;
+                if (studentErr) throw studentErr;
 
-            await supabase.from('class_memberships').insert({
-                class_id: classData!.id,
-                student_id: studentRecord!.id
-            });
+                await supabase.from('class_memberships').insert({
+                    class_id: classId,
+                    student_id: studentRecord.id
+                });
 
-            isSuccess = true;
+                isSuccess = true;
+            } else {
+                throw new Error("Sistem gagal memproses ID Sekolah atau Kelas.");
+            }
         }
 
     } catch (err: unknown) {
-        // Menghindari 'any', memastikan error tertangkap sebagai string dengan aman
         const exactError = err instanceof Error ? err.message : String(err);
         console.error("Database Error Detail:", exactError);
-        return { error: `Gagal: ${exactError}`, success: false };
+        return { error: `Gagal memproses data: ${exactError}`, success: false };
     }
 
     // ==========================================
     // FASE 4: PENGALIHAN HALAMAN
-    // Ditaruh di luar try-catch agar fungsi redirect() dari Next.js tidak terblokir
     // ==========================================
     if (isSuccess) {
         redirect('/student/dashboard');

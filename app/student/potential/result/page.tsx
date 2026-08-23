@@ -14,13 +14,17 @@ import {
     riasecDictionary,
     type AssessmentResult,
     type RiasecProfile,
-    type LevelData, // Pastikan tipe ini di-import dari update terbaru kita
+    type LevelData,
     type PhaseData
 } from '@/lib/data/riasec';
 
 function blendArrays(arr1: string[] = [], arr2: string[] = [], arr3: string[] = [], maxItems: number): string[] {
     const combined = [...arr1, ...arr2.slice(0, Math.max(1, Math.floor(arr2.length / 2))), ...arr3.slice(0, 1)];
     return [...new Set(combined)].slice(0, maxItems);
+}
+
+function cleanCode(code?: string): string {
+    return code ? code.trim().toUpperCase() : '';
 }
 
 export default async function ResultPage({ searchParams }: { searchParams: Promise<{ id?: string }>; }) {
@@ -49,53 +53,36 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
     const grade = student.grade_level || 7;
 
     // ========================================================================
-    // 1. LOGIKA PENENTUAN FASE SANGAT DETAIL (SD, SMP, SMA, SMK)
+    // PERBAIKAN: Pisahkan secara detail Fase MI, MTs, dan MA
     // ========================================================================
-    let phaseKey: keyof LevelData = 'SMP_Awal'; // Default
+    let phaseKey: keyof LevelData = 'SMP_Awal';
     let bannerMessage = null;
     let isTransisi = false;
 
     if (eduLvl === 'SD') {
-        if (grade <= 3) {
-            phaseKey = 'SD_Awal';
-            bannerMessage = "Fase Bermain & Karakter Dasar: Dukung anak bereksplorasi dengan menyenangkan!";
-        } else if (grade <= 5) {
-            phaseKey = 'SD_Akhir';
-            bannerMessage = "Fase Eksplorasi Minat: Kenalkan anak pada berbagai ekstrakurikuler dasar.";
-        } else {
-            phaseKey = 'SD_Transisi';
-            isTransisi = true;
-            bannerMessage = "Persiapan Lulus SD: Fokus persiapkan mental dan pemilihan SMP yang mendukung minatnya.";
-        }
+        if (grade <= 3) { phaseKey = 'SD_Awal'; bannerMessage = "Fase Bermain & Karakter Dasar: Dukung anak bereksplorasi dengan menyenangkan!"; }
+        else if (grade <= 5) { phaseKey = 'SD_Akhir'; bannerMessage = "Fase Eksplorasi Minat: Kenalkan anak pada berbagai ekstrakurikuler dasar."; }
+        else { phaseKey = 'SD_Transisi'; isTransisi = true; bannerMessage = "Persiapan Lulus SD: Fokus persiapkan mental dan pemilihan SMP yang mendukung minatnya."; }
+    } else if (eduLvl === 'MI') {
+        if (grade <= 3) { phaseKey = 'MI_Awal'; bannerMessage = "Fase Bermain Islami & Karakter: Dukung anak bereksplorasi dengan nilai-nilai madrasah."; }
+        else if (grade <= 5) { phaseKey = 'MI_Akhir'; bannerMessage = "Fase Eksplorasi Minat Madrasah: Kenalkan anak pada berbagai ekstrakurikuler Islami dasar."; }
+        else { phaseKey = 'MI_Transisi'; isTransisi = true; bannerMessage = "Persiapan Lulus MI: Fokus persiapkan mental dan pemilihan MTs/SMP yang mendukung."; }
     } else if (eduLvl === 'SMP') {
-        if (grade <= 8) {
-            phaseKey = 'SMP_Awal';
-            bannerMessage = "Fase Pencarian Jati Diri: Eksplorasi ekstrakurikuler dan organisasi untuk membangun karakter.";
-        } else {
-            phaseKey = 'SMP_Transisi';
-            isTransisi = true;
-            bannerMessage = "Penentuan Jalur Menengah Atas: Gunakan data ini untuk mantap memilih SMA atau SMK yang tepat!";
-        }
-    } else if (eduLvl === 'SMA' || eduLvl === 'MA') {
-        if (grade <= 11) {
-            phaseKey = 'SMA_Awal';
-            bannerMessage = "Fase Peminatan (E & F): Perdalam portofolio akademik dan keikutsertaan organisasi sekolah.";
-        } else {
-            phaseKey = 'SMA_Transisi';
-            isTransisi = true;
-            bannerMessage = "Fokus UTBK & Kuliah: Panduan utama menentukan prodi PTN dan strategi masuk kampus impian!";
-        }
+        if (grade <= 8) { phaseKey = 'SMP_Awal'; bannerMessage = "Fase Pencarian Jati Diri: Eksplorasi ekstrakurikuler dan organisasi untuk membangun karakter."; }
+        else { phaseKey = 'SMP_Transisi'; isTransisi = true; bannerMessage = "Penentuan Jalur Menengah Atas: Gunakan data ini untuk mantap memilih SMA atau SMK yang tepat!"; }
+    } else if (eduLvl === 'MTs') {
+        if (grade <= 8) { phaseKey = 'MTs_Awal'; bannerMessage = "Fase Pencarian Jati Diri Madrasah: Aktif di organisasi dan ekstrakurikuler untuk membentuk karakter."; }
+        else { phaseKey = 'MTs_Transisi'; isTransisi = true; bannerMessage = "Penentuan Jalur Lanjutan: Mantapkan pilihan ke MA, SMA, atau SMK sesuai minat bakatmu!"; }
+    } else if (eduLvl === 'SMA') {
+        if (grade <= 11) { phaseKey = 'SMA_Awal'; bannerMessage = "Fase Peminatan (E & F): Perdalam portofolio akademik dan keikutsertaan organisasi sekolah."; }
+        else { phaseKey = 'SMA_Transisi'; isTransisi = true; bannerMessage = "Fokus UTBK & Kuliah: Panduan utama menentukan prodi PTN dan strategi masuk kampus impian!"; }
+    } else if (eduLvl === 'MA') {
+        if (grade <= 11) { phaseKey = 'MA_Awal'; bannerMessage = "Fase Peminatan MA (E & F): Perdalam portofolio akademik madrasah dan keikutsertaan organisasi."; }
+        else { phaseKey = 'MA_Transisi'; isTransisi = true; bannerMessage = "Fokus UTBK, SPAN-PTKIN & Kuliah: Strategi menembus kampus impianmu!"; }
     } else if (eduLvl === 'SMK') {
-        if (grade <= 11) {
-            phaseKey = 'SMK_Awal';
-            bannerMessage = "Fase Vokasi & PKL: Fokus pada pengembangan skill praktis dan etika kerja industri.";
-        } else {
-            phaseKey = 'SMK_Transisi';
-            isTransisi = true;
-            bannerMessage = "Persiapan Karier Lulusan: Perkuat sertifikasi, uji kompetensi (UKK), dan kesiapan wawancara kerja!";
-        }
+        if (grade <= 11) { phaseKey = 'SMK_Awal'; bannerMessage = "Fase Vokasi & PKL: Fokus pada pengembangan skill praktis dan etika kerja industri."; }
+        else { phaseKey = 'SMK_Transisi'; isTransisi = true; bannerMessage = "Persiapan Karier Lulusan: Perkuat sertifikasi, uji kompetensi (UKK), dan kesiapan wawancara kerja!"; }
     }
-    // ========================================================================
 
     if (!resultId) {
         const { data: latestResult } = await supabase.from('assessment_results')
@@ -123,38 +110,74 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
     );
 
     const rawResults = profile.riasec_results || [];
-    const sortedScores = [...rawResults].sort((a, b) => b.raw_score !== a.raw_score ? b.raw_score - a.raw_score : a.code.localeCompare(b.code));
+
+    const sortedScores = [...rawResults].sort((a, b) => {
+        const scoreA = Number(a.raw_score);
+        const scoreB = Number(b.raw_score);
+        if (scoreB !== scoreA) return scoreB - scoreA;
+        return cleanCode(a.code).localeCompare(cleanCode(b.code));
+    });
 
     const topThree = sortedScores.slice(0, 3);
-    const code1 = topThree[0]?.code || 'S';
-    const code2 = topThree[1]?.code || 'C';
-    const code3 = topThree[2]?.code || 'I';
+    const code1 = cleanCode(topThree[0]?.code) || 'S';
+    const code2 = cleanCode(topThree[1]?.code) || 'C';
+    const code3 = cleanCode(topThree[2]?.code) || 'I';
     const hyphenatedCodes = `${code1}-${code2}-${code3}`;
 
-    const highestScore = sortedScores[0]?.raw_score || 0;
-    const dominantTies = sortedScores.filter((item) => item.raw_score === highestScore);
+    const highestScore = Number(sortedScores[0]?.raw_score) || 0;
+    const dominantTies = sortedScores.filter((item) => Number(item.raw_score) === highestScore);
     const isDominantTie = dominantTies.length > 1;
 
-    const cutoffScore = topThree[2]?.raw_score ?? 0;
-    const tiedAtCutoff = sortedScores.filter((item) => item.raw_score === cutoffScore);
-    const additionalTiedCodes = tiedAtCutoff.filter((item) => !topThree.some((topItem) => topItem.code === item.code)).map((item) => dimensionDefs[item.code].name);
+    const cutoffScore = Number(topThree[2]?.raw_score) ?? 0;
+    const tiedAtCutoff = sortedScores.filter((item) => Number(item.raw_score) === cutoffScore);
+
+    const additionalTiedCodes = tiedAtCutoff
+        .filter((item) => !topThree.some((topItem) => cleanCode(topItem.code) === cleanCode(item.code)))
+        .map((item) => {
+            const code = cleanCode(item.code);
+            return dimensionDefs[code]?.name || code;
+        });
 
     const cutoffMotivationMessage = additionalTiedCodes.length > 0
         ? `Selain pola di atas, kamu juga memiliki potensi kuat di bidang ${additionalTiedCodes.join(' dan ')} (Skor ${cutoffScore}). Jadikan opsi keterampilan unik!`
         : null;
 
-    const data1 = riasecDictionary[code1];
-    const data2 = riasecDictionary[code2];
-    const data3 = riasecDictionary[code3];
+    const data1 = riasecDictionary[code1] || riasecDictionary['S'];
+    const data2 = riasecDictionary[code2] || riasecDictionary['C'];
+    const data3 = riasecDictionary[code3] || riasecDictionary['I'];
 
-    // ========================================================================
-    // 2. MENGAMBIL DATA BERDASARKAN KUNCI FASE (phaseKey)
-    // ========================================================================
-    const phase1: PhaseData = data1.levels[phaseKey];
-    const phase2: PhaseData = data2.levels[phaseKey];
-    const phase3: PhaseData = data3.levels[phaseKey];
+    let dynamicConclusion = "";
 
-    // Menggabungkan data HANYA dari fase yang sedang aktif!
+    if (isDominantTie) {
+        const tieNamesText = dominantTies.map(t => {
+            const code = cleanCode(t.code);
+            return riasecDictionary[code]?.indonesianTitle || code;
+        }).join(" dan ");
+
+        dynamicConclusion = `Kamu memiliki ${dominantTies.length} tipe dominan yang seimbang, yaitu ${tieNamesText} dengan pola gabungan ${hyphenatedCodes}.\n\n`;
+
+        dominantTies.forEach(t => {
+            const code = cleanCode(t.code);
+            const dict = riasecDictionary[code];
+            if (dict) {
+                dynamicConclusion += `• ${dict.title}: ${dict.desc}\n`;
+            }
+        });
+
+        dynamicConclusion += `\nSecara khusus, perpaduan ini memberikanmu kekuatan dari ${dimensionDefs[code1]?.name || code1}, didukung gaya pendekatan ${dimensionDefs[code2]?.behavior || 'tertentu'}, serta insting ${dimensionDefs[code3]?.behavior || 'khas'}.`;
+    } else {
+        dynamicConclusion = `Tipe dominan kamu adalah ${data1.title} (${data1.indonesianTitle}) dengan pola gabungan ${hyphenatedCodes}. ${data1.desc}\n\nSecara khusus, kamu memadukan dorongan dari ${dimensionDefs[code1]?.name || code1}, gaya pendekatan ${dimensionDefs[code2]?.behavior || 'tertentu'}, didukung insting ${dimensionDefs[code3]?.behavior || 'khas'}.`;
+    }
+
+    let dominantTieMessage = null;
+    if (isDominantTie) {
+        dominantTieMessage = `Hebat! Kamu memiliki kecerdasan minat yang seimbang pada beberapa bidang sekaligus. Perpaduan ini membuatmu lebih mudah beradaptasi di berbagai lingkungan!`;
+    }
+
+    const phase1: PhaseData = data1.levels[phaseKey] || data1.levels['SMP_Awal'];
+    const phase2: PhaseData = data2.levels[phaseKey] || data2.levels['SMP_Awal'];
+    const phase3: PhaseData = data3.levels[phaseKey] || data3.levels['SMP_Awal'];
+
     const mixedEdu1 = blendArrays(phase1.eduList1, phase2.eduList1, phase3.eduList1, 5);
     const mixedEdu2 = blendArrays(phase1.eduList2, phase2.eduList2, phase3.eduList2, 5);
     const mixedMateri = blendArrays(phase1.materi, phase2.materi, phase3.materi, 6);
@@ -162,22 +185,11 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
     const mixedGuruBk = blendArrays(phase1.guruBk, phase2.guruBk, phase3.guruBk, 4);
     const mixedSiswa = blendArrays(phase1.siswa, phase2.siswa, phase3.siswa, 4);
 
-    // Karir & Freelance (Bebas lintas fase)
     const mixedKarir = blendArrays(data1.karir, data2.karir, data3.karir, 7);
     const mixedFreelance = blendArrays(data1.freelance, data2.freelance, data3.freelance, 5);
-    // ========================================================================
 
-    const dynamicConclusion = `Tipe dominan kamu adalah ${data1.title} (${data1.indonesianTitle}) dengan pola gabungan ${hyphenatedCodes}. ${data1.desc} Secara khusus, kamu memadukan dorongan dari ${dimensionDefs[code1].name}, gaya pendekatan ${dimensionDefs[code2].behavior}, didukung insting ${dimensionDefs[code3].behavior}.`;
-
-    let dominantTieMessage = null;
-    if (isDominantTie) {
-        const tieNames = dominantTies.map(t => riasecDictionary[t.code].indonesianTitle).join(" dan ");
-        dominantTieMessage = `Luar biasa! Skor tertinggi seimbang pada tipe ${tieNames}. Jadikan kepribadian fleksibel ini sebagai keunggulanmu!`;
-    }
-
-    // Penyesuaian nama tab berdasarkan tingkat yang spesifik
     let tabEducationTitle = "Pengembangan Diri & Studi";
-    if (eduLvl === 'SD') tabEducationTitle = "Aktivitas & Ekstrakurikuler";
+    if (eduLvl === 'SD' || eduLvl === 'MI') tabEducationTitle = "Aktivitas & Ekstrakurikuler";
     if (eduLvl === 'SMK') tabEducationTitle = "Fokus Vokasional";
 
     return (
@@ -211,7 +223,7 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
                         </div>
                         <div className="flex-1">
                             <h2 className="text-lg font-bold text-slate-900 mb-3">Ringkasan Kesimpulan</h2>
-                            <p className="text-slate-700 text-sm leading-relaxed mb-4">{dynamicConclusion}</p>
+                            <p className="text-slate-700 text-sm leading-relaxed mb-4 whitespace-pre-line">{dynamicConclusion}</p>
 
                             {dominantTieMessage && (
                                 <div className="mb-4 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 flex items-start gap-2">
@@ -236,10 +248,11 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                         {sortedScores.map((score) => {
-                            const percentage = Math.min((score.raw_score / 35) * 100, 100);
-                            const dimInfo = dimensionDefs[score.code];
+                            const percentage = Math.min((Number(score.raw_score) / 35) * 100, 100);
+                            const safeCode = cleanCode(score.code);
+                            const dimInfo = dimensionDefs[safeCode] || { name: safeCode, meaning: 'Data dimensi tidak ditemukan' };
                             return (
-                                <div key={score.code} className="flex flex-col gap-2">
+                                <div key={safeCode} className="flex flex-col gap-2">
                                     <div className="flex justify-between items-end">
                                         <div>
                                             <span className="font-bold text-slate-800 text-sm">{dimInfo.name}</span>
@@ -298,11 +311,11 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-700">
-                        <h4 className="text-sm font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-600 pb-2"><HeartHandshake className="h-4 w-4 text-slate-300" /> Yang Perlu Dilakukan Guru / Orang Tua</h4>
+                        <h4 className="text-sm font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-600 pb-2"><HeartHandshake className="h-4 w-4 text-slate-300" /> Saran untuk Guru / Orang Tua</h4>
                         <ul className="space-y-2">{mixedGuruBk.map((item, i) => <li key={i} className="text-sm text-slate-300 flex items-start gap-2"><ArrowRight className="h-4 w-4 shrink-0 mt-0.5 opacity-50" /> {item}</li>)}</ul>
                     </div>
                     <div className="bg-blue-50 rounded-xl p-6 shadow-sm border border-blue-100">
-                        <h4 className="text-sm font-bold text-blue-900 mb-4 flex items-center gap-2 border-b border-blue-200 pb-2"><UserCheck className="h-4 w-4 text-blue-600" /> Yang Perlu Kamu Lakukan (Siswa)</h4>
+                        <h4 className="text-sm font-bold text-blue-900 mb-4 flex items-center gap-2 border-b border-blue-200 pb-2"><UserCheck className="h-4 w-4 text-blue-600" /> Saran untuk Kamu (Siswa)</h4>
                         <ul className="space-y-2">{mixedSiswa.map((item, i) => <li key={i} className="text-sm text-blue-800 flex items-start gap-2"><Sparkles className="h-4 w-4 shrink-0 mt-0.5 opacity-50 text-blue-500" /> {item}</li>)}</ul>
                     </div>
                 </div>
