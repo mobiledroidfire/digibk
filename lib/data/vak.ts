@@ -10,7 +10,6 @@ export type VakProfile = {
 };
 export type AssessmentResultVak = { id: string; vak_profiles: VakProfile | VakProfile[] | null; };
 
-// Struktur ini disamakan persis dengan RIASEC agar UI Frontend bisa seragam (Re-usable)
 export type PhaseData = {
     eduTitle1: string; eduList1: string[];
     eduTitle2: string; eduList2: string[];
@@ -19,25 +18,13 @@ export type PhaseData = {
 };
 
 export type LevelData = {
-    // Jenjang Umum
-    SD_Awal: PhaseData;     // Kelas 1-3
-    SD_Akhir: PhaseData;    // Kelas 4-5
-    SD_Transisi: PhaseData; // Kelas 6
-    SMP_Awal: PhaseData;    // Kelas 7-8
-    SMP_Transisi: PhaseData;// Kelas 9
-    SMA_Awal: PhaseData;    // Kelas 10-11
-    SMA_Transisi: PhaseData;// Kelas 12
-    SMK_Awal: PhaseData;    // Kelas 10-11
-    SMK_Transisi: PhaseData;// Kelas 12
-
-    // Tambahan Jenjang Madrasah (MI, MTs, MA)
-    MI_Awal: PhaseData;     // Kelas 1-3 MI
-    MI_Akhir: PhaseData;    // Kelas 4-5 MI
-    MI_Transisi: PhaseData; // Kelas 6 MI
-    MTs_Awal: PhaseData;    // Kelas 7-8 MTs
-    MTs_Transisi: PhaseData;// Kelas 9 MTs
-    MA_Awal: PhaseData;     // Kelas 10-11 MA
-    MA_Transisi: PhaseData; // Kelas 12 MA
+    SD_Awal: PhaseData; SD_Akhir: PhaseData; SD_Transisi: PhaseData;
+    SMP_Awal: PhaseData; SMP_Transisi: PhaseData;
+    SMA_Awal: PhaseData; SMA_Transisi: PhaseData;
+    SMK_Awal: PhaseData; SMK_Transisi: PhaseData;
+    MI_Awal: PhaseData; MI_Akhir: PhaseData; MI_Transisi: PhaseData;
+    MTs_Awal: PhaseData; MTs_Transisi: PhaseData;
+    MA_Awal: PhaseData; MA_Transisi: PhaseData;
 };
 
 export type ProfileDetailVak = {
@@ -55,317 +42,310 @@ export const dimensionDefsVak: Record<string, { name: string; meaning: string; b
 export const vakDictionary: Record<string, ProfileDetailVak> = {
     V: {
         title: "Visual", indonesianTitle: "Visual (Penglihatan)",
-        desc: "Kamu adalah tipe pembelajar yang lebih mudah mengingat informasi dengan cara melihat. Gambar, diagram, warna, dan catatan yang rapi sangat membantumu dalam belajar.",
+        desc: "Kamu memiliki keunggulan kecerdasan visual-spasial. Mengubah informasi menjadi bentuk gambar, diagram, dan warna adalah cara paling efektif untuk mengoptimalkan daya ingatmu.",
         karir: ["Desainer Grafis", "Arsitek", "Fotografer", "Ilustrator", "Pembuat Peta (Kartografer)"], freelance: ["Editor Video", "Desainer UI/UX"],
         levels: {
-            // -- SD --
             SD_Awal: {
-                eduTitle1: "Metode Belajar", eduList1: ["Gunakan flashcard bergambar", "Belajar dengan buku cerita full color"],
-                eduTitle2: "Karakteristik", eduList2: ["Tertarik pada benda berwarna mencolok", "Suka memperhatikan raut wajah guru"],
-                materi: ["Membaca Permulaan Bergambar", "Mewarnai Bentuk Dasar"], layanan: ["Fasilitas poster edukasi di kelas"],
-                guruBk: ["Gunakan alat peraga visual yang menarik saat memberikan bimbingan"], siswa: ["Gunakan pensil warna untuk menandai catatanmu"]
+                eduTitle1: "Metode Belajar", eduList1: ["Penggunaan media flashcard bergambar", "Buku literasi visual (Full Color)"],
+                eduTitle2: "Karakteristik", eduList2: ["Tertarik pada stimulus warna yang mencolok", "Observan terhadap ekspresi wajah sekitar"],
+                materi: ["Literasi Visual Dasar", "Kreativitas Bentuk dan Warna"], layanan: ["Fasilitasi media poster edukasi interaktif"],
+                guruBk: ["Gunakan alat peraga visual (alat peraga konkret) untuk mempertahankan atensi anak saat bimbingan."], siswa: ["Gunakan pensil warna favoritmu untuk mewarnai bagian buku yang penting, ya!"]
             },
             SD_Akhir: {
-                eduTitle1: "Metode Belajar", eduList1: ["Membuat peta pikiran (Mind Map) sederhana", "Menonton video dokumenter anak"],
-                eduTitle2: "Karakteristik", eduList2: ["Catatan sekolahnya cenderung rapi", "Cepat hafal rute jalan atau letak barang"],
-                materi: ["Pembuatan Poster Mini", "Latihan Menggambar Peta"], layanan: ["Bimbingan cara merangkum materi secara visual"],
-                guruBk: ["Ajak anak memvisualisasikan cita-citanya melalui gambar"], siswa: ["Tempelkan jadwal pelajaranmu yang warna-warni di dinding kamar"]
+                eduTitle1: "Metode Belajar", eduList1: ["Pengenalan Peta Konsep (Mind Mapping)", "Media pembelajaran berbasis video/dokumenter"],
+                eduTitle2: "Karakteristik", eduList2: ["Memiliki kecenderungan mencatat dengan rapi", "Mampu menghafal rute spasial dengan cepat"],
+                materi: ["Keterampilan Presentasi Visual", "Pemetaan Ide Sederhana"], layanan: ["Bimbingan teknik merangkum berbasis visual"],
+                guruBk: ["Ajak siswa memvisualisasikan aspirasi atau cita-citanya melalui media gambar (Art Therapy)."], siswa: ["Tempelkan jadwal pelajaran yang sudah kamu hias di dinding kamar agar mudah diingat."]
             },
             SD_Transisi: {
-                eduTitle1: "Target Lingkungan SMP", eduList1: ["SMP dengan fasilitas proyektor di tiap kelas", "SMP yang mendukung kreativitas visual mading"],
-                eduTitle2: "Persiapan Ekskul SMP", eduList2: ["Klub Menggambar/Komik", "Klub Fotografi Cilik"],
-                materi: ["Keterampilan Mencatat Visual", "Manajemen Buku Catatan"], layanan: ["Konseling persiapan metode belajar SMP"],
-                guruBk: ["Ajarkan anak cara membuat ringkasan bab pelajaran dengan tabel/diagram"], siswa: ["Siapkan stabilo dan spidol warna-warni untuk SMP nanti"]
+                eduTitle1: "Target Lingkungan SMP", eduList1: ["Sekolah dengan fasilitas multimedia (Proyektor) memadai", "Sekolah dengan kultur apresiasi karya visual (Mading aktif)"],
+                eduTitle2: "Persiapan Ekskul SMP", eduList2: ["Klub Jurnalistik Visual", "Kesenian Lukis / Fotografi"],
+                materi: ["Keterampilan Mencatat Visual Terstruktur", "Manajemen Informasi Visual"], layanan: ["Konseling persiapan adaptasi gaya belajar menengah"],
+                guruBk: ["Fasilitasi siswa dengan teknik merangkum buku tebal menggunakan skema visual untuk persiapan SMP."], siswa: ["Mulai biasakan merangkum catatan pelajaran menggunakan tabel atau mind-map yang menarik."]
             },
-            // -- MI --
             MI_Awal: {
-                eduTitle1: "Metode Belajar Islami", eduList1: ["Menggunakan Iqro/Juz Amma berwarna", "Menonton video kisah Nabi kartun"],
-                eduTitle2: "Karakteristik Dasar", eduList2: ["Senang melihat hiasan kaligrafi", "Suka memperhatikan gerakan shalat dengan saksama"],
-                materi: ["Pengenalan Huruf Hijaiyah Berwarna", "Menulis Arab Dasar"], layanan: ["Penyediaan flashcard huruf Arab"],
-                guruBk: ["Gunakan gambar-gambar bernuansa Islami untuk menarik perhatian anak"], siswa: ["Warnai buku tugasmu agar kamu lebih semangat belajar!"]
+                eduTitle1: "Metode Belajar Islami", eduList1: ["Pendekatan Iqro dengan blok warna penegas", "Media pembelajaran kisah Nabi berbasis animasi"],
+                eduTitle2: "Karakteristik Dasar", eduList2: ["Apresiatif terhadap ornamen kaligrafi", "Observan meniru gerakan shalat secara visual"],
+                materi: ["Pengenalan Huruf Hijaiyah Berwarna", "Keterampilan Menulis Arab Dasar"], layanan: ["Penyediaan instrumen flashcard Hijaiyah"],
+                guruBk: ["Tarik atensi anak menggunakan media gambar bernuansa Islami yang interaktif dan kaya warna."], siswa: ["Warnai buku catatan tugasmu agar suasana belajar terasa lebih menyenangkan!"]
             },
             MI_Akhir: {
-                eduTitle1: "Metode Belajar Islami", eduList1: ["Menghafal doa dengan bantuan gambar komik", "Membuat poster dakwah mini"],
-                eduTitle2: "Karakteristik/Tanggung Jawab", eduList2: ["Suka menghias Mading kelas", "Menjaga kerapian meja belajar"],
-                materi: ["Seni Kaligrafi Pemula", "Sejarah Islam melalui Video"], layanan: ["Bimbingan metode menghafal berbasis visual"],
-                guruBk: ["Arahkan siswa membuat rangkuman kisah sahabat Nabi dalam bentuk peta konsep bergambar"], siswa: ["Tandai ayat-ayat hafalanmu di Al-Quran dengan stiker penanda khusus"]
+                eduTitle1: "Metode Belajar Islami", eduList1: ["Asosiasi hafalan doa dengan gambar ilustrasi", "Pembuatan karya poster dakwah mini"],
+                eduTitle2: "Tanggung Jawab Akademik", eduList2: ["Merancang tata letak Mading kelas", "Menjaga keindahan dan kerapian ruang kelas"],
+                materi: ["Seni Kaligrafi Tingkat Pemula", "Sejarah Kebudayaan Islam via Visual"], layanan: ["Pendampingan teknik hafalan berbasis memori visual"],
+                guruBk: ["Arahkan siswa untuk mengubah narasi Sejarah Kebudayaan Islam menjadi bentuk komik atau garis waktu (timeline)."], siswa: ["Gunakan stiker penanda warna-warni pada Al-Quran untuk mempermudah target hafalanmu."]
             },
             MI_Transisi: {
-                eduTitle1: "Target Lingkungan MTs/SMP", eduList1: ["MTs dengan fasilitas multimedia yang baik", "MTs yang memiliki ekskul kaligrafi/desain visual"],
-                eduTitle2: "Persiapan Ekskul", eduList2: ["Klub Kaligrafi (Khat)", "Jurnalistik Madrasah"],
-                materi: ["Manajemen Catatan Madrasah", "Pembuatan Mind Map Materi Akidah"], layanan: ["Konseling metode belajar visual tingkat menengah"],
-                guruBk: ["Ajarkan siswa membedakan warna stabilo untuk definisi, dalil, dan contoh"], siswa: ["Siapkan buku catatan dengan banyak warna agar kamu tidak bosan saat menghafal di MTs"]
+                eduTitle1: "Target Lingkungan MTs", eduList1: ["Madrasah dengan sarana multimedia pendukung", "Madrasah yang memiliki pembinaan ekskul visual/kaligrafi"],
+                eduTitle2: "Persiapan Ekskul", eduList2: ["Klub Seni Kaligrafi (Khat)", "Desain Grafis / Jurnalistik Madrasah"],
+                materi: ["Manajemen Catatan Madrasah", "Pemetaan Ide Materi Akidah/Akhlak"], layanan: ["Konseling metode belajar visual tingkat menengah"],
+                guruBk: ["Latih siswa menerapkan teknik 'Color-Coding' (kode warna) untuk membedakan dalil, definisi, dan contoh kasus."], siswa: ["Siapkan spidol atau stabilo berbeda warna untuk merapikan catatanmu di MTs nanti."]
             },
-            // -- SMP --
             SMP_Awal: {
-                eduTitle1: "Strategi Belajar", eduList1: ["Gunakan highlighter (stabilo) berbagai warna", "Ubah teks panjang menjadi infografis"],
-                eduTitle2: "Karakteristik", eduList2: ["Lebih paham jika melihat presentasi slide (PPT)", "Kadang terganggu oleh visual yang berantakan"],
-                materi: ["Teknik Membuat Mind Mapping", "Membaca Cepat (Skimming visual)"], layanan: ["Pelatihan teknik mencatat kreatif"],
-                guruBk: ["Gunakan media infografis saat memberikan materi klasikal BK di kelas"], siswa: ["Biasakan merangkum catatan pelajaran menjadi diagram pohon yang menarik"]
+                eduTitle1: "Strategi Belajar", eduList1: ["Implementasi teknik 'Color-Coding' pada catatan", "Transformasi teks panjang menjadi infografis naratif"],
+                eduTitle2: "Karakteristik", eduList2: ["Daya tangkap meningkat drastis melalui media slide (PPT)", "Mudah terdistraksi oleh tata letak ruangan yang berantakan"],
+                materi: ["Teknik Mind Mapping Lanjutan", "Keterampilan Membaca Pindai (Skimming/Scanning)"], layanan: ["Pelatihan teknik mencatat kreatif (Creative Note-taking)"],
+                guruBk: ["Gunakan instrumen pemetaan visual (seperti mind-map) untuk membantu siswa menstrukturkan alur pikirannya saat konseling."], siswa: ["Terapkan teknik 'Color-Coding' pada catatan belajarmu untuk memperkuat daya ingat visualmu secara signifikan."]
             },
             SMP_Transisi: {
-                eduTitle1: "Pilihan Jurusan SMA/MA", eduList1: ["Semua jurusan cocok, asalkan metode belajarnya disesuaikan (Visual)"],
-                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Desain Komunikasi Visual (DKV)", "Multimedia", "Animasi"],
-                materi: ["Eksplorasi Karir Berbasis Desain", "Strategi Ujian Nasional/Sekolah berbasis Visual"], layanan: ["Konsultasi arah bakat industri kreatif/visual"],
-                guruBk: ["Tunjukkan video profil jurusan SMK/SMA agar siswa mendapat gambaran visual yang jelas"], siswa: ["Pertimbangkan masuk SMK DKV jika kamu sangat suka belajar melalui desain dan gambar"]
+                eduTitle1: "Pilihan Jurusan SMA/MA", eduList1: ["Sangat adaptif di semua jurusan (MIPA/IPS) dengan catatan modifikasi metode visual"],
+                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Desain Komunikasi Visual (DKV)", "Multimedia / Animasi", "Arsitektur Dasar"],
+                materi: ["Eksplorasi Karir Industri Kreatif", "Strategi Ujian Berbasis Kecerdasan Spasial"], layanan: ["Konsultasi arah bakat industri kreatif dan desain"],
+                guruBk: ["Gunakan media video profil atau infografis kampus/jurusan untuk mempermudah siswa memvisualisasikan masa depannya."], siswa: ["Pertimbangkan jalur SMK DKV atau Multimedia jika kamu memiliki *passion* kuat dalam mengekspresikan ide melalui karya visual."]
             },
-            // -- MTs --
             MTs_Awal: {
-                eduTitle1: "Strategi Belajar", eduList1: ["Gunakan highlighter warna-warni untuk membedakan hukum tajwid/dalil", "Membuat bagan silsilah nabi/sejarah Islam"],
-                eduTitle2: "Karakteristik", eduList2: ["Rapi dalam menyalin tulisan Arab di papan tulis", "Lebih paham saat guru menggunakan slide proyektor"],
-                materi: ["Teknik Mind Mapping Materi Fikih", "Desain Poster Dakwah"], layanan: ["Pelatihan pembuatan catatan estetik (Aesthetic Notes)"],
-                guruBk: ["Saat konseling, gunakan kertas atau papan tulis kecil untuk menggambar alur penyelesaian masalah siswa"], siswa: ["Beli stabilo dengan 3 warna berbeda untuk menandai arti, lafal, dan hukum bacaan pada buku agamamu"]
+                eduTitle1: "Strategi Belajar", eduList1: ["Pemetaan hukum tajwid menggunakan stabilo multi-warna", "Visualisasi silsilah sejarah Islam dalam bentuk bagan (Tree Diagram)"],
+                eduTitle2: "Karakteristik", eduList2: ["Memiliki ketelitian tinggi dalam menyalin teks Arab", "Pemahaman materi optimal melalui proyektor slide"],
+                materi: ["Teknik Visualisasi Materi Fikih", "Desain Media Dakwah Komunikasi Visual"], layanan: ["Pelatihan pembuatan catatan estetik (Aesthetic Notes)"],
+                guruBk: ["Manfaatkan papan tulis atau kertas kosong untuk membuat bagan pemecahan masalah bersama siswa saat sesi konseling individu."], siswa: ["Gunakan tiga warna stabilo yang berbeda (misal: kuning untuk hukum tajwid, hijau untuk arti, merah untuk dalil) di buku catatan agamamu."]
             },
             MTs_Transisi: {
-                eduTitle1: "Pilihan Jurusan MA/SMA", eduList1: ["Sangat adaptif di semua jurusan, perkuat pemetaan visual"],
-                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Multimedia", "DKV", "Tata Busana (Fashion Design)"],
-                materi: ["Pengenalan Profesi Desain & Kreatif", "Strategi Belajar Visual untuk Ujian Akhir"], layanan: ["Tes Minat Bakat Visual-Spasial"],
-                guruBk: ["Gunakan video dokumenter atau brosur bergambar untuk menjelaskan pilihan sekolah lanjutan"], siswa: ["Jika kamu sangat suka menggambar dan melihat keindahan, SMK jurusan desain/multimedia bisa jadi pilihan tepat!"]
+                eduTitle1: "Pilihan Jurusan MA/SMA", eduList1: ["Adaptif di Keagamaan maupun Umum, dengan pendekatan visual"],
+                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Multimedia / Broadcasting", "Desain Komunikasi Visual (DKV)", "Tata Busana"],
+                materi: ["Pengenalan Profesi Industri Kreatif Digital", "Strategi Visual Mengerjakan Ujian Nasional"], layanan: ["Tes Penelusuran Minat Visual-Spasial"],
+                guruBk: ["Sajikan brosur visual bergambar atau video dokumenter untuk membantu siswa merancang *roadmap* pendidikan lanjutannya."], siswa: ["Jika kamu memiliki apresiasi tinggi terhadap estetika dan karya visual, jurusan DKV atau Multimedia di jenjang vokasi bisa menjadi pilihan cerdas!"]
             },
-            // -- SMA --
             SMA_Awal: {
-                eduTitle1: "Strategi Belajar (Fase E/F)", eduList1: ["Gunakan sticky notes warna-warni untuk target belajar", "Cari video ilustrasi (YouTube) untuk konsep sains yang rumit"],
-                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Desain UI/UX tingkat pemula", "Mampu membaca diagram/grafik data kompleks"],
-                materi: ["Pemahaman Tabel & Kurva Ekonomi/Sains", "Presentasi Visual Profesional"], layanan: ["Bimbingan cara presentasi menggunakan slide interaktif"],
-                guruBk: ["Fasilitasi mading kelas sebagai area mind map raksasa untuk persiapan ujian"], siswa: ["Gunakan aplikasi pembuat mind map digital (seperti Miro/Canva) untuk merangkum pelajaran"]
+                eduTitle1: "Strategi Belajar (Fase E/F)", eduList1: ["Penggunaan instrumen Kanban Board / Sticky Notes untuk pelacakan tugas", "Integrasi video ilustrasi/animasi untuk materi MIPA yang abstrak"],
+                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Dasar-dasar Desain Antarmuka (UI/UX Design)", "Kemampuan analisis grafik dan kurva kompleks"],
+                materi: ["Interpretasi Data Visual Terapan", "Teknik Presentasi Profesional Berbasis Slide"], layanan: ["Bimbingan teknik presentasi dan *Public Speaking* dengan media visual"],
+                guruBk: ["Fasilitasi pembuatan *Vision Board* (Papan Impian) di kelas sebagai media pendorong motivasi intrinsik siswa."], siswa: ["Gunakan platform digital (seperti Miro, Notion, atau Canva) untuk merancang rangkuman pelajaran yang interaktif dan mudah diakses."]
             },
             SMA_Transisi: {
-                eduTitle1: "Persiapan UTBK/PTN", eduList1: ["Pelajari tipe soal Figural/Gambar (TPS UTBK)", "Visualisasikan rumus matematika menjadi bentuk geometri nyata"],
-                eduTitle2: "Alternatif Karier", eduList2: ["Asisten Desainer", "Staf Administrasi Dokumen Visual"],
-                materi: ["Trik Cepat Soal Figural UTBK", "Manajemen Waktu Visual (Kalender/Kanban Board)"], layanan: ["Tryout khusus soal pola visual/gambar"],
-                guruBk: ["Bantu siswa merancang kalender visual raksasa (Timeline) menuju hari-H UTBK"], siswa: ["Perkuat insting matamu dalam mengerjakan soal penalaran gambar/figural di TPS SNBT"]
+                eduTitle1: "Persiapan UTBK/PTN", eduList1: ["Latihan intensif pemecahan Pola Figural (Spasial) pada TPS UTBK", "Visualisasi rumus matematika abstrak ke dalam bentuk bangun ruang nyata"],
+                eduTitle2: "Alternatif Karier", eduList2: ["Junior Graphic Designer", "Staf Administrasi Pengolahan Data Visual"],
+                materi: ["Taktik Efisiensi Waktu Soal Figural", "Manajemen Waktu Visual (Gantt Chart / Kanban)"], layanan: ["Tryout Khusus Analisis Pola Spasial dan Visual"],
+                guruBk: ["Bantu siswa merancang *Timeline Board* raksasa di ruang konseling untuk memvisualisasikan hitung mundur hari-H UTBK."], siswa: ["Latih ketajaman spasialmu. Soal-soal penalaran gambar (Figural) di UTBK bisa menjadi lumbung poin tertinggimu jika dilatih rutin."]
             },
-            // -- MA --
             MA_Awal: {
-                eduTitle1: "Strategi Belajar (Fase E/F)", eduList1: ["Membuat bagan/tabel perbedaan mazhab fikih (perbandingan)", "Mengubah materi hafalan sejarah Islam menjadi infografis timeline"],
-                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Mendesain materi presentasi dakwah/P5", "Penguasaan dasar tipografi Arab/Khat"],
-                materi: ["Pemahaman Grafik dan Kurva Sains/Ekonomi", "Teknik Presentasi Visual Menarik"], layanan: ["Pendampingan pembuatan media belajar visual"],
-                guruBk: ["Gunakan media papan kanban visual untuk melacak progres tugas akhir/hafalan siswa"], siswa: ["Rangkum materi yang tebal (seperti Sejarah Kebudayaan Islam) menjadi infografis garis waktu (timeline) yang berwarna"]
+                eduTitle1: "Strategi Belajar (Fase E/F)", eduList1: ["Transformasi perbandingan Mazhab Fikih ke dalam tabel komparasi visual", "Pembuatan infografis *Timeline* (Garis Waktu) untuk Sejarah Islam"],
+                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Desain materi presentasi proyek P5 yang estetik", "Pemahaman tata letak (layouting) dan tipografi Arab"],
+                materi: ["Interpretasi Kurva dan Data Statistik", "Teknik Desain Presentasi Komunikatif"], layanan: ["Pendampingan pengembangan portofolio desain digital"],
+                guruBk: ["Gunakan pendekatan *Visual Tracker* untuk membantu siswa memonitor kedisiplinan hafalan dan tugas akademik mereka."], siswa: ["Rangkumlah materi Sejarah Kebudayaan Islam yang tebal menjadi infografis garis waktu (*timeline*) berwarna agar jauh lebih mudah dihafal."]
             },
             MA_Transisi: {
-                eduTitle1: "Persiapan UTBK/PTKIN", eduList1: ["Fokus pada materi soal Figural (Pola Gambar) di UTBK", "Ubah rumus/konsep menjadi singkatan jembatan keledai visual"],
-                eduTitle2: "Alternatif Karier", eduList2: ["Freelance Ilustrator/Desainer Grafis", "Admin Sosmed Pemula"],
-                materi: ["Trik Mengerjakan Soal Figural (Penalaran Gambar)", "Time Management Berbasis Kalender Visual"], layanan: ["Tryout intensif penalaran spasial dan visual"],
-                guruBk: ["Bantu siswa merancang *Countdown Board* (Papan Hitung Mundur) hari-H ujian di dinding kamarnya"], siswa: ["Latih ketelitian matamu, banyak-banyak kerjakan latihan soal UTBK tipe figural dan deret ruang!"]
+                eduTitle1: "Persiapan UTBK/PTKIN", eduList1: ["Penguasaan materi TPS Figural (Penalaran Gambar)", "Modifikasi rumus/konsep kompleks menjadi jembatan keledai visual"],
+                eduTitle2: "Alternatif Karier", eduList2: ["Freelance Ilustrator / Video Editor", "Social Media Administrator"],
+                materi: ["Strategi Penguasaan Soal Figural (Spasial)", "Sistem Manajemen Waktu Visualisasi"], layanan: ["Tryout Intensif Penalaran Visual-Spasial"],
+                guruBk: ["Arahkan siswa untuk menyusun portofolio visual digital yang profesional jika mereka membidik jalur SNBP Fakultas Seni/Desain."], siswa: ["Asah insting visualmu! Perbanyak latihan soal deret gambar dan spasial, karena tipe soal tersebut menuntut ketelitian mata yang sangat tinggi."]
             },
-            // -- SMK --
             SMK_Awal: {
-                eduTitle1: "Fokus Praktik Kejuruan", eduList1: ["Pahami SOP (Standar Operasional) melalui flowchart/diagram alir", "Banyak melihat tutorial video praktik industri di YouTube"],
-                eduTitle2: "Persiapan Magang/PKL", eduList2: ["Perhatikan langkah kerja instruktur/mandor dengan saksama", "Buat catatan checklist visual untuk persiapan alat kerja"],
-                materi: ["Membaca Gambar Kerja/Blueprint (Teknik)", "Desain Mockup (IT/Bisnis)"], layanan: ["Pelatihan membaca instruksi kerja visual standar industri"],
-                guruBk: ["Gunakan bagan alur (flowchart) saat menjelaskan aturan tata tertib dan sanksi PKL"], siswa: ["Selalu perhatikan gambar atau simbol peringatan K3 (Keselamatan Kerja) di bengkel/laboratorium!"]
+                eduTitle1: "Fokus Praktik Kejuruan", eduList1: ["Mempelajari Standar Operasional (SOP) melalui *Flowchart* / Diagram Alir", "Observasi tutorial praktik industri berbasis video sebelum masuk bengkel"],
+                eduTitle2: "Persiapan Magang/PKL", eduList2: ["Pengamatan presisi terhadap demonstrasi kerja instruktur", "Pembuatan *Checklist* visual untuk inspeksi kelengkapan APD"],
+                materi: ["Membaca *Blueprint* / Gambar Kerja Industri", "Prinsip Estetika dan Desain Antarmuka"], layanan: ["Pelatihan literasi instruksi kerja visual standar industri"],
+                guruBk: ["Gunakan diagram alur (*Flowchart*) yang jelas saat menyosialisasikan kode etik, tata tertib, dan sanksi PKL industri."], siswa: ["Selalu waspada dan perhatikan rambu-rambu peringatan K3 (Kesehatan & Keselamatan Kerja) berbentuk simbol visual di area bengkel!"]
             },
             SMK_Transisi: {
-                eduTitle1: "Persiapan Rekrutmen Kerja", eduList1: ["Buat CV/Resume ATS Friendly yang rapi secara tata letak visual", "Siapkan portofolio visual (Desain/Foto/Video produk hasil praktik)"],
-                eduTitle2: "Alternatif Studi Lanjut Vokasi", eduList2: ["D4 Animasi", "D3 Desain Komunikasi Visual (DKV)", "D3 Arsitektur"],
-                materi: ["Tips Penampilan Visual Profesional saat Wawancara", "Psikotes Spasial/Gambar (Kertas Koran, Rotasi 3D)"], layanan: ["Simulasi Psikotes Kerja (Fokus tes Ketelitian dan Spasial Visual)"],
-                guruBk: ["Cek dan koreksi tata letak (layout) CV siswa agar terlihat profesional dan mudah dibaca (eye-catching) oleh HRD"], siswa: ["Penampilan visualmu (pakaian, kerapian rambut) adalah hal pertama yang dinilai saat wawancara. Berpakaianlah dengan sangat rapi!"]
+                eduTitle1: "Persiapan Rekrutmen Kerja", eduList1: ["Perancangan CV/Resume *ATS Friendly* dengan tata letak (*layout*) profesional", "Penyusunan portofolio digital berbasis visual (Desain, Foto, Mockup)"],
+                eduTitle2: "Alternatif Studi Lanjut Vokasi", eduList2: ["D4 Program Studi Animasi / DKV", "D3 Arsitektur Bangunan", "Institut Seni Indonesia (ISI)"],
+                materi: ["Etika Penampilan Visual Profesional untuk Wawancara", "Latihan Psikotes Spasial (Rotasi 3D, Tes Koran/Pauli)"], layanan: ["Simulasi Psikotes Rekrutmen (Fokus Akurasi Visual)"],
+                guruBk: ["Lakukan peninjauan mendalam (*review*) terhadap tipografi dan tata letak CV siswa agar mencerminkan profesionalitas di mata HRD."], siswa: ["Beri perhatian penuh pada 'Kesan Pertama' (First Impression). Pakaian yang rapi dan bahasa tubuh yang baik adalah elemen visual utama saat wawancara kerja."]
             }
         }
     },
     A: {
         title: "Auditori", indonesianTitle: "Auditori (Pendengaran)",
-        desc: "Kamu lebih mudah mengingat informasi melalui suara dan pendengaran. Berdiskusi, mendengarkan penjelasan langsung, atau membaca dengan bersuara adalah cara belajar terbaikmu.",
+        desc: "Kekuatan utamamu terletak pada kecerdasan linguistik dan pendengaran. Kamu akan memproses informasi secara optimal saat berdiskusi, mendengarkan, atau menjelaskan kembali sebuah materi.",
         karir: ["Penyiar/Podcaster", "Penerjemah", "Musisi", "Customer Service", "Konselor"], freelance: ["Voice Over Talent", "MC/Host"],
         levels: {
             SD_Awal: {
-                eduTitle1: "Metode Belajar", eduList1: ["Mendengarkan cerita/dongeng dari guru", "Mengeja kata dengan suara lantang"],
-                eduTitle2: "Karakteristik", eduList2: ["Mudah hafal lagu atau jingle iklan", "Suka berbicara dan bercerita kepada teman"],
-                materi: ["Latihan Mendengarkan (Menyimak)", "Bernyanyi Sambil Belajar"], layanan: ["Bimbingan melalui cerita/storytelling"],
-                guruBk: ["Gunakan intonasi suara yang menarik saat memberikan nasihat pada anak"], siswa: ["Baca buku pelajaranmu sambil bersuara pelan agar lebih ingat"]
+                eduTitle1: "Metode Belajar", eduList1: ["Penerapan metode *Storytelling* (Bercerita) interaktif", "Teknik mengeja fonetik dengan artikulasi lantang"],
+                eduTitle2: "Karakteristik", eduList2: ["Reseptif terhadap nada, irama, dan *jingle* edukatif", "Sangat ekspresif saat menceritakan pengalaman keseharian"],
+                materi: ["Keterampilan Menyimak Aktif (Active Listening)", "Belajar Berbasis Rima dan Irama"], layanan: ["Bimbingan klasikal berbasis dongeng/cerita inspiratif"],
+                guruBk: ["Gunakan modulasi suara (intonasi, volume, jeda) yang dinamis untuk mempertahankan fokus anak saat memberi instruksi."], siswa: ["Cobalah membaca buku pelajaranmu sambil bersuara pelan agar materinya lebih mudah menempel di ingatan."]
             },
             SD_Akhir: {
-                eduTitle1: "Metode Belajar", eduList1: ["Belajar kelompok dan saling melempar pertanyaan lisan", "Mendengarkan instruksi lisan dari guru"],
-                eduTitle2: "Karakteristik", eduList2: ["Terkadang menggerakkan bibir atau bergumam saat membaca", "Suka ikut diskusi kelas"],
-                materi: ["Latihan Berbicara di Depan Kelas", "Mendengarkan Cerpen (Audiobook)"], layanan: ["Konseling kelompok berbasis diskusi"],
-                guruBk: ["Biarkan anak menjelaskan permasalahannya secara verbal tanpa dipotong"], siswa: ["Ajak temanmu untuk tebak-tebakan materi pelajaran secara lisan"]
+                eduTitle1: "Metode Belajar", eduList1: ["Simulasi tanya-jawab lisan (Tutor Sebaya)", "Pemanfaatan media *Audiobook* (Buku Suara)"],
+                eduTitle2: "Karakteristik", eduList2: ["Memiliki kecenderungan menggumam (sub-vokalisasi) saat membaca", "Aktif berpartisipasi dalam diskusi atau curah pendapat kelas"],
+                materi: ["Keterampilan Berbicara di Depan Umum Dasar", "Latihan Konsentrasi Pendengaran"], layanan: ["Konseling kelompok dengan pendekatan diskusi (Group Sharing)"],
+                guruBk: ["Fasilitasi siswa untuk mengartikulasikan masalah atau perasaannya secara verbal tanpa diinterupsi."], siswa: ["Ajak teman sebangkumu untuk saling memberi tebak-tebakan pelajaran secara lisan."]
             },
             SD_Transisi: {
-                eduTitle1: "Target Lingkungan SMP", eduList1: ["SMP yang sering menerapkan diskusi kelompok aktif", "SMP dengan ekskul paduan suara/musik yang bagus"],
-                eduTitle2: "Persiapan Ekskul SMP", eduList2: ["Klub Debat Junior", "Klub Broadcasting/Radio Sekolah"],
-                materi: ["Keterampilan Presentasi Dasar", "Teknik Mendengarkan Aktif (Active Listening)"], layanan: ["Latihan public speaking dasar"],
-                guruBk: ["Ajak anak berdiskusi tanya-jawab mengenai kekhawatirannya masuk SMP"], siswa: ["Mulai biasakan mendengarkan penjelasan guru tanpa banyak mengobrol di kelas"]
+                eduTitle1: "Target Lingkungan SMP", eduList1: ["Sekolah dengan budaya diskusi dan presentasi yang kuat", "Sekolah yang memiliki fasilitas ekstrakurikuler musik/paduan suara aktif"],
+                eduTitle2: "Persiapan Ekskul SMP", eduList2: ["Klub Debat Junior", "Klub Penyiaran (Broadcasting/Radio Sekolah)"],
+                materi: ["Dasar-Dasar *Public Speaking*", "Etika Berkomunikasi (Communication Courtesy)"], layanan: ["Latihan kepercayaan diri dalam presentasi lisan"],
+                guruBk: ["Gunakan metode dialog interaktif dua arah saat membimbing anak memetakan kekhawatirannya menuju jenjang SMP."], siswa: ["Latihlah fokus pendengaranmu untuk menyimak penjelasan guru tanpa mudah terdistraksi obrolan teman di kelas."]
             },
             MI_Awal: {
-                eduTitle1: "Metode Belajar Islami", eduList1: ["Menghafal surah pendek dengan metode talqin/talaqqi (mendengar berulang)", "Mendengarkan murattal Al-Quran"],
-                eduTitle2: "Karakteristik Dasar", eduList2: ["Mudah menghafal lirik lagu Islami/Nasyid", "Suka berbicara dan menceritakan kembali kisah Nabi"],
-                materi: ["Menyimak Kisah Teladan (Audio/Cerita)", "Latihan Melafalkan Doa Harian dengan Suara"], layanan: ["Bimbingan dengan metode *Storytelling* (Bercerita)"],
-                guruBk: ["Gunakan intonasi dan variasi suara yang menarik saat menceritakan kisah tauladan"], siswa: ["Ucapkan hafalan doa-doamu dengan suara agar cepat hafal!"]
+                eduTitle1: "Metode Belajar Islami", eduList1: ["Pendekatan *Talaqqi* (Mendengar hafalan secara berulang)", "Pemanfaatan media audio *Murattal* Al-Quran anak"],
+                eduTitle2: "Karakteristik Dasar", eduList2: ["Sangat responsif terhadap lantunan Nasyid atau selawat", "Senang menceritakan ulang kisah-kisah teladan Nabi"],
+                materi: ["Menyimak Kisah Teladan (Audio/Cerita)", "Artikulasi Pelafalan Doa Harian"], layanan: ["Bimbingan dengan metode *Storytelling* Islami"],
+                guruBk: ["Bangkitkan imajinasi anak melalui teknik bercerita (storytelling) dengan intonasi suara karakter yang beragam."], siswa: ["Lantunkan hafalan doa dan surah pendekmu dengan suara lantang agar kamu cepat hafal!"]
             },
             MI_Akhir: {
-                eduTitle1: "Metode Belajar Islami", eduList1: ["Saling setoran hafalan berpasangan dengan teman", "Belajar tajwid melalui nyanyian atau irama"],
-                eduTitle2: "Tanggung Jawab/Prestasi", eduList2: ["Klub Paduan Suara/Qasidah", "Klub Muhadharah/Pidato Cilik"],
-                materi: ["Latihan Tilawah/Seni Baca Al-Quran", "Diskusi Kelompok (Menyimak)"], layanan: ["Konseling berbasis dialog interaktif"],
-                guruBk: ["Biarkan siswa menceritakan atau mempresentasikan ide-idenya secara verbal (lisan)"], siswa: ["Bacalah materi pelajaran sekolahmu sambil bersuara pelan di rumah"]
+                eduTitle1: "Metode Belajar Islami", eduList1: ["Penerapan metode *Simaan* (Saling menyimak hafalan) berpasangan", "Mempelajari hukum tajwid melalui irama (Nagham)"],
+                eduTitle2: "Tanggung Jawab Akademik", eduList2: ["Berpartisipasi aktif dalam ekstrakurikuler Qasidah/Paduan Suara", "Berlatih pidato (Muhadharah) atau kultum kelas"],
+                materi: ["Pengenalan Seni Tilawah Al-Quran", "Dinamika Diskusi Kelompok"], layanan: ["Konseling individu berbasis *Active Listening* (Mendengar Aktif)"],
+                guruBk: ["Berikan apresiasi saat siswa mampu mempresentasikan gagasan atau merangkum kajian agama secara lisan di depan kelas."], siswa: ["Bacalah rangkuman materi dari madrasah dengan cara disuarakan perlahan agar ingatanmu makin kuat."]
             },
             MI_Transisi: {
-                eduTitle1: "Target Lingkungan MTs/SMP", eduList1: ["MTs yang unggul di bidang tahfidz berbasis *Simaan* (Audio)", "MTs dengan program bahasa Arab/Inggris percakapan (Muhadasah)"],
-                eduTitle2: "Persiapan Ekskul", eduList2: ["Grup Nasyid/Rebana/Hadrah", "Klub Pidato Tiga Bahasa"],
-                materi: ["Latihan Presentasi Dasar", "Teknik Menyimak Efektif (Active Listening)"], layanan: ["Simulasi wawancara dan diskusi SMP"],
-                guruBk: ["Diskusikan dan tanya jawab (Tanya-Jawab lisan) mengenai minat dan kebingungannya memilih MTs"], siswa: ["Ajak teman sebangkumu untuk bermain tebak-tebakan pelajaran secara lisan!"]
+                eduTitle1: "Target Lingkungan MTs", eduList1: ["Madrasah dengan program unggulan Tahfidz berbasis *Simaan*", "Madrasah yang memiliki kultur percakapan Bahasa (Muhadasah)"],
+                eduTitle2: "Persiapan Ekskul", eduList2: ["Tim Nasyid / Rebana / Hadrah", "Klub Pidato Multi-Bahasa"],
+                materi: ["Keterampilan Presentasi Percaya Diri", "Teknik Menyimak Kritis (Critical Listening)"], layanan: ["Simulasi wawancara penjurusan madrasah tingkat menengah"],
+                guruBk: ["Eksplorasi minat siswa melalui metode tanya-jawab lisan (wawancara ringan) mengenai rencana pendidikan lanjutannya."], siswa: ["Ajak teman sebangkumu untuk me-*review* materi pelajaran melalui diskusi ringan dan tebak-tebakan lisan."]
             },
             SMP_Awal: {
-                eduTitle1: "Strategi Belajar", eduList1: ["Merekam penjelasan guru (Voice Note) dan memutarnya ulang", "Membaca nyaring materi hafalan"],
-                eduTitle2: "Karakteristik", eduList2: ["Suka belajar sambil mendengarkan musik (instrumental)", "Mudah terganggu oleh suara bising atau obrolan lain"],
-                materi: ["Manajemen Diskusi Kelompok", "Latihan Intonasi Berbicara"], layanan: ["Konseling dialog interaktif"],
-                guruBk: ["Fokus pada intonasi dan komunikasi verbal (konseling tatap muka langsung)"], siswa: ["Rekam suaramu sendiri saat merangkum pelajaran, lalu dengarkan saat akan tidur"]
+                eduTitle1: "Strategi Belajar", eduList1: ["Rekam materi penting menggunakan fitur *Voice Note* untuk diputar ulang", "Terapkan teknik *Read-Aloud* (Membaca nyaring) untuk teks hafalan"],
+                eduTitle2: "Karakteristik", eduList2: ["Tingkat fokus meningkat saat belajar diiringi musik instrumental", "Sangat sensitif dan mudah terdistraksi oleh polusi suara/bising"],
+                materi: ["Dinamika Forum Group Discussion (FGD)", "Manajemen Intonasi dan Artikulasi Komunikasi"], layanan: ["Konseling dialogis interaktif"],
+                guruBk: ["Terapkan teknik *Client-Centered Therapy* yang memberikan porsi dominan bagi siswa untuk mencurahkan isi pikirannya secara verbal."], siswa: ["Cobalah merekam suaramu sendiri saat merangkum materi penting, lalu dengarkan rekamannya sebagai *podcast* belajarmu sebelum tidur."]
             },
             SMP_Transisi: {
-                eduTitle1: "Pilihan Jurusan SMA/MA", eduList1: ["Jurusan Bahasa (Cocok untuk Linguistik/Sastra)"],
-                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Broadcasting/Penyiaran", "Pariwisata (Tour Guide)", "Administrasi Perkantoran"],
-                materi: ["Pengenalan Karir Komunikasi & Bahasa", "Persiapan Ujian Listening (Bahasa Inggris)"], layanan: ["Konseling karir berbasis dialog lisan"],
-                guruBk: ["Lakukan wawancara lisan mendalam untuk mengeksplorasi minat karirnya"], siswa: ["Jika kamu suka bicara, pertimbangkan masuk jurusan yang memperbanyak praktik bahasa atau komunikasi (Misal SMK Broadcasting/Pariwisata)"]
+                eduTitle1: "Pilihan Jurusan SMA/MA", eduList1: ["Jurusan Bahasa (Sangat sesuai untuk bakat Linguistik dan Sastra)"],
+                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Broadcasting / Penyiaran", "Industri Pariwisata (Tour Guide)", "Layanan Perkantoran"],
+                materi: ["Eksplorasi Karir Komunikasi Massa", "Strategi Menghadapi Ujian *Listening* Bahasa Asing"], layanan: ["Konseling karir berbasis eksplorasi naratif"],
+                guruBk: ["Lakukan penggalian bakat (*probing*) melalui wawancara mendalam untuk memetakan arah karir komunikasi siswa."], siswa: ["Jika kamu mahir berkomunikasi dan suka berbicara, pertimbangkan jalur SMK Broadcasting atau Pariwisata sebagai sarana unjuk bakatmu."]
             },
             MTs_Awal: {
-                eduTitle1: "Strategi Belajar", eduList1: ["Menghafal (Tahfidz) dengan metode mendengarkan Murattal Syaikh Misyari Rasyid (atau lainnya)", "Rekam penjelasan ustadz/ustadzah lalu putar ulang"],
-                eduTitle2: "Karakteristik", eduList2: ["Cepat menangkap nada/irama saat belajar seni Tilawah/Tajwid", "Suka belajar kelompok sambil diskusi (Simaan)"],
-                materi: ["Teknik Menghafal dengan Audio (Talaqqi)", "Latihan Public Speaking (Muhadharah)"], layanan: ["Layanan Bimbingan Kelompok (Diskusi Forum)"],
-                guruBk: ["Gunakan teknik konseling lisan yang interaktif dan banyak mendengarkan curhatan siswa (*Active Listening*)"], siswa: ["Rekam suaramu sendiri saat membaca rangkuman pelajaran, lalu dengarkan kembali sebagai podcast belajarmu!"]
+                eduTitle1: "Strategi Belajar", eduList1: ["Optimalkan hafalan (Tahfidz) dengan mendengarkan *Murattal* secara kontinu", "Perekaman penjelasan ustadz/ustadzah untuk bahan *review* di asrama"],
+                eduTitle2: "Karakteristik", eduList2: ["Cepat mengadaptasi nada/irama (Nagham) pada seni Tilawah/Tajwid", "Sangat menikmati metode belajar kelompok (*Simaan*/Halaqah)"],
+                materi: ["Teknik Memori Audio (*Audio-Spaced Repetition*)", "Keterampilan *Public Speaking* Islami (Muhadharah)"], layanan: ["Layanan Bimbingan Kelompok (FGD / Diskusi Forum)"],
+                guruBk: ["Praktikkan *Empathic Listening* (Mendengarkan Penuh Empati) saat mengurai konflik pergaulan remaja yang dialami siswa."], siswa: ["Terapkan teknik *Feynman*: Jelaskan kembali materi Fikih atau Sejarah secara lisan seolah-olah kamu sedang mengajar temanmu."]
             },
             MTs_Transisi: {
-                eduTitle1: "Pilihan Jurusan MA/SMA", eduList1: ["Jurusan Bahasa & Budaya (Fokus Sastra/Linguistik)", "Ilmu Agama (Fokus Tafsir, Hadis, Ceramah)"],
-                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Broadcasting & Perfilman", "Pariwisata (Tour Guide)"],
-                materi: ["Pengenalan Karir Bidang Komunikasi/Media", "Persiapan Listening Test Bahasa Inggris/Arab"], layanan: ["Wawancara Eksplorasi Karir"],
-                guruBk: ["Lakukan wawancara dua arah (tanya jawab) untuk memetakan cita-cita dan minat siswa"], siswa: ["Jika kamu sangat suka bicara dan mendengarkan, pertimbangkan jurusan Bahasa di MA atau Broadcasting di SMK!"]
+                eduTitle1: "Pilihan Jurusan MA/SMA", eduList1: ["Jurusan Bahasa & Budaya (Fokus Sastra)", "Ilmu Agama (Fokus Dakwah, Tafsir, Hadis)"],
+                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Broadcasting / Televisi & Radio", "Usaha Perjalanan Wisata (Pramuwisata)"],
+                materi: ["Pengenalan Karir Jurnalistik dan Penyiaran", "Persiapan Ujian *Listening* (Bahasa Arab/Inggris)"], layanan: ["Wawancara Eksplorasi Minat Karir (Career Interview)"],
+                guruBk: ["Validasi kemantapan pilihan siswa melalui diskusi dua arah yang menguji pemahamannya tentang jurusan yang akan dipilih."], siswa: ["Jika kamu piawai merangkai kata secara lisan, jurusan Ilmu Keagamaan (MA) atau Penyiaran (SMK) akan sangat cocok mengembangkan potensimu."]
             },
             SMA_Awal: {
-                eduTitle1: "Strategi Belajar (Fase E/F)", eduList1: ["Mencari materi dari Podcast edukasi (seperti Spotify/YouTube Edu)", "Belajar kelompok (Diskusi dan Debat ringan)"],
-                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Keterampilan Presentasi dan MC (Master of Ceremony)", "Mampu memimpin rapat secara verbal"],
-                materi: ["Teknik Negosiasi dan Lobi", "Peningkatan Skill Listening Bahasa Asing"], layanan: ["Bimbingan karir melalui podcast/audio sekolah"],
-                guruBk: ["Berikan tugas berupa *Voice Note* atau rekaman wawancara sebagai pengganti tugas tertulis"], siswa: ["Buatlah kelompok diskusi rutin seminggu sekali untuk membahas pelajaran yang sulit"]
+                eduTitle1: "Strategi Belajar (Fase E/F)", eduList1: ["Pemanfaatan platform *Podcast* edukasi sebagai suplemen belajar utama", "Inisiasi kelompok belajar berbasis debat terbuka dan adu argumentasi"],
+                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Kecakapan menjadi Master of Ceremony (MC) atau Moderator", "Teknik memandu jalannya rapat organisasi secara komunikatif"],
+                materi: ["Teknik Lobi dan Negosiasi Praktis", "Peningkatan Kompetensi *Listening* Bahasa Asing"], layanan: ["Fasilitasi program Bimbingan Karir melalui Radio/Podcast Sekolah"],
+                guruBk: ["Izinkan siswa mengganti instrumen tugas tertulis dengan pengumpulan berbasis rekaman *Voice Note* atau *Podcast* jika memungkinkan."], siswa: ["Bentuklah forum belajar kelompok mingguan (*Study Group*). Berdiskusi secara lisan akan memangkas separuh waktu belajarmu secara mandiri."]
             },
             SMA_Transisi: {
-                eduTitle1: "Persiapan UTBK/PTN", eduList1: ["Manfaatkan video pembahasan UTBK secara lisan di YouTube", "Jelaskan ulang materi UTBK ke teman (Tutor Sebaya)"],
-                eduTitle2: "Alternatif Karier", eduList2: ["Customer Service / Call Center", "Voice Over Talent / Podcaster Pemula"],
-                materi: ["Strategi Lulus Ujian Wawancara (PTN Kedinasan)", "Trik Listening TOEFL/IELTS Lanjutan"], layanan: ["Simulasi wawancara masuk kampus kedinasan/internasional"],
-                guruBk: ["Bantu siswa menyimulasikan wawancara beasiswa dengan format tanya-jawab langsung"], siswa: ["Cara terbaikmu belajar adalah dengan 'mengajar' (tutor sebaya). Jelaskan materi UTBK ke temanmu secara lisan!"]
+                eduTitle1: "Persiapan UTBK/PTN", eduList1: ["Optimalisasi video pembahasan soal UTBK (Fokus pada narasi tutor)", "Penerapan metode *Tutor Sebaya* (Peer Tutoring) untuk materi Soshum/Saintek"],
+                eduTitle2: "Alternatif Karier", eduList2: ["Customer Service / Call Center", "Voice Over Talent / *Podcaster* Pemula"],
+                materi: ["Strategi Taktis Ujian Wawancara PTN / Kedinasan", "Manajemen Audio TOEFL/IELTS Lanjutan"], layanan: ["Simulasi *Mock Interview* (Wawancara Masuk Kampus/Beasiswa)"],
+                guruBk: ["Selenggarakan simulasi wawancara (*Mock Interview*) intensif untuk mempersiapkan siswa menghadapi seleksi masuk Perguruan Tinggi/Kedinasan."], siswa: ["Terapkan metode belajar 'Tutor Sebaya'. Mengajarkan materi UTBK secara lisan kepada teman adalah cara paling ampuh menanamkan konsep di otakmu."]
             },
             MA_Awal: {
-                eduTitle1: "Strategi Belajar (Fase E/F)", eduList1: ["Belajar materi Sosiologi/Sejarah lewat Podcast/Audiobook", "Belajar kelompok (Diskusi atau Debat terbuka materi Fikih Kontemporer)"],
-                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Mahir menjadi MC/Moderator atau Orator dakwah", "Kemampuan negosiasi dan lobi secara lisan"],
-                materi: ["Public Speaking dan Retorika Dakwah", "Peningkatan Skill Listening (TOEFL/TOAFL)"], layanan: ["Radio/Podcast Madrasah (sebagai sarana bimbingan)"],
-                guruBk: ["Beri siswa ruang untuk mengemukakan argumentasi/pendapat lisan secara panjang lebar saat konseling"], siswa: ["Gunakan aplikasi podcast (seperti Spotify) untuk mencari materi sejarah Islam atau motivasi belajar sambil berangkat sekolah"]
+                eduTitle1: "Strategi Belajar (Fase E/F)", eduList1: ["Menggali materi literasi Sosiologi/Sejarah Islam melalui media *Audiobook*", "Penyelenggaraan kajian diskusi kelompok (Bahtsul Masail tingkat dasar)"],
+                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Kecakapan Retorika Dakwah, Orasi, dan Khutbah", "Teknik Resolusi Konflik melalui pendekatan dialogis (Lobi)"],
+                materi: ["Retorika Lanjutan dan *Public Speaking*", "Peningkatan Kompetensi *Listening* (TOEFL / TOAFL)"], layanan: ["Bimbingan Konseling melalui saluran Radio/Podcast Madrasah"],
+                guruBk: ["Sediakan ruang diskusi yang apresiatif bagi siswa untuk mengelaborasi argumentasi lisannya secara komprehensif saat konseling."], siswa: ["Manfaatkan durasi perjalanan ke madrasah dengan mendengarkan kajian audio atau rangkuman sejarah melalui *headset*."]
             },
             MA_Transisi: {
-                eduTitle1: "Persiapan UTBK/PTKIN", eduList1: ["Simak video pembahasan UTBK/UM-PTKIN di YouTube (perhatikan penjelasan lisan tutor)", "Bentuk grup belajar dan jadilah 'Guru' (Tutor Sebaya) bagi temanmu"],
-                eduTitle2: "Alternatif Karier", eduList2: ["Call Center / Customer Service", "Penyiar Radio/Voice Over (VO) Talent"],
-                materi: ["Persiapan Wawancara (Interview) Beasiswa/Kedinasan", "Trik Listening Bahasa Arab (TOAFL) dan Inggris"], layanan: ["Simulasi Wawancara Masuk Kampus (Jalur Prestasi/Beasiswa)"],
-                guruBk: ["Lakukan latihan simulasi wawancara (*Mock Interview*) bersama siswa agar ia makin luwes saat tes wawancara beasiswa"], siswa: ["Kamu akan cepat hafal materi jika kamu mengajarkannya kembali kepada orang lain. Buka kelompok belajarmu sendiri!"]
+                eduTitle1: "Persiapan UTBK/PTKIN", eduList1: ["Review pembahasan soal UM-PTKIN via YouTube (Fokus pada alur penjelasan lisan)", "Konsolidasi pemahaman melalui pengajaran silang antar teman sebaya"],
+                eduTitle2: "Alternatif Karier", eduList2: ["Customer Relation / Staf Layanan BMT", "Penyiar Radio Islami / *Voice Over Talent*"],
+                materi: ["Persiapan Wawancara Beasiswa (PBSB/KIP-K)", "Taktik Mengerjakan Soal *Listening* Bahasa Arab (TOAFL)"], layanan: ["Simulasi Wawancara Beasiswa Jalur Prestasi"],
+                guruBk: ["Latih artikulasi, proyeksi suara, dan kepercayaan diri siswa melalui simulasi wawancara (*Mock Interview*) yang menantang."], siswa: ["Buka kelas bimbingan kecil dengan teman-temanmu. Semakin sering kamu menjelaskan materi secara verbal, semakin kuat materi itu tersimpan di memori jangka panjangmu."]
             },
             SMK_Awal: {
-                eduTitle1: "Fokus Praktik Kejuruan", eduList1: ["Dengarkan penjelasan dan instruksi verbal dari guru bengkel/pembimbing dengan saksama", "Tanya jawab langsung saat menemukan mesin/alur kerja yang tidak dimengerti"],
-                eduTitle2: "Persiapan Magang/PKL", eduList2: ["Latihan Komunikasi Efektif dengan pelanggan (Misal: Melayani tamu hotel/restoran)", "Simulasi bertelepon bisnis secara profesional (Telephone Courtesy)"],
-                materi: ["Teknik Komunikasi Terapeutik/Profesional", "Bahasa Inggris Percakapan (Conversation for Business)"], layanan: ["Simulasi *Roleplay* layanan pelanggan (*Customer Service*)"],
-                guruBk: ["Fokus pada intonasi dan tutur kata siswa. Ajarkan cara meminta maaf, meminta tolong, dan menyapa secara profesional untuk persiapan magang"], siswa: ["Banyaklah bertanya! Karena kamu tipe auditori, penjelasan lisan dari teknisi/senior di tempat magang adalah sumber ilmu utamamu."]
+                eduTitle1: "Fokus Praktik Kejuruan", eduList1: ["Interpretasi instruksi verbal mandor/instruktur bengkel secara presisi", "Proaktif melakukan konfirmasi (tanya-jawab lisan) terhadap prosedur kerja industri"],
+                eduTitle2: "Persiapan Magang/PKL", eduList2: ["Latihan Komunikasi Profesional (*Business Courtesy*) dengan pelanggan", "Simulasi penerimaan keluhan (*Handling Complaint*) secara verbal"],
+                materi: ["Komunikasi Terapeutik / Pelayanan Prima (*Service Excellence*)", "Percakapan Bisnis (*Business Conversation*) Tingkat Dasar"], layanan: ["Simulasi *Roleplay* skenario pelayanan pelanggan (Customer Service)"],
+                guruBk: ["Fokuskan pembinaan pada intonasi, *manner* (kesopanan), dan *Telephone Courtesy* sebagai modal komunikasi siswa di dunia industri."], siswa: ["Kekuatanmu adalah komunikasimu. Jangan ragu bertanya secara lisan kepada teknisi/senior di tempat magang jika ada instruksi yang belum jelas."]
             },
             SMK_Transisi: {
-                eduTitle1: "Persiapan Rekrutmen Kerja", eduList1: ["Latih artikulasi suara dan kepercayaan diri untuk sesi Interview HRD", "Siapkan jawaban-jawaban lisan untuk pertanyaan umum saat wawancara kerja"],
-                eduTitle2: "Alternatif Studi Lanjut Vokasi", eduList2: ["D3 Hubungan Masyarakat (Public Relations)", "D3 Penyiaran (Broadcasting) / Radio", "D3 Bahasa Inggris/Asing untuk Pariwisata"],
-                materi: ["Simulasi Interview Kerja (Wawancara Panel & Individu)", "Keterampilan Komunikasi Asertif (Tegas tapi Sopan)"], layanan: ["Sesi Latihan Intensif Wawancara Kerja HRD (Mock Interview) di Bursa Kerja Khusus"],
-                guruBk: ["Jadilah 'HRD Galak' dalam simulasi wawancara agar mental siswa terasah saat menghadapi wawancara kerja sungguhan di industri"], siswa: ["Senjata terkuatmu ada di 'Cara Bicaramu'. Berlatihlah mengatur tempo, intonasi, dan kejernihan suara saat tes wawancara kerja nanti."]
+                eduTitle1: "Persiapan Rekrutmen Kerja", eduList1: ["Penguasaan artikulasi dan intonasi persuasif untuk sesi *Interview* HRD", "Penyiapan naskah (*script*) verbal untuk menjawab pertanyaan wawancara menjebak"],
+                eduTitle2: "Alternatif Studi Lanjut Vokasi", eduList2: ["D3 Hubungan Masyarakat (Public Relations)", "D3 Penyiaran (Broadcasting)", "D4 Bahasa Asing Terapan Pariwisata"],
+                materi: ["Simulasi *Interview* Panel Rekrutmen Perusahaan", "Keterampilan Komunikasi Asertif di Lingkungan Kerja"], layanan: ["Pelatihan Intensif *Mock Interview* Bersama Praktisi HRD di Bursa Kerja Khusus"],
+                guruBk: ["Ciptakan suasana simulasi *Interview* yang penuh tekanan (*stress interview*) agar mental komunikasi siswa terasah tangguh di hadapan HRD industri."], siswa: ["Senjata terhebatmu dalam melamar kerja adalah 'Cara Bicaramu'. Latih ketenangan, kejernihan suara, dan kontak matamu secara profesional!"]
             }
         }
     },
     K: {
         title: "Kinestetik", indonesianTitle: "Kinestetik (Gerakan)",
-        desc: "Kamu tipe yang 'Learning by Doing'. Kamu paling cepat paham jika langsung mempraktikkan, bergerak, atau menyentuh objek pelajaran. Duduk diam terlalu lama mungkin membuatmu bosan.",
+        desc: "Kamu adalah pembelajar tipe *Learning by Doing*. Otakmu memproses informasi paling optimal ketika tubuhmu bergerak, menyentuh, atau mempraktikkan langsung objek pelajaran tersebut.",
         karir: ["Mekanik", "Ahli Bedah", "Atlet", "Koki (Chef)", "Polisi/TNI"], freelance: ["Instruktur Tari/Senam", "Pengrajin/Crafter"],
         levels: {
             SD_Awal: {
-                eduTitle1: "Metode Belajar", eduList1: ["Belajar menghitung menggunakan benda nyata (kelereng/lidi)", "Bermain tebak gaya (Charades)"],
-                eduTitle2: "Karakteristik", eduList2: ["Sulit disuruh duduk diam di kelas", "Suka menyentuh atau memegang benda yang baru dilihat"],
-                materi: ["Prakarya dan Kesenian (Meremas plastisin, melipat)", "Pendidikan Olahraga"], layanan: ["Fasilitas belajar di luar kelas (Outdoor learning)"],
-                guruBk: ["Beri jeda istirahat (Ice Breaking) yang melibatkan gerakan tangan/badan saat bimbingan"], siswa: ["Gunakan jari tanganmu untuk membantu berhitung atau menghafal"]
+                eduTitle1: "Metode Belajar", eduList1: ["Penggunaan media ajar manipulatif (benda konkret seperti balok/kelereng)", "Pembelajaran berbasis gerak dan lagu (Kinesthetic-Musical)"],
+                eduTitle2: "Karakteristik", eduList2: ["Memiliki rentang atensi pendek jika diwajibkan duduk statis", "Memiliki dorongan taktil (menyentuh) pada objek yang baru dikenali"],
+                materi: ["Prakarya Motorik Halus (Origami, Plastisin)", "Pendidikan Jasmani (Motorik Kasar)"], layanan: ["Fasilitasi *Outdoor Learning* (Belajar di luar ruang)"],
+                guruBk: ["Sisipkan *Brain Breaks* (Jeda Gerak Singkat) atau *Ice Breaking* fisik agar anak tidak frustrasi selama sesi bimbingan panjang."], siswa: ["Gunakan jari-jari tanganmu untuk membantu mengingat atau mempraktikkan pelajaran, ya!"]
             },
             SD_Akhir: {
-                eduTitle1: "Metode Belajar", eduList1: ["Melakukan eksperimen sains (percobaan langsung)", "Bermain peran (Drama/Roleplay) sejarah"],
-                eduTitle2: "Karakteristik", eduList2: ["Suka mengetuk-ngetuk meja atau menggerakkan kaki saat berpikir", "Suka tugas yang bersifat proyek/membuat barang"],
-                materi: ["Kerajinan Tangan Dasar", "Praktik IPA Lingkungan"], layanan: ["Konseling sambil berjalan santai (Walking Counseling)"],
-                guruBk: ["Ubah hukuman duduk diam menjadi hukuman gerak ringan (misal: membuang sampah, merapikan kursi)"], siswa: ["Bantulah guru menghapus papan tulis untuk melepaskan energi tubuhmu"]
+                eduTitle1: "Metode Belajar", eduList1: ["Simulasi sains melalui eksperimen langsung (*Hands-on Activity*)", "Penerapan metode *Roleplay* (Bermain peran) untuk pelajaran sejarah"],
+                eduTitle2: "Karakteristik", eduList2: ["Sering mengetukkan alat tulis atau menggerakkan kaki saat berpikir", "Memiliki antusiasme tinggi pada tugas berbasis proyek kreatif"],
+                materi: ["Keterampilan Motorik Terapan", "Praktikum IPA Lingkungan"], layanan: ["Konseling pendampingan bergerak (*Walking Counseling*)"],
+                guruBk: ["Transformasikan sanksi duduk diam di kelas menjadi sanksi motorik ringan yang positif (misal: membersihkan rak buku kelas)."], siswa: ["Tawarkan bantuan kepada guru untuk membagikan buku di kelas agar energi tubuhmu tersalurkan dengan baik."]
             },
             SD_Transisi: {
-                eduTitle1: "Target Lingkungan SMP", eduList1: ["SMP dengan fasilitas Laboratorium/Bengkel Prakarya yang bagus", "SMP dengan lapangan olahraga yang luas"],
-                eduTitle2: "Persiapan Ekskul SMP", eduList2: ["Klub Olahraga", "Klub Tari/Teater Fisik"],
-                materi: ["Pengenalan Kegiatan Praktikum Lanjutan", "Manajemen Energi dan Konsentrasi"], layanan: ["Orientasi ekstrakurikuler lapangan di SMP"],
-                guruBk: ["Bantu anak menyalurkan kelebihan energinya ke ekskul fisik di SMP"], siswa: ["Berjalan-jalanlah kecil di dalam kamar saat kamu harus menghafal banyak materi"]
+                eduTitle1: "Target Lingkungan SMP", eduList1: ["Sekolah yang dilengkapi infrastruktur Laboratorium dan Bengkel Prakarya memadai", "Sekolah dengan fasilitas Gelanggang Olahraga terpadu"],
+                eduTitle2: "Persiapan Ekskul SMP", eduList2: ["Klub Olahraga / Ekstrakurikuler Fisik", "Seni Teater Olah Tubuh / Tari"],
+                materi: ["Pengenalan Budaya Praktikum Menengah", "Manajemen Energi dan Regulasi Diri"], layanan: ["Orientasi peminatan ekstrakurikuler lapangan SMP"],
+                guruBk: ["Arahkan surplus energi kinetik siswa menuju seleksi ekstrakurikuler fisik bergengsi (Olahraga/Pramuka) di jenjang SMP."], siswa: ["Jika kesulitan menghafal sambil duduk, cobalah berjalan mondar-mandir pelan di dalam kamarmu."]
             },
             MI_Awal: {
-                eduTitle1: "Metode Belajar Islami", eduList1: ["Praktik langsung gerakan wudhu dan shalat (tidak cuma teori)", "Menghafal sambil berjalan ringan (Metode kinetik)"],
-                eduTitle2: "Karakteristik Dasar", eduList2: ["Cepat bosan jika harus duduk tegak menyimak ceramah lama", "Suka menyentuh tasbih, buku, atau alat tulis saat belajar"],
-                materi: ["Praktik Ibadah Dasar", "Prakarya Lipat/Gunting (Motorik halus)"], layanan: ["Fasilitasi *Ice Breaking* / Senam ringan di sela bimbingan"],
-                guruBk: ["Jangan paksa siswa ini duduk diam terlalu lama, berikan tugas fisik ringan (seperti membagikan lembar kerja)"], siswa: ["Gunakan jari tanganmu untuk menghitung atau menandai baris saat membaca Iqro"]
+                eduTitle1: "Metode Belajar Islami", eduList1: ["Praktikum integratif ibadah (Praktik Wudhu dan Shalat langsung)", "Metode hafalan kinetik (Bergerak repetitif ringan)"],
+                eduTitle2: "Karakteristik Dasar", eduList2: ["Cenderung gelisah saat menyimak ceramah agama statis berdurasi panjang", "Memiliki reflek taktil seperti memainkan tasbih atau buku saku"],
+                materi: ["Bimbingan Ibadah Praktis Dasar", "Penguatan Motorik Halus Islami (Memotong/Menempel)"], layanan: ["Fasilitasi peregangan fisik interaktif di sela bimbingan"],
+                guruBk: ["Hindari intervensi yang mewajibkan siswa duduk kaku; libatkan mereka dalam tugas fisik kelas seperti menyiapkan papan tulis."], siswa: ["Gunakan jarimu untuk menunjuk dan mengikuti setiap baris huruf saat kamu membaca Iqro atau Al-Quran."]
             },
             MI_Akhir: {
-                eduTitle1: "Metode Belajar Islami", eduList1: ["Belajar sejarah (SKI) dengan metode bermain peran/drama (Roleplay)", "Eksperimen langsung sains/IPA di alam madrasah"],
-                eduTitle2: "Tanggung Jawab/Prestasi", eduList2: ["Olahraga Tradisional Islami (Memanah ringan/Beladiri)", "Pramuka Regu Inti (Bongkar pasang tenda)"],
-                materi: ["Kerajinan Tangan Dasar", "Pendidikan Olahraga dan Kebugaran"], layanan: ["Konseling Aktif (Berjalan atau di luar ruangan)"],
-                guruBk: ["Lakukan sesi konseling individu di taman atau lapangan madrasah sambil berjalan santai (*Walking Counseling*)"], siswa: ["Bila mulai bosan belajar, regangkan badanmu atau berjalanlah sebentar untuk minum air putih"]
+                eduTitle1: "Metode Belajar Islami", eduList1: ["Simulasi Sejarah Kebudayaan Islam (SKI) melalui sosiodrama", "Eksplorasi ayat *Kauniyah* (IPA) secara langsung di alam terbuka"],
+                eduTitle2: "Tanggung Jawab Akademik", eduList2: ["Berpartisipasi dalam Olahraga Sunnah (Panahan dasar/Bela Diri)", "Keterlibatan aktif dalam regu kepanduan (Bongkar pasang tenda)"],
+                materi: ["Keterampilan Prakarya Madrasah", "Pendidikan Kebugaran dan Olahraga"], layanan: ["*Walking Counseling* (Konseling sambil berjalan di lapangan/taman)"],
+                guruBk: ["Terapkan *Walking Counseling* di area terbuka madrasah untuk menciptakan suasana curhat yang rileks bagi siswa kinestetik."], siswa: ["Jika merasa pikiranmu jenuh saat belajar, regangkan otot-otot tubuhmu sebentar atau berjalanlah keluar untuk mencari udara segar."]
             },
             MI_Transisi: {
-                eduTitle1: "Target Lingkungan MTs/SMP", eduList1: ["MTs dengan program ekstrakurikuler Bela Diri/Olahraga yang hebat", "MTs dengan Laboratorium IPA/Komputer yang sering dipakai praktik"],
-                eduTitle2: "Persiapan Ekskul", eduList2: ["Pencak Silat (Pagar Nusa/Tapak Suci)", "Paskibra Madrasah"],
-                materi: ["Pengenalan Lingkungan Praktikum Lapangan", "Manajemen Fokus dan Energi"], layanan: ["Simulasi kegiatan fisik ekstrakurikuler"],
-                guruBk: ["Salurkan energi siswa yang 'tidak bisa diam' ini ke orientasi ekstrakurikuler fisik bergengsi di MTs nanti"], siswa: ["Cobalah hafalkan pelajaranmu sambil mondar-mandir pelan di dalam kamar, itu sangat membantumu!"]
+                eduTitle1: "Target Lingkungan MTs", eduList1: ["Madrasah dengan pembinaan ekskul Bela Diri/Olahraga terstruktur", "Madrasah yang secara aktif memanfaatkan Lab IPA untuk kegiatan praktik"],
+                eduTitle2: "Persiapan Ekskul", eduList2: ["Perguruan Pencak Silat / Tapak Suci", "Paskibraka Madrasah tingkat dasar"],
+                materi: ["Orientasi Lapangan Praktikum Menengah", "Teknik Regulasi Fokus dan Energi"], layanan: ["Simulasi kegiatan fisik ekstrakurikuler madrasah"],
+                guruBk: ["Salurkan dorongan motorik berlebih siswa pada persiapan fisik seleksi ekstrakurikuler lapangan tingkat menengah."], siswa: ["Gunakan *Flashcard* atau kartu hafalan yang bisa kamu genggam dan urutkan menggunakan tangan agar belajar lebih interaktif!"]
             },
             SMP_Awal: {
-                eduTitle1: "Strategi Belajar", eduList1: ["Berjalan mondar-mandir pelan sambil menghafal materi", "Ubah teori menjadi praktik langsung (misal: belajar fisika pakai karet gelang)"],
-                eduTitle2: "Karakteristik", eduList2: ["Selalu ingin segera menggunakan alat lab (tidak sabar dengar teori)", "Banyak menggunakan gerakan tangan (gestur) saat bicara"],
-                materi: ["Prakarya dan Kewirausahaan Dasar", "Manajemen Stres Berbasis Gerak (Relaksasi Otot)"], layanan: ["Pembuatan *Stress Ball* atau alat peraga sederhana"],
-                guruBk: ["Sediakan benda kecil seperti squishy atau stress ball di ruang BK agar siswa kinestetik bisa memegangnya saat konseling"], siswa: ["Buat rangkuman materi menjadi potongan kecil (flashcard) agar tanganmu sibuk mengurutkannya"]
+                eduTitle1: "Strategi Belajar", eduList1: ["Terapkan metode memori kinetik (Mondar-mandir saat merapalkan hafalan)", "Konversi pemahaman teoritis MIPA ke medium eksperimen skala rumahan"],
+                eduTitle2: "Karakteristik", eduList2: ["Sangat impulsif dan antusias saat berada di lingkungan Laboratorium", "Penggunaan bahasa isyarat (Gestur) tubuh secara masif saat berkomunikasi"],
+                materi: ["Proyek Kewirausahaan dan Prakarya", "Manajemen Stres Berbasis Relaksasi Otot Kinetik"], layanan: ["Fasilitasi media manipulatif pereda stres (*Stress Ball / Fidget Spinner*)"],
+                guruBk: ["Sediakan instrumen pereda stres kinestetik (seperti *squishy* atau *stress ball*) di ruang BK untuk menjaga fokus siswa saat sesi konseling."], siswa: ["Pecah materi catatanmu menjadi bagian kecil (seperti *Flashcard*) agar tanganmu aktif menyusun dan mengurutkannya secara fisik."]
             },
             SMP_Transisi: {
-                eduTitle1: "Pilihan Jurusan SMA/MA", eduList1: ["MIPA (Fokus banyak Praktikum Lab)"],
-                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Teknik Otomotif / Mesin", "Tata Boga / Tata Busana", "Pariwisata / Perhotelan"],
-                materi: ["Eksplorasi Karir Berbasis Fisik/Keterampilan", "Persiapan Ujian Praktik Sekolah"], layanan: ["Tes kecerdasan mekanikal / motorik kasar"],
-                guruBk: ["Dorong siswa untuk mempertimbangkan masuk SMK karena mereka lebih unggul dalam 'Learning by Doing' (Praktik langsung)"], siswa: ["Apakah kamu gampang bosan dengan teori di buku? Pikirkan serius untuk masuk SMK tempat kamu bisa langsung kerja praktik di bengkel/dapur!"]
+                eduTitle1: "Pilihan Jurusan SMA/MA", eduList1: ["Peminatan MIPA (Optimal pada aktivitas Praktikum Laboratorium intensif)"],
+                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Teknik Kendaraan Ringan (Otomotif) / Permesinan", "Tata Boga / Tata Busana / Perhotelan", "Agribisnis"],
+                materi: ["Eksplorasi Karir Industri Berbasis *Hard-Skill*", "Persiapan Mental Ujian Praktik Sekolah"], layanan: ["Tes Asesmen Kecerdasan Mekanikal dan Motorik Kasar"],
+                guruBk: ["Edukasi siswa dan wali murid mengenai keunggulan siswa di ranah Vokasi (SMK), di mana metode *Learning by Doing* adalah kurikulum utamanya."], siswa: ["Jika metode belajar berbasis teori membuatmu cepat bosan, pertimbangkan matang-matang untuk memilih jalur Vokasi (SMK) yang mengutamakan praktik industri riil."]
             },
             MTs_Awal: {
-                eduTitle1: "Strategi Belajar", eduList1: ["Ubah teori Fikih menjadi praktik nyata (Praktik Tayammum, Shalat Jenazah, dll)", "Gunakan benda nyata/maket saat belajar sejarah"],
-                eduTitle2: "Karakteristik", eduList2: ["Selalu antusias jika diajak masuk Laboratorium Komputer/IPA", "Banyak memakai gestur (gerakan tangan) saat bercerita"],
-                materi: ["Praktik Ibadah Lanjutan", "Manajemen Fokus Belajar (Metode Pomodoro Aktif)"], layanan: ["Pembuatan alat peraga visual/fisik 3D untuk materi madrasah"],
-                guruBk: ["Sediakan alat mainan pereda stres (stress-ball/squishy) di ruang BK agar siswa kinestetik nyaman saat sesi curhat"], siswa: ["Salin catatanmu menggunakan tangan (menulis manual). Gerakan menulis itu sangat membantu otot tanganmu mengingat materi!"]
+                eduTitle1: "Strategi Belajar", eduList1: ["Realisasi materi Fikih ibadah murni melalui simulasi gerak (Praktik Tayammum/Shalat Jenazah)", "Pemanfaatan instrumen maket/diorama tiga dimensi untuk mata pelajaran Sejarah"],
+                eduTitle2: "Karakteristik", eduList2: ["Menunjukkan atensi penuh saat diajak melakukan observasi di luar ruang kelas", "Cenderung responsif dan komunikatif melalui gerakan tubuh dan tangan"],
+                materi: ["Praktikum Ibadah Komprehensif", "Manajemen Atensi (Teknik Pomodoro Aktif)"], layanan: ["Pembuatan Proyek Karya Visual-Kinetik Berbasis 3D"],
+                guruBk: ["Hargai kebutuhan gerak siswa; jangan paksa mereka melakukan kontak mata statis jika gerakan tangan membantu mereka mengartikulasikan masalah."], siswa: ["Menulislah dengan tangan! Gerakan fisik menulis manual menciptakan 'Memori Otot' (*Muscle Memory*) yang sangat ampuh mengunci ingatanmu."]
             },
             MTs_Transisi: {
-                eduTitle1: "Pilihan Jurusan MA/SMA", eduList1: ["MA Keterampilan (Ada kelas menjahit/elektronika/otomotif)", "MIPA (Fokus Praktikum Lab Kimia/Fisika)"],
-                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Teknik Mesin / Otomotif", "Tata Boga / Perhotelan", "Agribisnis/Pertanian"],
-                materi: ["Pengenalan Karir Keterampilan Tangan (Vokasi)", "Persiapan Ujian Praktik Akhir Madrasah"], layanan: ["Tes Minat Bakat Teknikal dan Mekanikal"],
-                guruBk: ["Kuatkan dorongan bagi siswa ini untuk masuk ke SMK atau MA Program Keterampilan, karena ia bersinar saat 'Learning by Doing' (Praktek Langsung)"], siswa: ["Jika duduk mendengarkan teori membuatmu mengantuk, kamu WAJIB masuk sekolah Vokasi/SMK agar kamu bisa langsung praktek memegang alat berat!"]
+                eduTitle1: "Pilihan Jurusan MA/SMA", eduList1: ["MA Program Plus Keterampilan (Otomotif/Tata Busana/Kelistrikan)", "MIPA (Fokus Eksperimental)"],
+                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Teknik Rekayasa & Otomotif", "Hospitality (Pariwisata/Perhotelan)", "Teknik Komputer & Jaringan (Hardware)"],
+                materi: ["Pengenalan Karir Keterampilan Tangan Profesional Vokasi", "Strategi Fisik Menghadapi Ujian Praktik Akhir"], layanan: ["Simulasi Tes Minat Bakat Ranah Teknikal dan Praktikal"],
+                guruBk: ["Berikan validasi positif bahwa kecerdasan kinestetik mereka adalah aset krusial untuk sukses di sekolah Vokasi atau MA Keterampilan."], siswa: ["Kamu adalah aset berharga bagi dunia industri. Masuklah ke SMK atau MA Keterampilan agar kehebatan tanganmu bisa langsung dipraktikkan!"]
             },
             SMA_Awal: {
-                eduTitle1: "Strategi Belajar (Fase E/F)", eduList1: ["Belajar kelompok sambil makan ringan atau melakukan aktivitas fisik ringan", "Buat maket, model 3D, atau diorama untuk tugas akhir pelajaran"],
-                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Kemampuan bongkar-pasang barang (Hardware/Perkakas)", "Aktivitas Outdoor (Kepanduan/Pecinta Alam)"],
-                materi: ["Praktikum Laboratorium Kimia/Fisika Lanjutan", "Pendidikan Kebugaran Jasmani"], layanan: ["Fasilitasi program relawan lapangan/Bakti Sosial"],
-                guruBk: ["Jangan paksakan gaya belajar konvensional (duduk diam membaca), sarankan ia belajar dengan interval istirahat rutin (Pomodoro)"], siswa: ["Gunakan metode Pomodoro (25 menit fokus, 5 menit berdiri/jalan ambil air) agar tidak cepat jenuh di kamar"]
+                eduTitle1: "Strategi Belajar (Fase E/F)", eduList1: ["Implementasi pembelajaran berbasis proyek (*Project-Based Learning*) seperti perakitan maket MIPA/IPS", "Mengkonsumsi camilan ringan (*Snacking*) untuk menstimulasi saraf motorik rahang saat belajar"],
+                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Kecakapan perakitan komponen perangkat keras (*Hardware/Troubleshooting*)", "Daya tahan fisik (*Endurance*) pada aktivitas lapangan ekstrem (Pecinta Alam/SAR)"],
+                materi: ["Praktikum Eksperimental Laboratorium Lanjutan", "Manajemen Pendidikan Kebugaran Jasmani"], layanan: ["Fasilitasi program Bakti Sosial / Relawan Lapangan Eksternal"],
+                guruBk: ["Sarankan penerapan teknik *Pomodoro* (interval fokus-istirahat aktif) untuk mencegah sindrom kelelahan kognitif (*Burnout*) pada siswa."], siswa: ["Gunakan interval *Pomodoro*. Belajarlah fokus selama 25 menit, lalu gunakan 5 menit jeda untuk berdiri, melakukan peregangan, atau berjalan mengambil minum."]
             },
             SMA_Transisi: {
-                eduTitle1: "Persiapan UTBK/PTN", eduList1: ["Kerjakan tryout sambil mengunyah permen karet untuk merangsang saraf gerak", "Pindahkan materi ke flashcard dan hafalkan sambil berjalan"],
-                eduTitle2: "Alternatif Karier", eduList2: ["TNI/Polri/Sekolah Kedinasan", "Instruktur Olahraga/Pelatih Muda", "Mekanik/Teknisi Pemula"],
-                materi: ["Persiapan Tes Fisik/Kesamaptaan Kedinasan", "Manajemen Stres Ujian (Latihan Pernapasan & Gerak)"], layanan: ["Bimbingan fisik dan tes jasmani kedinasan"],
-                guruBk: ["Cek kesiapan fisik (kesehatan mata, gigi, postur) jika siswa menargetkan sekolah kedinasan (Akpol/Akmil)"], siswa: ["Tulis ulang rumus UTBK menggunakan tanganmu sendiri berulang-ulang, ototmu (muscle memory) akan mengingatnya!"]
+                eduTitle1: "Persiapan UTBK/PTN", eduList1: ["Pengunyahan permen karet bebas gula selama simulasi Tryout untuk merangsang sirkulasi darah ke otak", "Mentransfer formula matematika kompleks ke dalam gerakan atau gestur spesifik"],
+                eduTitle2: "Alternatif Karier", eduList2: ["Akademi Militer/Kepolisian (TNI/Polri)", "Instruktur Kebugaran/Pelatih Muda Olahraga", "Teknisi Industri / Mekanik Entry-Level"],
+                materi: ["Persiapan Tes Kesamaptaan Jasmani Kedinasan", "Regulasi Stres Ujian Berbasis Relaksasi Fisik"], layanan: ["Pendampingan Medis dan Fisik Syarat Pendaftaran Kedinasan"],
+                guruBk: ["Lakukan monitoring indeks kebugaran (Postur, BMI, Buta Warna, THT) secara dini jika siswa menargetkan masuk Akademi Kedinasan."], siswa: ["Tulis ulang rumus-rumus abstrak UTBK secara berulang-ulang di atas kertas buram. Otot tanganmu (*Muscle Memory*) akan membantumu mengingatnya saat tes!"]
             },
             MA_Awal: {
-                eduTitle1: "Strategi Belajar (Fase E/F)", eduList1: ["Buatlah maket (model fisik 3D) untuk proyek P5 atau tugas kelas", "Praktikum langsung (Misal: Praktik manasik haji, penyembelihan kurban)"],
-                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["PMR/Kesehatan Lapangan", "Aktivitas Pecinta Alam/Pramuka Penegak Madrasah"],
-                materi: ["Praktikum Laboratorium Terpadu (Fase F)", "Pendidikan Jasmani & Kesehatan Reproduksi"], layanan: ["Fasilitasi dan dukung program bakti sosial lapangan"],
-                guruBk: ["Ajarkan teknik relaksasi otot (Progressive Muscle Relaxation) jika ia terlihat gelisah atau stres menghadapi tumpukan tugas"], siswa: ["Gunakan teknik belajar Pomodoro! Belajar fokus 25 menit, lalu berdiri dan renggangkan badanmu selama 5 menit. Ulangi terus."]
+                eduTitle1: "Strategi Belajar (Fase E/F)", eduList1: ["Pembuatan karya instalasi fisik/Maket 3D untuk menunjang proyek Profil Pelajar Pancasila (P5)", "Simulasi tata cara manasik haji atau fikih penyembelihan kurban secara aplikatif di lapangan"],
+                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Kecakapan teknis Palang Merah Remaja (PMR/Kesehatan Lapangan Dasar)", "Keterampilan *Survival* pada ekstrakurikuler Pramuka Penegak Madrasah"],
+                materi: ["Eksplorasi Praktikum Biologi/Kimia Terpadu (Fase F)", "Anatomi Fisiologi dan Pendidikan Kesehatan Remaja"], layanan: ["Dukungan institusional untuk program pengabdian masyarakat lapangan"],
+                guruBk: ["Edukasi siswa dengan metode Relaksasi Otot Progresif (*Progressive Muscle Relaxation*) untuk menetralisir ketegangan fisik akibat beban tugas madrasah yang padat."], siswa: ["Jangan memaksakan diri duduk berjam-jam saat menghafal kitab. Berdirilah sesekali, regangkan ototmu, dan aplikasikan gerakan fisik agar pikiranmu kembali jernih."]
             },
             MA_Transisi: {
-                eduTitle1: "Persiapan UTBK/PTKIN", eduList1: ["Tulis ulang rumus/dalil berulang kali (Muscle Memory / Memori Otot)", "Kerjakan soal tryout sambil sesekali mengetuk jari atau mengunyah permen karet"],
-                eduTitle2: "Alternatif Karier", eduList2: ["TNI/Polri/Sekolah Kedinasan", "Teknisi / Mekanik Pemula", "Pengrajin / Crafter / Koki Muda"],
-                materi: ["Persiapan Kesamaptaan Jasmani (Tes Fisik Masuk Kedinasan)", "Manajemen Stres Ujian Berbasis Gerak Fisik"], layanan: ["Simulasi Ujian Fisik/Samapta (Lari, Pull-up, Push-up)"],
-                guruBk: ["Pantau asupan gizi dan kebugaran fisik (BMI, mata, tinggi badan) jika siswa mengincar Akademi Militer, Polisi, atau ikatan dinas lainnya"], siswa: ["Otot tanganmu akan lebih mudah mengingat rumus dan kosakata baru jika kamu menulisnya sendiri berulang-ulang di atas kertas buram!"]
+                eduTitle1: "Persiapan UTBK/PTKIN", eduList1: ["Pengulangan penulisan manual (Tulis Tangan) dalil atau rumus untuk membangun *Muscle Memory*", "Mengkondisikan saraf gerak saat mengerjakan Tryout (Mengetukkan ujung jari perlahan)"],
+                eduTitle2: "Alternatif Karier", eduList2: ["Taruna Akademi Militer/Kepolisian", "Pengrajin Seni Kriya / Pekerja Kreatif Fisik", "Ahli Gizi Kuliner / Koki Vokasi"],
+                materi: ["Latihan Intensif Ujian Fisik Kesamaptaan (TNI/Polri/STIN)", "Metode Manajemen Stres Psikososial Berbasis Kinetik"], layanan: ["Simulasi Periodik Tes Samapta (Lari 12 Menit, Pull-up, *Shuttle Run*)"],
+                guruBk: ["Bimbing siswa untuk mempersiapkan administrasi dan fisik sedini mungkin jika memiliki intensi kuat menembus seleksi Akademi Ikatan Dinas."], siswa: ["Gunakan kertas buram atau papan tulis kecil untuk menggoreskan alur penyelesaian soal UTBK secara berulang. Sentuhan fisik dengan pena adalah kunci kecepatan kerjamu."]
             },
             SMK_Awal: {
-                eduTitle1: "Fokus Praktik Kejuruan", eduList1: ["Gunakan waktu di Bengkel/Laboratorium/Dapur Sekolah (Kitchen) semaksimal mungkin", "Sentuh, rasakan, dan hafalkan letak/bentuk setiap komponen mesin, bumbu, atau peralatan praktik"],
-                eduTitle2: "Persiapan Magang/PKL", eduList2: ["Simulasi fisik menggunakan alat berat/mesin sesuai dengan standar industri K3", "Biasakan tubuh berdiri/bekerja dalam durasi lama (Stamina Kerja Industri)"],
-                materi: ["Penerapan 5R (Ringkas, Rapi, Resik, Rawat, Rajin) di Area Praktik", "Standar Keselamatan dan Kesehatan Kerja (K3) Lapangan"], layanan: ["Pemantauan Kedisiplinan Pemakaian APD (Alat Pelindung Diri: Helm safety, Sepatu booth, dll)"],
-                guruBk: ["Tanamkan *Awareness* (kesadaran) pada siswa kinestetik agar tidak bertindak ceroboh, terburu-buru, atau terlalu banyak bercanda saat mengoperasikan mesin berbahaya di bengkel"], siswa: ["Kelebihanmu adalah di tangan dan fisikmu! Pahami fungsi alat praktik dengan memegangnya langsung, tapi ingat, selalu ikuti buku panduan manual K3!"]
+                eduTitle1: "Fokus Praktik Kejuruan", eduList1: ["Optimalisasi jam kerja *Teaching Factory* di area Bengkel, Dapur Komersial, atau Laboratorium Terpadu", "Pengenalan taktil (Sentuhan fisik) terhadap bentuk, tekstur, dan letak komponen mesin/bahan praktik industri"],
+                eduTitle2: "Persiapan Magang/PKL", eduList2: ["Simulasi ketahanan fisik (*Stamina Building*) untuk beradaptasi dengan ritme kerja berdiri (*Standing Operation*) di industri", "Pelatihan manuver alat berat atau mesin presisi tinggi sesuai standar baku operasional"],
+                materi: ["Penerapan Prinsip 5R Industri (Ringkas, Rapi, Resik, Rawat, Rajin)", "Standar Kesehatan, Keselamatan Kerja, dan Lingkungan Hidup (K3LH)"], layanan: ["Inspeksi Kedisiplinan Penggunaan Alat Pelindung Diri (APD/Safety Gear)"],
+                guruBk: ["Tanamkan kesadaran penuh (*Mindfulness*) pada siswa kinestetik agar meminimalkan impulsivitas dan manuver ceroboh saat berada di area praktik berisiko tinggi."], siswa: ["Fisik dan kecekatan tanganmu adalah modal utamamu! Pahami cara kerja alat melalui sentuhan langsung, namun pastikan selalu mematuhi instruksi manual Keselamatan Kerja (K3)."]
             },
             SMK_Transisi: {
-                eduTitle1: "Persiapan Rekrutmen Kerja", eduList1: ["Fokus 100% pada pematangan Uji Kompetensi Keahlian (UKK) secara fisik/praktik langsung", "Persiapkan fisik, istirahat cukup sebelum mengikuti tes kemampuan kerja atau psikotes lapangan"],
-                eduTitle2: "Alternatif Studi Lanjut Vokasi", eduList2: ["Politeknik Manufaktur / Teknik Mesin", "Sekolah Tinggi Pariwisata (Tata Boga/Kru Kapal Pesiar)", "Akademi Militer / Kepolisian"],
-                materi: ["Simulasi Uji Praktik Kerja Lapangan (Hard-Skill Assessment)", "Manajemen Kelelahan Fisik di Lingkungan Industri (Fatigue Management)"], layanan: ["Penyaluran Kerja ke Sektor Industri Manufaktur, Pertambangan, Konstruksi, atau Hospitality (BKK)"],
-                guruBk: ["Hubungkan bakat praktik siswa dengan industri yang memang membutuhkan tenaga kerja fisik tinggi (seperti pabrik Astra, industri kuliner, atau perkapalan)"], siswa: ["Saat tes melamar kerja, HRD/Penguji akan menyuruhmu mempraktikkan langsung (misal: mengelas, memasak, atau mengetik cepat). Tunjukkan kecekatan tanganmu dengan tenang dan profesional!"]
+                eduTitle1: "Persiapan Rekrutmen Kerja", eduList1: ["Fokus absolut pada pencapaian nilai sempurna di Uji Kompetensi Keahlian (UKK) praktik industri", "Manajemen istirahat fisik (*Recovery*) H-1 sebelum menghadapi tes kemampuan lapangan perusahaan"],
+                eduTitle2: "Alternatif Studi Lanjut Vokasi", eduList2: ["Politeknik Negeri Manufaktur (Polman) / Teknik Rekayasa Terapan", "Sekolah Tinggi Pariwisata (NHI / Manajemen Tataboga Internasional)", "Akademi Kedinasan Militer / Navigasi Laut"],
+                materi: ["Simulasi Penilaian *Hard-Skill* Industri Berbasis Tekanan Waktu", "Manajemen Kelelahan Otot (*Fatigue Management*) di Shift Kerja Industri"], layanan: ["Penyaluran Tenaga Kerja ke Sektor Manufaktur, Pertambangan, Konstruksi BUMN/Swasta (BKK)"],
+                guruBk: ["Petakan profil kinetik siswa untuk disalurkan secara presisi ke mitra industri yang menuntut stamina, kecekatan tangan, dan ketahanan fisik (*Endurance*) tinggi."], siswa: ["Saat tes seleksi HRD pabrik atau hotel, kamu akan diuji langsung di lapangan (seperti mengelas atau merakit). Jaga ketenangan, dan buktikan kehebatan tanganmu dengan tindakan nyata!"]
             }
         }
     }
