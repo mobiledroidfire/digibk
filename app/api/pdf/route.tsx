@@ -19,9 +19,9 @@ import {
     type VakProfile
 } from '@/lib/data/vak';
 
-// Helper Functions
-function blendArrays(arr1: string[] = [], arr2: string[] = [], arr3: string[] = [], maxItems: number): string[] {
-    const combined = [...arr1, ...arr2.slice(0, Math.max(1, Math.floor(arr2.length / 2))), ...arr3.slice(0, 1)];
+// Helper: Proporsi dominan yang lebih akurat
+function blendAccurate(arr1: string[] = [], arr2: string[] = [], arr3: string[] = [], maxItems: number): string[] {
+    const combined = [...arr1.slice(0, 4), ...arr2.slice(0, 2), ...arr3.slice(0, 1)];
     return [...new Set(combined)].slice(0, maxItems);
 }
 
@@ -32,40 +32,67 @@ function cleanCode(code?: string): string {
 // STYLESHEET
 const styles = StyleSheet.create({
     container: { padding: 5 },
-    phaseBanner: { backgroundColor: '#7e22ce', padding: 12, borderRadius: 8, marginBottom: 12 },
+    phaseBanner: { backgroundColor: '#3b82f6', padding: 12, borderRadius: 8, marginBottom: 15 },
     phaseTitle: { color: '#ffffff', fontSize: 13, fontWeight: 'bold', marginBottom: 2 },
-    phaseSub: { color: '#f3e8ff', fontSize: 10 },
-    sectionCard: { backgroundColor: '#ffffff', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 12 },
-    sectionTitle: { fontSize: 14, fontWeight: 'bold', color: '#0f172a', marginBottom: 8 },
+    phaseSub: { color: '#eff6ff', fontSize: 10 },
+
+    sectionCard: { backgroundColor: '#ffffff', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 15 },
+    sectionTitle: { fontSize: 13, fontWeight: 'bold', color: '#0f172a', marginBottom: 8, textTransform: 'uppercase' },
+
     badgeProfil: { backgroundColor: '#eff6ff', padding: '6 12', borderRadius: 6, width: 80, textAlign: 'center', marginBottom: 8 },
-    badgeText: { fontSize: 14, fontWeight: 'bold', color: '#1d4ed8' },
-    alertBlue: { backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', padding: 8, borderRadius: 6, marginTop: 8 },
+    badgeText: { fontSize: 16, fontWeight: 'bold', color: '#1d4ed8' },
+
+    alertBlue: { backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', padding: 10, borderRadius: 6, marginTop: 8 },
     alertBlueText: { color: '#1e40af', fontSize: 9.5, lineHeight: 1.4 },
-    scoreRowContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-    scoreItem: { width: '48%' },
-    scoreItemFull: { width: '100%', marginBottom: 12 },
-    scoreTextRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 2 },
-    scoreLabel: { fontSize: 10, fontWeight: 'bold', color: '#1e293b' },
-    scoreSub: { fontSize: 8.5, color: '#64748b' },
-    scoreVal: { fontSize: 10, fontWeight: 'bold', color: '#4338ca' },
-    barBg: { height: 6, backgroundColor: '#e2e8f0', borderRadius: 3, width: '100%', marginTop: 4 },
-    barFill: { height: 6, borderRadius: 3 },
-    gridRow3: { flexDirection: 'row', justifyContent: 'space-between', gap: 6, marginBottom: 12 },
-    gridCol3: { flex: 1, backgroundColor: '#ffffff', padding: 8, borderRadius: 8, border: '1px solid #e2e8f0' },
-    gridRow2: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, marginBottom: 12 },
-    gridCol2: { flex: 1, backgroundColor: '#ffffff', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0' },
+
+    // Desain Tabel 
+    table: { width: '100%', marginBottom: 15, border: '1px solid #cbd5e1', borderRadius: 4 },
+    tableRow: { flexDirection: 'row', borderBottom: '1px solid #cbd5e1' },
+    tableHeader: { backgroundColor: '#f8fafc' },
+    tableCol1: { width: '15%', padding: 6, borderRight: '1px solid #cbd5e1', textAlign: 'center' },
+    tableCol2: { width: '45%', padding: 6, borderRight: '1px solid #cbd5e1' },
+    tableCol3: { width: '20%', padding: 6, borderRight: '1px solid #cbd5e1', textAlign: 'center' },
+    tableCol4: { width: '20%', padding: 6, textAlign: 'center' },
+    tableCell: { fontSize: 9, color: '#334155' },
+    tableCellHeader: { fontSize: 9, color: '#0f172a', fontWeight: 'bold' },
+
+    // Grid
+    gridRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginBottom: 15 },
+    gridCol: { flex: 1, backgroundColor: '#ffffff', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0' },
+
     colHeader: { fontSize: 11, fontWeight: 'bold', color: '#0f172a', marginBottom: 6, borderBottom: '1px solid #f1f5f9', paddingBottom: 4 },
-    colSubHeader: { fontSize: 8.5, fontWeight: 'bold', color: '#94a3b8', marginTop: 4, marginBottom: 2, textTransform: 'uppercase' },
-    bulletContainer: { flexDirection: 'row', marginBottom: 3 },
-    bulletPoint: { width: 10, fontSize: 10, color: '#334155' },
-    bulletItem: { flex: 1, fontSize: 9, color: '#334155', lineHeight: 1.4 },
-    boxDark: { flex: 1, backgroundColor: '#1e293b', padding: 10, borderRadius: 8 },
-    boxDarkTitle: { fontSize: 11, fontWeight: 'bold', color: '#ffffff', marginBottom: 6 },
-    boxDarkText: { flex: 1, fontSize: 9, color: '#cbd5e1', lineHeight: 1.4 },
-    boxLight: { flex: 1, backgroundColor: '#eff6ff', padding: 10, borderRadius: 8, border: '1px solid #bfdbfe' },
-    boxLightTitle: { fontSize: 11, fontWeight: 'bold', color: '#1e40af', marginBottom: 6 },
-    boxLightText: { flex: 1, fontSize: 9, color: '#1e3a8a', lineHeight: 1.4 }
+    colSubHeader: { fontSize: 9, fontWeight: 'bold', color: '#64748b', marginTop: 6, marginBottom: 3, textTransform: 'uppercase' },
+
+    // Bullet Point
+    bulletContainer: { flexDirection: 'row', marginBottom: 4, alignItems: 'flex-start' },
+    bulletPoint: { width: 12, fontSize: 10, color: '#64748b' },
+    bulletItem: { flex: 1, fontSize: 9.5, color: '#334155', lineHeight: 1.4 },
+
+    boxDark: { flex: 1, backgroundColor: '#1e293b', padding: 12, borderRadius: 8 },
+    boxDarkTitle: { fontSize: 11, fontWeight: 'bold', color: '#ffffff', marginBottom: 8 },
+    boxDarkText: { flex: 1, fontSize: 9.5, color: '#cbd5e1', lineHeight: 1.4 },
+
+    boxLight: { flex: 1, backgroundColor: '#eff6ff', padding: 12, borderRadius: 8, border: '1px solid #bfdbfe' },
+    boxLightTitle: { fontSize: 11, fontWeight: 'bold', color: '#1e40af', marginBottom: 8 },
+    boxLightText: { flex: 1, fontSize: 9.5, color: '#1e3a8a', lineHeight: 1.4 }
 });
+
+// Kamus Terjemahan Tipe Holland (RIASEC)
+const hollandTranslations: Record<string, string> = {
+    'Realistic': 'Realistis',
+    'Investigative': 'Investigatif',
+    'Artistic': 'Artistik',
+    'Social': 'Sosial',
+    'Enterprising': 'Wirausaha',
+    'Conventional': 'Konvensional'
+};
+
+// Kamus Terjemahan Gaya Belajar (VAK)
+const vakTranslations: Record<string, string> = {
+    'V': 'Penglihatan',
+    'A': 'Pendengaran',
+    'K': 'Gerak / Praktik'
+};
 
 export async function POST(request: Request) {
     try {
@@ -85,21 +112,21 @@ export async function POST(request: Request) {
         if (!student) return NextResponse.json({ error: 'Data siswa tidak ditemukan' }, { status: 404 });
 
         const studentName = student.full_name;
+        // PERBAIKAN: Menambahkan kembali variabel schoolObj yang terhapus
         const schoolObj = student.schools;
-        const schoolName = schoolObj && typeof schoolObj === 'object' && 'name' in schoolObj ? String(schoolObj.name) : 'Sekolah Anda';
-        const eduLvl = student.education_level || 'SD';
+        const baseSchoolName = schoolObj && typeof schoolObj === 'object' && 'name' in schoolObj ? String(schoolObj.name) : 'Sekolah Anda';
+        const eduLvl = student.education_level || 'SMP';
 
-        // FIX BUG 1: Logika Fallback Cerdas untuk Kelas
-        // Jika database grade_level kosong, default akan menyesuaikan jenjang pendidikan, bukan dipaksa '7'
         let defaultGrade = 7;
         if (eduLvl === 'SD' || eduLvl === 'MI') defaultGrade = 6;
         else if (eduLvl === 'SMA' || eduLvl === 'MA' || eduLvl === 'SMK') defaultGrade = 12;
-        else defaultGrade = 9; // SMP/MTs
 
-        // Menggunakan nullish coalescing (??) agar nilai 0 tetap valid, atau fallback ke defaultGrade jika null
         const grade = student.grade_level ?? defaultGrade;
 
-        let phaseKey = 'SD_Transisi';
+        // Menggabungkan nama sekolah dan kelas secara logis di sini
+        const schoolNameWithGrade = `${baseSchoolName} - Kelas ${grade}`;
+
+        let phaseKey = 'SMP_Awal';
         let bannerTitle = 'Fase Penjelajahan Minat';
         let bannerMessage = 'Eksplorasi minat dan bakat siswa.';
 
@@ -109,13 +136,13 @@ export async function POST(request: Request) {
             else { phaseKey = 'SD_Transisi'; bannerTitle = "Fase Transisi Pendidikan"; bannerMessage = "Persiapan Lulus SD/MI: Fokus persiapkan mental dan pemilihan SMP/MTs yang mendukung minatnya."; }
         } else if (eduLvl === 'SMP' || eduLvl === 'MTs') {
             if (grade <= 8) { phaseKey = 'SMP_Awal'; bannerMessage = "Fase Pencarian Jati Diri: Eksplorasi ekstrakurikuler dan organisasi."; }
-            else { phaseKey = 'SMP_Transisi'; bannerTitle = "Fase Transisi Pendidikan"; bannerMessage = "Penentuan Jalur Menengah Atas: Gunakan data ini untuk mantap memilih SMA, MA, atau SMK!"; }
+            else { phaseKey = 'SMP_Transisi'; bannerTitle = "Fase Transisi Pendidikan"; bannerMessage = "Penentuan Jalur Lanjutan: Mantapkan arah penjurusan ke SMA, MA, atau SMK!"; }
         } else if (eduLvl === 'SMA' || eduLvl === 'MA') {
             if (grade <= 11) { phaseKey = 'SMA_Awal'; bannerMessage = "Fase Peminatan: Perdalam portofolio akademik dan organisasi."; }
-            else { phaseKey = 'SMA_Transisi'; bannerTitle = "Fase Transisi Pendidikan"; bannerMessage = "Fokus Lanjutan: Panduan menentukan prodi PTN dan strategi karir masa depan."; }
+            else { phaseKey = 'SMA_Transisi'; bannerTitle = "Fase Transisi Pendidikan"; bannerMessage = "Fokus UTBK & Kuliah: Panduan utama menentukan prodi PTN impian!"; }
         } else if (eduLvl === 'SMK') {
-            if (grade <= 11) { phaseKey = 'SMK_Awal'; bannerMessage = "Fase Vokasi: Fokus pengembangan skill praktis dan persiapan PKL."; }
-            else { phaseKey = 'SMK_Transisi'; bannerTitle = "Fase Transisi Pendidikan"; bannerMessage = "Persiapan Lulusan: Perkuat uji kompetensi dan kesiapan wawancara kerja."; }
+            if (grade <= 11) { phaseKey = 'SMK_Awal'; bannerMessage = "Fase Vokasi: Fokus pengembangan skill praktis dan etika kerja."; }
+            else { phaseKey = 'SMK_Transisi'; bannerTitle = "Fase Transisi Pendidikan"; bannerMessage = "Persiapan Karier: Perkuat kompetensi uji UKK dan persiapan wawancara kerja."; }
         }
 
         let ModuleContent;
@@ -125,7 +152,7 @@ export async function POST(request: Request) {
         // RENDER PDF: RIASEC
         // ==========================================================
         if (moduleType === 'RIASEC') {
-            moduleTitle = `Kenali Potensi (${schoolName} - Kelas ${grade})`;
+            moduleTitle = `Laporan Potensi Bakat Minat`;
 
             const { data: results } = await supabase
                 .from('assessment_results')
@@ -160,26 +187,18 @@ export async function POST(request: Request) {
                 const data2 = riasecDictionary[code2] || riasecDictionary['S'];
                 const data3 = riasecDictionary[code3] || riasecDictionary['I'];
 
-                // Gunakan TypeScript "as any" untuk mengakses data bertingkat dari LevelData dengan key dinamis
-                const phase1: RiasecPhaseData = (data1.levels as any)[phaseKey] || data1.levels['SD_Transisi'];
-                const phase2: RiasecPhaseData = (data2.levels as any)[phaseKey] || data2.levels['SD_Transisi'];
-                const phase3: RiasecPhaseData = (data3.levels as any)[phaseKey] || data3.levels['SD_Transisi'];
+                const phase1: RiasecPhaseData = (data1.levels as any)[phaseKey] || data1.levels['SMP_Transisi'];
+                const phase2: RiasecPhaseData = (data2.levels as any)[phaseKey] || data2.levels['SMP_Transisi'];
+                const phase3: RiasecPhaseData = (data3.levels as any)[phaseKey] || data3.levels['SMP_Transisi'];
 
-                // FIX BUG 2: Menyamakan limit maxItems dengan versi Web.
-                // Karir ditingkatkan menjadi 7, Edu 5, Materi 6, dst agar lebih lengkap di PDF
-                const mixedEdu1 = blendArrays(phase1.eduList1, phase2.eduList1, phase3.eduList1, 5);
-                const mixedEdu2 = blendArrays(phase1.eduList2, phase2.eduList2, phase3.eduList2, 5);
-                const mixedKarir = blendArrays(data1.karir, data2.karir, data3.karir, 7);
-                const mixedFreelance = blendArrays(data1.freelance, data2.freelance, data3.freelance, 5);
-                const mixedMateri = blendArrays(phase1.materi, phase2.materi, phase3.materi, 6);
-                const mixedLayanan = blendArrays(phase1.layanan, phase2.layanan, phase3.layanan, 5);
-                const mixedGuruBk = blendArrays(phase1.guruBk, phase2.guruBk, phase3.guruBk, 4);
-                const mixedSiswa = blendArrays(phase1.siswa, phase2.siswa, phase3.siswa, 4);
-
-                const scoreRows = [];
-                for (let i = 0; i < sortedScores.length; i += 2) {
-                    scoreRows.push(sortedScores.slice(i, i + 2));
-                }
+                const mixedEdu1 = blendAccurate(phase1.eduList1, phase2.eduList1, phase3.eduList1, 6);
+                const mixedEdu2 = blendAccurate(phase1.eduList2, phase2.eduList2, phase3.eduList2, 6);
+                const mixedKarir = blendAccurate(data1.karir, data2.karir, data3.karir, 7);
+                const mixedFreelance = blendAccurate(data1.freelance, data2.freelance, data3.freelance, 5);
+                const mixedMateri = blendAccurate(phase1.materi, phase2.materi, phase3.materi, 6);
+                const mixedLayanan = blendAccurate(phase1.layanan, phase2.layanan, phase3.layanan, 5);
+                const mixedGuruBk = blendAccurate(phase1.guruBk, phase2.guruBk, phase3.guruBk, 4);
+                const mixedSiswa = blendAccurate(phase1.siswa, phase2.siswa, phase3.siswa, 4);
 
                 ModuleContent = (
                     <View style={styles.container}>
@@ -191,102 +210,96 @@ export async function POST(request: Request) {
                         <View style={styles.sectionCard} wrap={false}>
                             <View style={{ flexDirection: 'row' }}>
                                 <View style={styles.badgeProfil}>
-                                    <Text style={{ fontSize: 7, color: '#3b82f6', textAlign: 'center' }}>PROFIL</Text>
+                                    <Text style={{ fontSize: 8, color: '#3b82f6', textAlign: 'center', marginBottom: 2 }}>KODE PROFIL</Text>
                                     <Text style={styles.badgeText}>{hyphenatedCodes.replace(/-/g, '')}</Text>
                                 </View>
                                 <View style={{ flex: 1, paddingLeft: 12 }}>
                                     <Text style={styles.sectionTitle}>Ringkasan Kesimpulan</Text>
                                     <Text style={{ fontSize: 9.5, color: '#334155', lineHeight: 1.4 }}>
-                                        Kamu memiliki tipe dominan <Text style={{ fontWeight: 'bold' }}>{data1.title}</Text> dan <Text style={{ fontWeight: 'bold' }}>{data2.title}</Text> dengan pola gabungan {hyphenatedCodes}.
+                                        Tipe dominan kamu adalah <Text style={{ fontWeight: 'bold' }}>{data1.title} ({data1.indonesianTitle})</Text> dengan pola gabungan {hyphenatedCodes}.
                                     </Text>
                                     <Text style={{ fontSize: 9, color: '#475569', marginTop: 4 }}>• {data1.title}: {data1.desc}</Text>
                                     <Text style={{ fontSize: 9, color: '#475569', marginTop: 2 }}>• {data2.title}: {data2.desc}</Text>
                                 </View>
                             </View>
                             <View style={styles.alertBlue}>
-                                <Text style={styles.alertBlueText}>☆ Hebat! Kamu memiliki kecerdasan minat yang seimbang pada beberapa bidang sekaligus. Perpaduan ini membuatmu lebih mudah beradaptasi di berbagai lingkungan!</Text>
+                                <Text style={styles.alertBlueText}>* Kamu memiliki kecerdasan minat yang saling mendukung. Perpaduan ini menjadi kekuatan utamamu dalam menentukan pendidikan lanjutan dan karier masa depan!</Text>
                             </View>
                         </View>
 
                         <View style={styles.sectionCard} wrap={false}>
-                            <Text style={styles.sectionTitle}>Detail Skor 6 Dimensi</Text>
-                            {scoreRows.map((row, idx) => (
-                                <View key={idx} style={styles.scoreRowContainer}>
-                                    {row.map((sc) => {
-                                        const code = cleanCode(sc.code);
-                                        const def = dimensionDefs[code] || { name: code, meaning: '' };
-                                        const scoreNum = Number(sc.raw_score);
-                                        const pct = Math.min((scoreNum / 35) * 100, 100);
-
-                                        return (
-                                            <View key={code} style={styles.scoreItem}>
-                                                <View style={styles.scoreTextRow}>
-                                                    <View style={{ flex: 1, paddingRight: 8 }}>
-                                                        <Text style={styles.scoreLabel}>{def.name}</Text>
-                                                        <Text style={styles.scoreSub}>{def.meaning}</Text>
-                                                    </View>
-                                                    <Text style={styles.scoreVal}>{scoreNum}</Text>
-                                                </View>
-                                                <View style={styles.barBg}>
-                                                    <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: '#4f46e5' }]} />
-                                                </View>
-                                            </View>
-                                        );
-                                    })}
+                            <Text style={styles.sectionTitle}>Ringkasan Skor 6 Dimensi (RIASEC)</Text>
+                            <View style={styles.table}>
+                                <View style={[styles.tableRow, styles.tableHeader]}>
+                                    <View style={styles.tableCol1}><Text style={styles.tableCellHeader}>Kode</Text></View>
+                                    <View style={styles.tableCol2}><Text style={styles.tableCellHeader}>Tipe Holland</Text></View>
+                                    <View style={styles.tableCol3}><Text style={styles.tableCellHeader}>Skor</Text></View>
+                                    <View style={styles.tableCol4}><Text style={styles.tableCellHeader}>Persentase</Text></View>
                                 </View>
-                            ))}
+                                {sortedScores.map((sc) => {
+                                    const code = cleanCode(sc.code);
+                                    const def = dimensionDefs[code] || { name: code, meaning: '' };
+                                    const scoreNum = Number(sc.raw_score);
+                                    const pct = Math.round((scoreNum / 35) * 100);
+                                    const translatedName = hollandTranslations[def.name] || def.name;
+
+                                    return (
+                                        <View key={code} style={styles.tableRow}>
+                                            <View style={styles.tableCol1}><Text style={[styles.tableCell, { fontWeight: 'bold', color: '#1e40af' }]}>{code}</Text></View>
+                                            <View style={styles.tableCol2}><Text style={[styles.tableCell, { fontWeight: 'bold' }]}>{def.name} ({translatedName})</Text></View>
+                                            <View style={styles.tableCol3}><Text style={styles.tableCell}>{scoreNum}</Text></View>
+                                            <View style={styles.tableCol4}><Text style={styles.tableCell}>{pct}%</Text></View>
+                                        </View>
+                                    );
+                                })}
+                            </View>
                         </View>
 
-                        {/* wrap={false} dihilangkan sedikit agar kolom daftar tidak terpotong jika kontennya panjang */}
-                        <View style={styles.gridRow3}>
-                            <View style={styles.gridCol3}>
-                                <Text style={styles.colHeader}>Aktivitas & Ekstrakurikuler</Text>
-                                <Text style={styles.colSubHeader}>PENGEMBANGAN DIRI & STUDI</Text>
+                        <View style={styles.gridRow} break>
+                            <View style={styles.gridCol}>
+                                <Text style={styles.colHeader}>Studi Lanjut & Karier</Text>
+                                <Text style={styles.colSubHeader}>REKOMENDASI STUDI / JURUSAN</Text>
                                 {mixedEdu1.map((item, i) => (
                                     <View key={`edu1-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
                                 ))}
-                                <Text style={styles.colSubHeader}>PERSIAPAN AKTIVITAS/EKSKUL</Text>
+                                <Text style={styles.colSubHeader}>PILIHAN ALTERNATIF (VOKASI)</Text>
                                 {mixedEdu2.map((item, i) => (
                                     <View key={`edu2-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
                                 ))}
-                            </View>
-
-                            <View style={styles.gridCol3}>
-                                <Text style={styles.colHeader}>Karier & Usaha</Text>
                                 <Text style={styles.colSubHeader}>PEKERJAAN MASA DEPAN</Text>
                                 {mixedKarir.map((item, i) => (
                                     <View key={`karir-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
                                 ))}
-                                <Text style={styles.colSubHeader}>PELUANG PENGEMBANGAN KHUSUS</Text>
-                                {mixedFreelance.map((item, i) => (
-                                    <View key={`free-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
-                                ))}
                             </View>
 
-                            <View style={styles.gridCol3}>
-                                <Text style={styles.colHeader}>Pembelajaran</Text>
-                                <Text style={styles.colSubHeader}>FOKUS MATERI ({eduLvl})</Text>
+                            <View style={styles.gridCol}>
+                                <Text style={styles.colHeader}>Pengembangan Diri</Text>
+                                <Text style={styles.colSubHeader}>MATERI YANG PERLU DIPERKUAT</Text>
                                 {mixedMateri.map((item, i) => (
                                     <View key={`mat-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
                                 ))}
-                                <Text style={styles.colSubHeader}>LAYANAN PENDUKUNG</Text>
+                                <Text style={styles.colSubHeader}>PELUANG FREELANCE / MANDIRI</Text>
+                                {mixedFreelance.map((item, i) => (
+                                    <View key={`free-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
+                                ))}
+                                <Text style={styles.colSubHeader}>LAYANAN PENDUKUNG IDEAL</Text>
                                 {mixedLayanan.map((item, i) => (
                                     <View key={`lay-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
                                 ))}
                             </View>
                         </View>
 
-                        <View style={styles.gridRow2} wrap={false}>
+                        <View style={styles.gridRow} wrap={false}>
                             <View style={styles.boxDark}>
-                                <Text style={styles.boxDarkTitle}>Saran untuk Guru / Orang Tua</Text>
+                                <Text style={styles.boxDarkTitle}>Yang Perlu Dilakukan Guru / Orang Tua</Text>
                                 {mixedGuruBk.map((item, i) => (
-                                    <View key={`gbk-${i}`} style={styles.bulletContainer}><Text style={{ ...styles.bulletPoint, color: '#94a3b8' }}>→</Text><Text style={styles.boxDarkText}>{item}</Text></View>
+                                    <View key={`gbk-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxDarkText}>{item}</Text></View>
                                 ))}
                             </View>
                             <View style={styles.boxLight}>
-                                <Text style={styles.boxLightTitle}>Saran untuk Kamu (Siswa)</Text>
+                                <Text style={styles.boxLightTitle}>Yang Perlu Kamu Lakukan (Siswa)</Text>
                                 {mixedSiswa.map((item, i) => (
-                                    <View key={`sis-${i}`} style={styles.bulletContainer}><Text style={{ ...styles.bulletPoint, color: '#3b82f6' }}>✦</Text><Text style={styles.boxLightText}>{item}</Text></View>
+                                    <View key={`sis-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxLightText}>{item}</Text></View>
                                 ))}
                             </View>
                         </View>
@@ -298,7 +311,7 @@ export async function POST(request: Request) {
         // RENDER PDF: VAK
         // ==========================================================
         else if (moduleType === 'VAK') {
-            moduleTitle = `Gaya Belajar (${schoolName} - Kelas ${grade})`;
+            moduleTitle = `Laporan Gaya Belajar`;
 
             const { data: results } = await supabase
                 .from('assessment_results')
@@ -326,9 +339,7 @@ export async function POST(request: Request) {
 
                 const domCode = cleanCode(actualProfile.dominant_code) || 'V';
                 const domData = vakDictionary[domCode] || vakDictionary['V'];
-                const phaseData: VakPhaseData = (domData.levels as any)[phaseKey] || domData.levels['SD_Transisi'];
-
-                const maxScore = Math.max(...sortedScores.map(s => Number(s.raw_score)), 1);
+                const phaseData: VakPhaseData = (domData.levels as any)[phaseKey] || domData.levels['SMP_Transisi'];
 
                 ModuleContent = (
                     <View style={styles.container}>
@@ -340,43 +351,51 @@ export async function POST(request: Request) {
                         <View style={styles.sectionCard} wrap={false}>
                             <View style={{ flexDirection: 'row' }}>
                                 <View style={styles.badgeProfil}>
-                                    <Text style={{ fontSize: 7, color: '#3b82f6', textAlign: 'center' }}>DOMINAN</Text>
+                                    <Text style={{ fontSize: 8, color: '#3b82f6', textAlign: 'center', marginBottom: 2 }}>DOMINAN</Text>
                                     <Text style={styles.badgeText}>{domCode}</Text>
                                 </View>
                                 <View style={{ flex: 1, paddingLeft: 12 }}>
-                                    <Text style={styles.sectionTitle}>{domData.title}</Text>
+                                    <Text style={styles.sectionTitle}>{domData.title} ({domData.indonesianTitle})</Text>
                                     <Text style={{ fontSize: 9.5, color: '#334155', lineHeight: 1.4 }}>
-                                        Kamu adalah tipe pembelajar <Text style={{ fontWeight: 'bold' }}>{domData.indonesianTitle}</Text>.
+                                        {domData.desc}
                                     </Text>
-                                    <Text style={{ fontSize: 9, color: '#475569', marginTop: 4 }}>{domData.desc}</Text>
                                 </View>
                             </View>
                         </View>
 
                         <View style={styles.sectionCard} wrap={false}>
-                            <Text style={styles.sectionTitle}>Profil Detail V-A-K Kamu</Text>
-                            {sortedScores.map((sc) => {
-                                const code = cleanCode(sc.code);
-                                const dictRef = vakDictionary[code] || { title: code, indonesianTitle: '' };
-                                const scoreNum = Number(sc.raw_score);
-                                const pct = Math.min((scoreNum / maxScore) * 100, 100);
+                            <Text style={styles.sectionTitle}>Ringkasan Skor V-A-K</Text>
+                            <View style={styles.table}>
+                                <View style={[styles.tableRow, styles.tableHeader]}>
+                                    <View style={styles.tableCol1}><Text style={styles.tableCellHeader}>Kode</Text></View>
+                                    <View style={styles.tableCol2}><Text style={styles.tableCellHeader}>Gaya Belajar</Text></View>
+                                    <View style={styles.tableCol3}><Text style={styles.tableCellHeader}>Skor Poin</Text></View>
+                                    <View style={styles.tableCol4}><Text style={styles.tableCellHeader}>Status</Text></View>
+                                </View>
+                                {sortedScores.map((sc, index) => {
+                                    const code = cleanCode(sc.code);
+                                    const dictRef = vakDictionary[code] || { title: code, indonesianTitle: '' };
+                                    const scoreNum = Number(sc.raw_score);
+                                    const translatedName = vakTranslations[code] || dictRef.indonesianTitle || '';
 
-                                return (
-                                    <View key={code} style={styles.scoreItemFull}>
-                                        <View style={styles.scoreTextRow}>
-                                            <Text style={styles.scoreLabel}>{dictRef.title}</Text>
-                                            <Text style={styles.scoreVal}>{scoreNum} Poin</Text>
+                                    return (
+                                        <View key={code} style={styles.tableRow}>
+                                            <View style={styles.tableCol1}><Text style={[styles.tableCell, { fontWeight: 'bold', color: '#1e40af' }]}>{code}</Text></View>
+                                            <View style={styles.tableCol2}>
+                                                <Text style={[styles.tableCell, { fontWeight: 'bold' }]}>
+                                                    {dictRef.title} {translatedName ? `(${translatedName})` : ''}
+                                                </Text>
+                                            </View>
+                                            <View style={styles.tableCol3}><Text style={styles.tableCell}>{scoreNum}</Text></View>
+                                            <View style={styles.tableCol4}><Text style={[styles.tableCell, { color: index === 0 ? '#10b981' : '#64748b', fontWeight: 'bold' }]}>{index === 0 ? 'Dominan' : 'Pendukung'}</Text></View>
                                         </View>
-                                        <View style={styles.barBg}>
-                                            <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: code === 'V' ? '#3b82f6' : code === 'A' ? '#10b981' : '#f59e0b' }]} />
-                                        </View>
-                                    </View>
-                                );
-                            })}
+                                    );
+                                })}
+                            </View>
                         </View>
 
-                        <View style={styles.gridRow2} wrap={false}>
-                            <View style={styles.gridCol2}>
+                        <View style={styles.gridRow} break>
+                            <View style={styles.gridCol}>
                                 <Text style={styles.colHeader}>Strategi Belajar</Text>
                                 <Text style={styles.colSubHeader}>{phaseData.eduTitle1}</Text>
                                 {phaseData.eduList1.map((item, i) => (
@@ -388,7 +407,7 @@ export async function POST(request: Request) {
                                 ))}
                             </View>
 
-                            <View style={styles.gridCol2}>
+                            <View style={styles.gridCol}>
                                 <Text style={styles.colHeader}>Pengayaan & Materi</Text>
                                 <Text style={styles.colSubHeader}>FOKUS / TRIK UJIAN</Text>
                                 {phaseData.materi.map((item, i) => (
@@ -401,17 +420,17 @@ export async function POST(request: Request) {
                             </View>
                         </View>
 
-                        <View style={styles.gridRow2} wrap={false}>
+                        <View style={styles.gridRow} wrap={false}>
                             <View style={styles.boxDark}>
                                 <Text style={styles.boxDarkTitle}>Saran untuk Guru / Orang Tua</Text>
                                 {phaseData.guruBk.map((item, i) => (
-                                    <View key={`gbk-${i}`} style={styles.bulletContainer}><Text style={{ ...styles.bulletPoint, color: '#94a3b8' }}>→</Text><Text style={styles.boxDarkText}>{item}</Text></View>
+                                    <View key={`gbk-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxDarkText}>{item}</Text></View>
                                 ))}
                             </View>
                             <View style={styles.boxLight}>
                                 <Text style={styles.boxLightTitle}>Apa yang Harus Kamu Lakukan?</Text>
                                 {phaseData.siswa.map((item, i) => (
-                                    <View key={`sis-${i}`} style={styles.bulletContainer}><Text style={{ ...styles.bulletPoint, color: '#3b82f6' }}>✦</Text><Text style={styles.boxLightText}>{item}</Text></View>
+                                    <View key={`sis-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxLightText}>{item}</Text></View>
                                 ))}
                             </View>
                         </View>
@@ -423,7 +442,9 @@ export async function POST(request: Request) {
         }
 
         const MyDocument = (
-            <MasterPdfTemplate moduleName={moduleTitle} studentName={studentName} schoolName={schoolName}>
+            <MasterPdfTemplate moduleName={moduleTitle} studentName={studentName}
+                schoolName={schoolNameWithGrade}
+            >
                 {ModuleContent}
             </MasterPdfTemplate>
         );
