@@ -5,11 +5,14 @@ import { redirect } from 'next/navigation';
 import { logoutAction } from '@/features/auth/actions/auth.actions';
 import {
     User, GraduationCap, School, PlayCircle,
-    CheckCircle2, FileText, LogOut, BrainCircuit,
+    CheckCircle2, LogOut, BrainCircuit,
     Clock, Lock, BookOpen, Activity, ShieldCheck,
     Target, Users, Handshake, Lightbulb
 } from 'lucide-react';
 import Link from 'next/link';
+
+// PERBAIKAN 1: Mengimpor komponen PrintPdfButton
+import PrintPdfButton from '@/components/pdf/PrintPdfButton';
 
 // 1. Mendefinisikan Tipe Data
 type StudentData = {
@@ -69,7 +72,7 @@ export default async function StudentDashboardPage() {
     if (sessionsRaw) {
         const sessions = sessionsRaw as unknown as SessionData[];
 
-        // PERBAIKAN: Menggunakan for...of agar TypeScript bisa melacak perubahan nilai
+        // Menggunakan for...of agar TypeScript bisa melacak perubahan nilai
         for (const session of sessions) {
             const code = session.assessment_versions?.assessments?.code;
             const currentStatus = session.status;
@@ -87,7 +90,7 @@ export default async function StudentDashboardPage() {
         }
     }
 
-    // 5. Data Konfigurasi untuk Jurus 2 sampai 7 (Terkunci, agar menghasilkan 6 kotak genap)
+    // 5. Data Konfigurasi untuk Jurus 2 sampai 7 (Terkunci)
     const lockedJurus = [
         { id: 2, title: "Kelola Emosi", icon: Activity, color: "text-rose-500", bg: "bg-rose-50" },
         { id: 3, title: "Tumbuhkan Resiliensi", icon: ShieldCheck, color: "text-orange-500", bg: "bg-orange-50" },
@@ -162,6 +165,7 @@ export default async function StudentDashboardPage() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+
                                 {/* Modul 1: RIASEC */}
                                 <div className="p-6 md:p-8 flex flex-col h-full bg-slate-50/50">
                                     <div className="flex items-start justify-between mb-4">
@@ -183,9 +187,16 @@ export default async function StudentDashboardPage() {
                                                 <Link href="/student/potential/result" className="flex-1 inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-sm font-bold py-2.5 px-4 rounded-xl transition-colors">
                                                     Lihat Hasil
                                                 </Link>
-                                                <button disabled className="flex-1 inline-flex items-center justify-center gap-2 bg-slate-800 text-white text-sm font-bold py-2.5 px-4 rounded-xl opacity-50 cursor-not-allowed">
-                                                    <FileText className="h-4 w-4" /> Unduh PDF
-                                                </button>
+
+                                                {/* PERBAIKAN 2: Memasang Tombol PDF untuk RIASEC */}
+                                                <PrintPdfButton
+                                                    moduleType="RIASEC"
+                                                    studentData={{
+                                                        id: studentData.id,
+                                                        name: studentData.full_name,
+                                                        school: schoolName
+                                                    }}
+                                                />
                                             </>
                                         )}
                                     </div>
@@ -212,9 +223,16 @@ export default async function StudentDashboardPage() {
                                                 <Link href="/student/learning-style/result" className="flex-1 inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-sm font-bold py-2.5 px-4 rounded-xl transition-colors">
                                                     Lihat Hasil
                                                 </Link>
-                                                <button disabled className="flex-1 inline-flex items-center justify-center gap-2 bg-slate-800 text-white text-sm font-bold py-2.5 px-4 rounded-xl opacity-50 cursor-not-allowed">
-                                                    <FileText className="h-4 w-4" /> Unduh PDF
-                                                </button>
+
+                                                {/* PERBAIKAN 3: Memasang Tombol PDF untuk VAK */}
+                                                <PrintPdfButton
+                                                    moduleType="VAK"
+                                                    studentData={{
+                                                        id: studentData.id,
+                                                        name: studentData.full_name,
+                                                        school: schoolName
+                                                    }}
+                                                />
                                             </>
                                         )}
                                     </div>
@@ -223,7 +241,7 @@ export default async function StudentDashboardPage() {
                         </div>
 
                         {/* ========================================================= */}
-                        {/* JURUS 2 SAMPAI 7 (TERKUNCI, DIBUAT 3 KOLOM SEHINGGA GENAP 2 BARIS) */}
+                        {/* JURUS 2 SAMPAI 7 (TERKUNCI) */}
                         {/* ========================================================= */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {lockedJurus.map((jurus) => {
