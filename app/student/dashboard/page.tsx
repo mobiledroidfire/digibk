@@ -25,6 +25,7 @@ type StudentData = {
 };
 
 type SessionData = {
+    id: string;
     status: string;
     assessment_versions: { assessments: { code: string; } }
 };
@@ -39,10 +40,8 @@ export default async function StudentDashboardPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect('/login');
 
-    // === PERBAIKAN: Deteksi otomatis akun Tamu (Guest) ===
-    // Membaca data 'is_guest' dari metadata Supabase Auth
+    // === Deteksi otomatis akun Tamu (Guest) ===
     const isGuest = user.user_metadata?.is_guest === true;
-    // =======================================================
 
     // 3. Ambil Data Profil Siswa
     const { data: studentRaw, error: studentError } = await supabase
@@ -65,32 +64,46 @@ export default async function StudentDashboardPage() {
 
     // 4. Inisialisasi Status Asesmen
     let riasecStatus: AssessmentStatusType = 'NOT_STARTED';
-    let vakStatus: AssessmentStatusType = 'NOT_STARTED';
+    let varkStatus: AssessmentStatusType = 'NOT_STARTED'; // PERBAIKAN: Ubah nama variabel ke VARK
 
+    // Ambil data sesi
     const { data: sessionsRaw } = await supabase
         .from('assessment_sessions')
         .select(`
+            id,
             status,
             assessment_versions!inner ( assessments!inner ( code ) )
         `)
         .eq('student_id', studentData.id);
+
+    // PERBAIKAN (Jaring Pengaman): Ambil data dari tabel hasil tes. 
+    // Jika ada hasil, berarti tes PASTI sudah selesai, apa pun status sesinya.
+    const { data: resultsRaw } = await supabase
+        .from('assessment_results')
+        .select('session_id')
+        .eq('student_id', studentData.id);
+
+    const completedSessionIds = resultsRaw?.map(r => r.session_id) || [];
 
     if (sessionsRaw) {
         const sessions = sessionsRaw as unknown as SessionData[];
 
         for (const session of sessions) {
             const code = session.assessment_versions?.assessments?.code;
-            const currentStatus = session.status;
+
+            // Logika baru: Selesai jika statusnya COMPLETED ATAU ID sesi ada di tabel hasil
+            const isCompleted = session.status === 'COMPLETED' || completedSessionIds.includes(session.id);
+            const isProgress = session.status === 'IN_PROGRESS' && !isCompleted;
 
             // Pengecekan Status RIASEC
             if (code === 'RIASEC') {
-                if (currentStatus === 'COMPLETED') riasecStatus = 'COMPLETED';
-                else if (riasecStatus !== 'COMPLETED' && currentStatus === 'IN_PROGRESS') riasecStatus = 'IN_PROGRESS';
+                if (isCompleted) riasecStatus = 'COMPLETED';
+                else if (riasecStatus !== 'COMPLETED' && isProgress) riasecStatus = 'IN_PROGRESS';
             }
-            // Pengecekan Status VAK
-            else if (code === 'VAK') {
-                if (currentStatus === 'COMPLETED') vakStatus = 'COMPLETED';
-                else if (vakStatus !== 'COMPLETED' && currentStatus === 'IN_PROGRESS') vakStatus = 'IN_PROGRESS';
+            // Pengecekan Status VARK (PERBAIKAN: VAK menjadi VARK)
+            else if (code === 'VARK') {
+                if (isCompleted) varkStatus = 'COMPLETED';
+                else if (varkStatus !== 'COMPLETED' && isProgress) varkStatus = 'IN_PROGRESS';
             }
         }
     }
@@ -117,8 +130,6 @@ export default async function StudentDashboardPage() {
                         </div>
                         <span className="font-bold text-xl tracking-tight text-slate-900">DIGIBK</span>
                     </div>
-
-                    {/* PERBAIKAN: Mengirimkan status isGuest ke komponen LogoutButton */}
                     <LogoutButton isGuestAccount={isGuest} />
                 </div>
             </header>
@@ -151,9 +162,7 @@ export default async function StudentDashboardPage() {
 
                     <div className="flex flex-col gap-6">
 
-                        {/* ========================================================= */}
-                        {/* JURUS 1: SATU BINGKAI BESAR UNTUK RIASEC & VAK */}
-                        {/* ========================================================= */}
+                        {/* JURUS 1: SATU BINGKAI BESAR UNTUK RIASEC & VARK */}
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                             <div className="bg-slate-900 p-5 md:p-6 flex items-center gap-4">
                                 <div className="h-12 w-12 rounded-xl bg-blue-500/20 flex items-center justify-center border border-blue-500/30 shrink-0">
@@ -201,21 +210,21 @@ export default async function StudentDashboardPage() {
                                     </div>
                                 </div>
 
-                                {/* Modul 2: VAK */}
+                                {/* Modul 2: VARK */}
                                 <div className="p-6 md:p-8 flex flex-col h-full bg-white">
                                     <div className="flex items-start justify-between mb-4">
                                         <div>
-                                            <h4 className="font-bold text-slate-800 text-lg">2. Gaya Belajar (VAK)</h4>
-                                            <p className="text-sm text-slate-500 mt-1 mb-6">Ketahui cara belajar paling efektif: Visual, Auditori, atau Kinestetik.</p>
+                                            <h4 className="font-bold text-slate-800 text-lg">2. Gaya Belajar (VARK)</h4>
+                                            <p className="text-sm text-slate-500 mt-1 mb-6">Ketahui cara belajar paling efektif: Visual, Auditori, Reading, atau Kinestetik.</p>
                                         </div>
-                                        {vakStatus === 'COMPLETED' ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200"><CheckCircle2 className="h-4 w-4" /> Selesai</span> : null}
-                                        {vakStatus === 'IN_PROGRESS' ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200"><Clock className="h-4 w-4" /> Tertunda</span> : null}
-                                        {vakStatus === 'NOT_STARTED' ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">Belum</span> : null}
+                                        {varkStatus === 'COMPLETED' ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200"><CheckCircle2 className="h-4 w-4" /> Selesai</span> : null}
+                                        {varkStatus === 'IN_PROGRESS' ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200"><Clock className="h-4 w-4" /> Tertunda</span> : null}
+                                        {varkStatus === 'NOT_STARTED' ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">Belum</span> : null}
                                     </div>
                                     <div className="mt-auto flex flex-col sm:flex-row gap-3">
-                                        {vakStatus !== 'COMPLETED' ? (
+                                        {varkStatus !== 'COMPLETED' ? (
                                             <Link href="/student/learning-style" className="flex-1 inline-flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm">
-                                                <PlayCircle className="h-4 w-4" /> {vakStatus === 'IN_PROGRESS' ? 'Lanjutkan' : 'Mulai Tes'}
+                                                <PlayCircle className="h-4 w-4" /> {varkStatus === 'IN_PROGRESS' ? 'Lanjutkan' : 'Mulai Tes'}
                                             </Link>
                                         ) : (
                                             <>
@@ -237,9 +246,7 @@ export default async function StudentDashboardPage() {
                             </div>
                         </div>
 
-                        {/* ========================================================= */}
                         {/* JURUS 2 SAMPAI 7 (TERKUNCI) */}
-                        {/* ========================================================= */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {lockedJurus.map((jurus) => {
                                 const IconComponent = jurus.icon;
