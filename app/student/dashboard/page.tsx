@@ -232,7 +232,7 @@ export default async function StudentDashboardPage() {
                                                     Lihat Hasil
                                                 </Link>
                                                 <PrintPdfButton
-                                                    moduleType="VAK"
+                                                    moduleType="VARK"
                                                     studentData={{
                                                         id: studentData.id,
                                                         name: studentData.full_name,

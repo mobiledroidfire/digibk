@@ -1,10 +1,9 @@
 // Lokasi file: src/components/pdf/PrintPdfButton.tsx
-'use client'; // Wajib ditambahkan agar tombol bisa diklik
+'use client';
 
 import { useState } from 'react';
 import { FileText, Loader2 } from 'lucide-react';
 
-// Menentukan tipe data yang dibutuhkan oleh tombol
 type PrintPdfButtonProps = {
     moduleType: string;
     studentData: {
@@ -20,23 +19,26 @@ export default function PrintPdfButton({ moduleType, studentData }: PrintPdfButt
     const handlePrint = async () => {
         setIsLoading(true);
         try {
-            // Memanggil API route pembuat PDF yang sudah kita buat sebelumnya
             const response = await fetch('/api/pdf', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ moduleType, studentData })
             });
 
-            if (!response.ok) throw new Error('Gagal memproses PDF');
+            if (!response.ok) {
+                // TANGKAP ERROR DETAIL DARI SERVER
+                const errorData = await response.json().catch(() => null);
+                const errorMessage = errorData?.error || response.statusText || 'Kesalahan server tidak diketahui';
+                throw new Error(errorMessage);
+            }
 
-            // Menerima file PDF dan membukanya di tab baru
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             window.open(url, '_blank');
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error printing PDF:', error);
-            alert('Maaf, terjadi kesalahan saat menyiapkan PDF.');
+            alert(`Maaf, gagal menyiapkan PDF.\nAlasan: ${error.message}`);
         } finally {
             setIsLoading(false);
         }
