@@ -2,18 +2,17 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-// logoutAction dihapus dari sini karena sudah dipanggil di dalam LogoutButton
 import {
     User, GraduationCap, School, PlayCircle,
     CheckCircle2, BrainCircuit,
     Clock, Lock, Activity, ShieldCheck,
     Target, Users, Handshake, Lightbulb
-} from 'lucide-react'; // Ikon LogOut dihapus dari sini
+} from 'lucide-react';
 import Link from 'next/link';
 
 // Import komponen PrintPdfButton
 import PrintPdfButton from '@/components/pdf/PrintPdfButton';
-// PERBAIKAN: Import komponen LogoutButton yang baru dibuat
+// Import komponen LogoutButton yang baru dibuat
 import LogoutButton from '@/components/auth/LogoutButton';
 
 // 1. Mendefinisikan Tipe Data
@@ -39,6 +38,11 @@ export default async function StudentDashboardPage() {
     // 2. Validasi Sesi Pengguna
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect('/login');
+
+    // === PERBAIKAN: Deteksi otomatis akun Tamu (Guest) ===
+    // Membaca data 'is_guest' dari metadata Supabase Auth
+    const isGuest = user.user_metadata?.is_guest === true;
+    // =======================================================
 
     // 3. Ambil Data Profil Siswa
     const { data: studentRaw, error: studentError } = await supabase
@@ -114,8 +118,8 @@ export default async function StudentDashboardPage() {
                         <span className="font-bold text-xl tracking-tight text-slate-900">DIGIBK</span>
                     </div>
 
-                    {/* PERBAIKAN: Memanggil komponen Pop-up Logout yang modern */}
-                    <LogoutButton />
+                    {/* PERBAIKAN: Mengirimkan status isGuest ke komponen LogoutButton */}
+                    <LogoutButton isGuestAccount={isGuest} />
                 </div>
             </header>
 
