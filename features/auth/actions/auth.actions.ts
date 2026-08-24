@@ -116,10 +116,17 @@ export async function registeredLoginAction(prevState: AuthState | null, formDat
 
     const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', data.user.id).limit(1).single();
 
-    if (roleData && ['BK_COUNSELOR', 'TEACHER', 'SUPER_ADMIN'].includes(roleData.role)) {
-        redirect('/bk/dashboard');
+    // Arahkan ke dashboard yang sesuai dengan jabatannya (Role)
+    if (roleData) {
+        if (roleData.role === 'SUPER_ADMIN') {
+            redirect('/admin/dashboard'); // Ke halaman super admin
+        } else if (['BK_COUNSELOR', 'TEACHER'].includes(roleData.role)) {
+            redirect('/bk/dashboard'); // Ke halaman guru
+        } else {
+            redirect('/student/dashboard'); // Ke halaman siswa
+        }
     } else {
-        redirect('/student/dashboard');
+        redirect('/student/dashboard'); // Default
     }
 }
 
