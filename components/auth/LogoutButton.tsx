@@ -19,11 +19,19 @@ export default function LogoutButton({ isGuestAccount = false }: LogoutButtonPro
     const router = useRouter();
     const supabase = createClient();
 
-    const executeLogout = async () => {
+    // PERBAIKAN: Fungsi logout sekarang menerima parameter isRegistered
+    const executeLogout = async (isRegistered: boolean) => {
         setIsLoggingOut(true);
         try {
             await supabase.auth.signOut();
-            router.push('/login');
+
+            // Logika pengarahan (Redirect)
+            if (isRegistered) {
+                router.push('/login?tab=registered');
+            } else {
+                router.push('/login');
+            }
+
             router.refresh();
         } catch (error) {
             console.error('Gagal keluar:', error);
@@ -35,25 +43,28 @@ export default function LogoutButton({ isGuestAccount = false }: LogoutButtonPro
         if (isGuestAccount) {
             setIsModalOpen(true);
         } else {
-            executeLogout();
+            // Sudah permanen -> keluar dan arahkan ke tab Gunakan Akun (true)
+            executeLogout(true);
         }
     };
 
-    // PERBAIKAN: Memanggil Server Action yang divalidasi Zod
     const handleSaveAccount = async (nisn: string, password: string) => {
-        // Panggil Server Action claimAccountAction
         const result = await claimAccountAction(nisn, password);
 
         if (!result.success) {
-            // Jika Zod menemukan error (misal password kurang dari 6), lempar error ke modal
             throw new Error(result.error || 'Gagal memvalidasi data');
         }
 
         alert('Akun berhasil diamankan! Anda bisa login dengan NISN dan password ini nanti.');
         setIsModalOpen(false);
 
-        // Opsional: Muat ulang halaman agar header/status tamu diperbarui
-        router.refresh();
+        // Setelah berhasil mendaftar, keluar dan arahkan ke tab Gunakan Akun (true)
+        executeLogout(true);
+    };
+
+    const handleForceExit = () => {
+        // Keluar paksa sebagai tamu -> arahkan ke tab Publik (false)
+        executeLogout(false);
     };
 
     return (
@@ -76,7 +87,8 @@ export default function LogoutButton({ isGuestAccount = false }: LogoutButtonPro
             <ExitConfirmationModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onConfirmExit={executeLogout}
+                // PERBAIKAN: Gunakan handleForceExit saat memilih Keluar Tanpa Menyimpan
+                onConfirmExit={handleForceExit}
                 onSaveAccount={handleSaveAccount}
             />
         </>

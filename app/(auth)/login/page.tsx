@@ -1,10 +1,12 @@
 // Lokasi file: src/app/(auth)/login/page.tsx
 'use client';
 
-import { useState, useActionState, useEffect } from 'react';
+import { useState, useActionState, useEffect, Suspense } from 'react';
 import { publicLoginAction, registeredLoginAction, type AuthState } from '@/features/auth/actions/auth.actions';
 import { Loader2, GraduationCap, ShieldCheck, ArrowLeft, AlertCircle, Eye, EyeOff, BrainCircuit, ActivitySquare } from 'lucide-react';
 import Link from 'next/link';
+// 1. TAMBAHKAN IMPORT INI UNTUK MEMBACA URL
+import { useSearchParams } from 'next/navigation';
 
 const initialState: AuthState = { error: null, success: false };
 
@@ -25,13 +27,27 @@ function useMarqueePlaceholder(text: string, speed: number = 150) {
     return placeholder;
 }
 
-export default function LoginPage() {
+// 2. KITA PINDAHKAN ISI HALAMAN KE DALAM KOMPONEN BARU "LoginContent"
+function LoginContent() {
+    const searchParams = useSearchParams(); // Mengambil data parameter dari URL
+
+    // Default ke Masuk Publik (true)
     const [isStudentMode, setIsStudentMode] = useState<boolean>(true);
+
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [classNameValue, setClassNameValue] = useState<string>('');
 
     const [studentState, studentAction, isStudentPending] = useActionState(publicLoginAction, initialState);
     const [teacherState, teacherAction, isTeacherPending] = useActionState(registeredLoginAction, initialState);
+
+    // 3. EFEK UNTUK MENGECEK URL SAAT HALAMAN DIMUAT
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        // Jika di URL tertulis ?tab=registered, pindahkan ke tab Gunakan Akun (false)
+        if (tab === 'registered') {
+            setIsStudentMode(false);
+        }
+    }, [searchParams]);
 
     const isPending = isStudentPending || isTeacherPending;
     const currentError = isStudentMode ? studentState.error : teacherState.error;
@@ -175,7 +191,7 @@ export default function LoginPage() {
                         {isStudentMode ? (
                             <form action={studentAction} className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
                                 <div className="space-y-2">
-                                    <label htmlFor="studentCode" className="text-sm font-semibold text-slate-700">NISN / Nomor Absen</label>
+                                    <label htmlFor="studentCode" className="text-sm font-semibold text-slate-700">NISN / Nomor Induk</label>
                                     <input
                                         id="studentCode" name="studentCode" type="text" required disabled={isPending}
                                         minLength={3}
@@ -274,5 +290,19 @@ export default function LoginPage() {
                 </div>
             </div>
         </main>
+    );
+}
+
+// 4. KITA BUNGKUS "LoginContent" DENGAN COMPONENT SUSPENSE
+export default function LoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+                <Loader2 className="h-10 w-10 animate-spin text-blue-600 mb-4" />
+                <p className="text-slate-500 font-medium animate-pulse">Memuat halaman login...</p>
+            </div>
+        }>
+            <LoginContent />
+        </Suspense>
     );
 }

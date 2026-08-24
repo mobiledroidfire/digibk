@@ -1,26 +1,25 @@
-// D:\APLIKASI\digibk\app\student\learning-style\page.tsx
+// src/app/student/learning-style/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getVakQuestions, submitVakAssessment } from '@/features/assessments/actions/vak.actions';
+import { getVarkQuestions, submitVarkAssessment } from '@/features/assessments/actions/vark.actions';
 import { BookOpen, Loader2, ArrowLeft, ArrowRight, AlertCircle, Sparkles, CheckCircle2 } from 'lucide-react';
 
 type Question = {
     id: string;
     text: string;
-    dimensionId: string;
-    dimensionCode: string;
+    dimensionId?: string | null;
+    dimensionCode?: string | null;
+    displayOrder?: number;
 };
 
 type Answer = {
     questionId: string;
-    dimensionId: string;
-    dimensionCode: string;
     value: number;
 };
 
-export default function VakAssessmentPage() {
+export default function VarkAssessmentPage() {
     const router = useRouter();
     const [versionId, setVersionId] = useState<string>('');
     const [questions, setQuestions] = useState<Question[]>([]);
@@ -34,12 +33,12 @@ export default function VakAssessmentPage() {
     useEffect(() => {
         async function fetchQuestions() {
             try {
-                const data = await getVakQuestions();
+                const data = await getVarkQuestions();
                 setVersionId(data.versionId);
                 setQuestions(data.questions);
 
-                const savedAnswers = localStorage.getItem('vakProgress_answers');
-                const savedIndex = localStorage.getItem('vakProgress_index');
+                const savedAnswers = localStorage.getItem('varkProgress_answers');
+                const savedIndex = localStorage.getItem('varkProgress_index');
 
                 if (savedAnswers) setAnswers(JSON.parse(savedAnswers));
                 if (savedIndex) setCurrentIndex(parseInt(savedIndex, 10));
@@ -56,17 +55,16 @@ export default function VakAssessmentPage() {
 
     useEffect(() => {
         if (isRestored && questions.length > 0) {
-            localStorage.setItem('vakProgress_answers', JSON.stringify(answers));
-            localStorage.setItem('vakProgress_index', currentIndex.toString());
+            localStorage.setItem('varkProgress_answers', JSON.stringify(answers));
+            localStorage.setItem('varkProgress_index', currentIndex.toString());
         }
     }, [answers, currentIndex, isRestored, questions]);
 
     const handleAnswer = (value: number) => {
         const currentQ = questions[currentIndex];
+
         const newAnswer: Answer = {
             questionId: currentQ.id,
-            dimensionId: currentQ.dimensionId,
-            dimensionCode: currentQ.dimensionCode,
             value
         };
 
@@ -97,14 +95,16 @@ export default function VakAssessmentPage() {
         setIsSubmitting(true);
         setErrorMessage(null);
         try {
-            const resultId = await submitVakAssessment(versionId, finalAnswers);
-            localStorage.removeItem('vakProgress_answers');
-            localStorage.removeItem('vakProgress_index');
-            router.push(`/student/learning-style/result?id=${resultId}`);
-        } catch (error: any) {
+            const result = await submitVarkAssessment(versionId, finalAnswers);
+            localStorage.removeItem('varkProgress_answers');
+            localStorage.removeItem('varkProgress_index');
+            router.push(`/student/learning-style/result?id=${result.resultId}`);
+        } catch (error: unknown) {
+            // PERBAIKAN: Mengganti error: any menjadi error: unknown
             console.error(error);
             setIsSubmitting(false);
-            setErrorMessage(error.message || 'Terjadi kesalahan saat menyimpan jawaban. Silakan coba lagi.');
+            const errMessage = error instanceof Error ? error.message : 'Terjadi kesalahan saat menyimpan jawaban. Silakan coba lagi.';
+            setErrorMessage(errMessage);
         }
     };
 
@@ -136,7 +136,6 @@ export default function VakAssessmentPage() {
 
     return (
         <div className="min-h-screen bg-linear-to-br from-teal-50 via-slate-50 to-emerald-50 flex flex-col relative overflow-hidden">
-            {/* Modal Error */}
             {errorMessage && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md px-4">
                     <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95">
@@ -227,12 +226,13 @@ export default function VakAssessmentPage() {
                         "{questions[currentIndex]?.text}"
                     </h2>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
                         {[
                             { value: 1, label: 'Sangat Tidak Sesuai', emoji: '🙅', activeColor: 'bg-rose-100 border-rose-400 ring-4 ring-rose-100', hoverColor: 'hover:bg-rose-50 hover:border-rose-300' },
                             { value: 2, label: 'Tidak Sesuai', emoji: '😕', activeColor: 'bg-orange-100 border-orange-400 ring-4 ring-orange-100', hoverColor: 'hover:bg-orange-50 hover:border-orange-300' },
-                            { value: 3, label: 'Sesuai', emoji: '👍', activeColor: 'bg-blue-100 border-blue-400 ring-4 ring-blue-100', hoverColor: 'hover:bg-blue-50 hover:border-blue-300' },
-                            { value: 4, label: 'Sangat Sesuai', emoji: '🙌', activeColor: 'bg-emerald-100 border-emerald-400 ring-4 ring-emerald-100', hoverColor: 'hover:bg-emerald-50 hover:border-emerald-300' }
+                            { value: 3, label: 'Biasa Saja', emoji: '😐', activeColor: 'bg-slate-200 border-slate-500 ring-4 ring-slate-100', hoverColor: 'hover:bg-slate-50 hover:border-slate-300' },
+                            { value: 4, label: 'Sesuai', emoji: '👍', activeColor: 'bg-blue-100 border-blue-400 ring-4 ring-blue-100', hoverColor: 'hover:bg-blue-50 hover:border-blue-300' },
+                            { value: 5, label: 'Sangat Sesuai', emoji: '🙌', activeColor: 'bg-emerald-100 border-emerald-400 ring-4 ring-emerald-100', hoverColor: 'hover:bg-emerald-50 hover:border-emerald-300' }
                         ].map((option) => {
                             const isSelected = currentAnswer?.value === option.value;
 
@@ -242,7 +242,8 @@ export default function VakAssessmentPage() {
                                     key={option.value}
                                     onClick={() => handleAnswer(option.value)}
                                     className={`flex flex-col items-center justify-center gap-3 p-4 sm:py-6 rounded-2xl border-2 transition-all duration-200 active:scale-90 shadow-sm col-span-1 
-                                        ${isSelected ? option.activeColor : `bg-white border-slate-100 ${option.hoverColor}`}`}
+                    ${option.value === 3 ? 'col-span-2 md:col-span-1' : ''} 
+                    ${isSelected ? option.activeColor : `bg-white border-slate-100 ${option.hoverColor}`}`}
                                 >
                                     <div className={`text-3xl transition-transform duration-200 ${isSelected ? 'scale-125' : 'hover:scale-110'}`}>
                                         {option.emoji}
@@ -255,13 +256,11 @@ export default function VakAssessmentPage() {
                         })}
                     </div>
 
-                    {/* PERBAIKAN: Hapus hasAnsweredCurrent dari sini agar tombol selalu muncul di akhir */}
                     {isLastQuestion && (
                         <div className="mt-10 flex justify-center animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <button
                                 type="button"
                                 onClick={() => {
-                                    // Deteksi cerdas nomor urut yang belum dijawab
                                     const missingNumbers: number[] = [];
                                     questions.forEach((q, index) => {
                                         const isAnswered = answers.some((a) => a.questionId === q.id);
@@ -271,17 +270,14 @@ export default function VakAssessmentPage() {
                                     });
 
                                     if (missingNumbers.length > 0) {
-                                        // Format nomor soal yang hilang dengan rapi
                                         const displayNumbers = missingNumbers.length > 5
                                             ? `${missingNumbers.slice(0, 5).join(', ')}, dan ${missingNumbers.length - 5} soal lainnya`
                                             : missingNumbers.join(', ');
 
                                         setErrorMessage(`Tunggu sebentar! Soal nomor ${displayNumbers} belum terjawab. Kami sudah memindahkan layar Anda kembali ke soal yang kosong tersebut.`);
 
-                                        // Teleportasi otomatis ke soal PERTAMA yang kosong!
                                         setCurrentIndex(missingNumbers[0] - 1);
                                     } else {
-                                        // Jika semua aman, kirim jawaban
                                         submitAssessment(answers);
                                     }
                                 }}

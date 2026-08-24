@@ -1,24 +1,27 @@
-// D:\APLIKASI\digibk\app\api\pdf\route.tsx
+// Lokasi file: src/app/api/pdf/route.tsx
 import { NextResponse } from 'next/server';
 import { renderToBuffer, Text, View, StyleSheet } from '@react-pdf/renderer';
 import MasterPdfTemplate from '@/components/pdf/MasterPdfTemplate';
 import { createClient } from '@/lib/supabase/server';
+
+// IMPORT SERVICE SSOT
+// PERBAIKAN: Menggunakan getVarkResultData
+import { getRiasecResultData, getVarkResultData } from '@/features/assessments/services/result.service';
 
 // Import Data
 import {
     riasecDictionary,
     dimensionDefs,
     PhaseData as RiasecPhaseData,
-    type AssessmentResult,
     type RiasecProfile
 } from '@/lib/data/riasec';
 
+// PERBAIKAN: Import PhaseData sebagai VarkPhaseData
 import {
-    vakDictionary,
-    PhaseData as VakPhaseData,
-    type AssessmentResultVak,
-    type VakProfile
-} from '@/lib/data/vak';
+    varkDictionary,
+    PhaseData as VarkPhaseData,
+    type VarkProfile
+} from '@/lib/data/vark';
 
 // Helper: Proporsi dominan yang lebih akurat
 function blendAccurate(arr1: string[] = [], arr2: string[] = [], arr3: string[] = [], maxItems: number): string[] {
@@ -46,7 +49,6 @@ const styles = StyleSheet.create({
     alertBlue: { backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', padding: 10, borderRadius: 6, marginTop: 8 },
     alertBlueText: { color: '#1e40af', fontSize: 9.5, lineHeight: 1.4 },
 
-    // Desain Grafik Bar Modern
     scoreRowContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
     scoreItem: { width: '48%' },
     scoreItemFull: { width: '100%', marginBottom: 12 },
@@ -57,14 +59,12 @@ const styles = StyleSheet.create({
     barBg: { height: 6, backgroundColor: '#e2e8f0', borderRadius: 3, width: '100%', marginTop: 2 },
     barFill: { height: 6, borderRadius: 3 },
 
-    // Grid
     gridRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginBottom: 15 },
     gridCol: { flex: 1, backgroundColor: '#ffffff', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0' },
 
     colHeader: { fontSize: 11, fontWeight: 'bold', color: '#0f172a', marginBottom: 6, borderBottom: '1px solid #f1f5f9', paddingBottom: 4 },
     colSubHeader: { fontSize: 9, fontWeight: 'bold', color: '#64748b', marginTop: 6, marginBottom: 3, textTransform: 'uppercase' },
 
-    // Bullet Point
     bulletContainer: { flexDirection: 'row', marginBottom: 4, alignItems: 'flex-start' },
     bulletPoint: { width: 12, fontSize: 10, color: '#64748b' },
     bulletItem: { flex: 1, fontSize: 9.5, color: '#334155', lineHeight: 1.4 },
@@ -78,7 +78,6 @@ const styles = StyleSheet.create({
     boxLightText: { flex: 1, fontSize: 9.5, color: '#1e3a8a', lineHeight: 1.4 }
 });
 
-// Kamus Terjemahan & Warna Dinamis
 const hollandTranslations: Record<string, string> = {
     'Realistic': 'Realistis',
     'Investigative': 'Investigatif',
@@ -89,30 +88,34 @@ const hollandTranslations: Record<string, string> = {
 };
 
 const riasecColors: Record<string, string> = {
-    'R': '#ef4444', // Merah
-    'I': '#f59e0b', // Kuning/Amber
-    'A': '#10b981', // Hijau
-    'S': '#3b82f6', // Biru
-    'E': '#8b5cf6', // Ungu
-    'C': '#64748b'  // Abu-abu kebiruan
+    'R': '#ef4444',
+    'I': '#f59e0b',
+    'A': '#10b981',
+    'S': '#3b82f6',
+    'E': '#8b5cf6',
+    'C': '#64748b'
 };
 
-const vakTranslations: Record<string, string> = {
-    'V': 'Penglihatan',
-    'A': 'Pendengaran',
-    'K': 'Gerak / Praktik'
+// PERBAIKAN: Menambahkan dimensi 'R' untuk VARK
+const varkTranslations: Record<string, string> = {
+    'V': 'Penglihatan (Visual)',
+    'A': 'Pendengaran (Aural)',
+    'R': 'Membaca/Menulis (Read/Write)',
+    'K': 'Praktik/Fisik (Kinesthetic)'
 };
 
-const vakColors: Record<string, string> = {
+// PERBAIKAN: Menambahkan warna untuk dimensi 'R'
+const varkColors: Record<string, string> = {
     'V': '#3b82f6', // Biru
     'A': '#10b981', // Hijau
+    'R': '#8b5cf6', // Ungu
     'K': '#f59e0b'  // Oranye
 };
 
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { moduleType } = body;
+        const { moduleType, resultId } = body;
         const supabase = await createClient();
 
         const { data: { user } } = await supabase.auth.getUser();
@@ -161,32 +164,17 @@ export async function POST(request: Request) {
         let moduleTitle = '';
 
         // ==========================================================
-        // RENDER PDF: RIASEC
+        // RENDER PDF: RIASEC 
         // ==========================================================
         if (moduleType === 'RIASEC') {
             moduleTitle = `Laporan Potensi Bakat Minat`;
 
-            const { data: results } = await supabase
-                .from('assessment_results')
-                .select(`
-                    id, 
-                    riasec_profiles ( 
-                        code, primary_code, secondary_code, tertiary_code, 
-                        riasec_results ( code, raw_score ) 
-                    )
-                `)
-                .eq('student_id', student.id)
-                .eq('scoring_version', 'RIASEC-SCORING-v1')
-                .order('calculated_at', { ascending: false });
+            const resultData = await getRiasecResultData(student.id, resultId);
 
-            const validResult = results?.find(r => r.riasec_profiles && (Array.isArray(r.riasec_profiles) ? r.riasec_profiles.length > 0 : true));
-            const typedResult = validResult as unknown as AssessmentResult;
-            const rawProfile = typedResult ? (Array.isArray(typedResult.riasec_profiles) ? typedResult.riasec_profiles[0] : typedResult.riasec_profiles) : null;
-            const actualProfile = rawProfile as RiasecProfile | null;
-
-            if (!actualProfile) {
-                ModuleContent = <View><Text style={{ fontSize: 10 }}>Data hasil RIASEC belum tersedia.</Text></View>;
+            if (!resultData || !resultData.profile) {
+                ModuleContent = <View><Text style={{ fontSize: 10 }}>Data hasil RIASEC versi terbaru belum tersedia.</Text></View>;
             } else {
+                const actualProfile = resultData.profile as RiasecProfile;
                 const rawResults = actualProfile.riasec_results || [];
                 const sortedScores = [...rawResults].sort((a, b) => Number(b.raw_score) - Number(a.raw_score));
 
@@ -199,9 +187,13 @@ export async function POST(request: Request) {
                 const data2 = riasecDictionary[code2] || riasecDictionary['S'];
                 const data3 = riasecDictionary[code3] || riasecDictionary['I'];
 
-                const phase1: RiasecPhaseData = (data1.levels as any)[phaseKey] || data1.levels['SMP_Transisi'];
-                const phase2: RiasecPhaseData = (data2.levels as any)[phaseKey] || data2.levels['SMP_Transisi'];
-                const phase3: RiasecPhaseData = (data3.levels as any)[phaseKey] || data3.levels['SMP_Transisi'];
+                const riasecLevels1 = data1.levels as Record<string, RiasecPhaseData>;
+                const riasecLevels2 = data2.levels as Record<string, RiasecPhaseData>;
+                const riasecLevels3 = data3.levels as Record<string, RiasecPhaseData>;
+
+                const phase1: RiasecPhaseData = riasecLevels1[phaseKey] || riasecLevels1['SMP_Transisi'];
+                const phase2: RiasecPhaseData = riasecLevels2[phaseKey] || riasecLevels2['SMP_Transisi'];
+                const phase3: RiasecPhaseData = riasecLevels3[phaseKey] || riasecLevels3['SMP_Transisi'];
 
                 const mixedEdu1 = blendAccurate(phase1.eduList1, phase2.eduList1, phase3.eduList1, 6);
                 const mixedEdu2 = blendAccurate(phase1.eduList2, phase2.eduList2, phase3.eduList2, 6);
@@ -212,7 +204,6 @@ export async function POST(request: Request) {
                 const mixedGuruBk = blendAccurate(phase1.guruBk, phase2.guruBk, phase3.guruBk, 4);
                 const mixedSiswa = blendAccurate(phase1.siswa, phase2.siswa, phase3.siswa, 4);
 
-                // Membagi skor menjadi 2 kolom
                 const scoreRows = [];
                 for (let i = 0; i < sortedScores.length; i += 2) {
                     scoreRows.push(sortedScores.slice(i, i + 2));
@@ -256,7 +247,6 @@ export async function POST(request: Request) {
                                         const translatedName = hollandTranslations[def.name] || def.name;
                                         const scoreNum = Number(sc.raw_score);
                                         const pct = Math.min(Math.round((scoreNum / 35) * 100), 100);
-                                        // Mengambil warna dinamis
                                         const barColor = riasecColors[code] || '#3b82f6';
 
                                         return (
@@ -331,40 +321,39 @@ export async function POST(request: Request) {
             }
         }
         // ==========================================================
-        // RENDER PDF: VAK
+        // RENDER PDF: VARK 
         // ==========================================================
-        else if (moduleType === 'VAK') {
+        else if (moduleType === 'VARK') { // PERBAIKAN: Modul diubah menjadi VARK
             moduleTitle = `Laporan Gaya Belajar`;
 
-            const { data: results } = await supabase
-                .from('assessment_results')
-                .select(`
-                    id, 
-                    vak_profiles ( 
-                        code, dominant_code, secondary_code, tertiary_code, 
-                        vak_results ( code, raw_score ) 
-                    )
-                `)
-                .eq('student_id', student.id)
-                .eq('scoring_version', 'VAK-SCORING-v1')
-                .order('calculated_at', { ascending: false });
+            // PERBAIKAN: Menggunakan getVarkResultData
+            const resultData = await getVarkResultData(student.id, resultId);
 
-            const validResult = results?.find(r => r.vak_profiles && (Array.isArray(r.vak_profiles) ? r.vak_profiles.length > 0 : true));
-            const typedResult = validResult as unknown as AssessmentResultVak;
-            const rawProfile = typedResult ? (Array.isArray(typedResult.vak_profiles) ? typedResult.vak_profiles[0] : typedResult.vak_profiles) : null;
-            const actualProfile = rawProfile as VakProfile | null;
-
-            if (!actualProfile) {
-                ModuleContent = <View><Text style={{ fontSize: 10 }}>Data hasil VAK belum tersedia.</Text></View>;
+            if (!resultData || !resultData.profile) {
+                ModuleContent = <View><Text style={{ fontSize: 10 }}>Data hasil VARK versi terbaru belum tersedia.</Text></View>;
             } else {
-                const rawResults = actualProfile.vak_results || [];
+                type ValidResultItem = {
+                    code: string;
+                    raw_score: number | string;
+                };
+
+                type SafeDatabaseProfile = Omit<VarkProfile, 'vark_results'> & {
+                    vark_results?: ValidResultItem[];
+                    vak_results?: ValidResultItem[]; // Tetap kita sediakan fallback aman jika data lama masih di database
+                };
+
+                const actualProfile = resultData.profile as unknown as SafeDatabaseProfile;
+                // Prioritaskan vark_results, fallback ke vak_results
+                const rawResults = actualProfile.vark_results || actualProfile.vak_results || [];
                 const sortedScores = [...rawResults].sort((a, b) => Number(b.raw_score) - Number(a.raw_score));
 
                 const domCode = cleanCode(actualProfile.dominant_code) || 'V';
-                const domData = vakDictionary[domCode] || vakDictionary['V'];
-                const phaseData: VakPhaseData = (domData.levels as any)[phaseKey] || domData.levels['SMP_Transisi'];
+                const domData = varkDictionary[domCode] || varkDictionary['V'];
 
-                // Menentukan nilai tertinggi untuk mencari yang Dominan
+                // PERBAIKAN: Menggunakan VarkPhaseData
+                const varkLevels = domData.levels as Record<string, VarkPhaseData>;
+                const phaseData: VarkPhaseData = varkLevels[phaseKey] || varkLevels['SMP_Transisi'];
+
                 const maxScore = Math.max(...sortedScores.map(s => Number(s.raw_score)), 1);
 
                 ModuleContent = (
@@ -390,20 +379,21 @@ export async function POST(request: Request) {
                         </View>
 
                         <View style={styles.sectionCard} wrap={false}>
-                            <Text style={styles.sectionTitle}>Ringkasan Skor V-A-K</Text>
+                            <Text style={styles.sectionTitle}>Ringkasan Skor V-A-R-K</Text>
 
                             {sortedScores.map((sc) => {
                                 const code = cleanCode(sc.code);
-                                const dictRef = vakDictionary[code] || { title: code, indonesianTitle: '' };
+                                const dictRef = varkDictionary[code] || { title: code, indonesianTitle: '' };
                                 const scoreNum = Number(sc.raw_score);
-                                const translatedName = vakTranslations[code] || dictRef.indonesianTitle || '';
+                                // PERBAIKAN: Menggunakan varkTranslations
+                                const translatedName = varkTranslations[code] || dictRef.indonesianTitle || '';
 
-                                // PERBAIKAN: Mengecek jika skornya menyentuh nilai tertinggi (seri di pucuk)
                                 const isDominant = scoreNum === maxScore;
                                 const status = isDominant ? 'Dominan' : 'Pendukung';
 
                                 const pct = Math.min((scoreNum / maxScore) * 100, 100);
-                                const barColor = vakColors[code] || '#3b82f6';
+                                // PERBAIKAN: Menggunakan varkColors
+                                const barColor = varkColors[code] || '#3b82f6';
 
                                 return (
                                     <View key={code} style={styles.scoreItemFull}>

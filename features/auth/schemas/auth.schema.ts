@@ -1,4 +1,4 @@
-// D:\APLIKASI\digibk\features\auth\schemas\auth.schema.ts
+// src/features/auth/schemas/auth.schema.ts
 import { z } from 'zod';
 
 // Aturan untuk Siswa/Tamu

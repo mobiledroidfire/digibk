@@ -1,5 +1,4 @@
-// Lokasi file: src/app/student/learning-style/result/page.tsx
-
+// src/app/student/learning-style/result/page.tsx
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -9,27 +8,37 @@ import {
     BookOpen, Lightbulb, UserCheck, HeartHandshake
 } from 'lucide-react';
 
+// IMPORT SERVICE SSOT
+import { getVarkResultData } from '@/features/assessments/services/result.service';
+
 import {
-    vakDictionary,
-    type AssessmentResultVak,
-    type VakProfile,
+    varkDictionary,
     type LevelData,
     type PhaseData
-} from '@/lib/data/vak';
+} from '@/lib/data/vark';
 
-const getVakStyle = (code: string) => {
-    if (code === 'V') return { icon: Eye, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', bar: 'bg-blue-500' };
-    if (code === 'A') return { icon: Headphones, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', bar: 'bg-emerald-500' };
-    return { icon: MousePointerClick, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', bar: 'bg-amber-500' };
+const getVarkStyle = (code: string) => {
+    switch (code) {
+        case 'V':
+            return { icon: Eye, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', bar: 'bg-blue-500' };
+        case 'A':
+            return { icon: Headphones, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', bar: 'bg-emerald-500' };
+        case 'R':
+            return { icon: BookOpen, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', bar: 'bg-amber-500' };
+        case 'K':
+            return { icon: MousePointerClick, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200', bar: 'bg-rose-500' };
+        default:
+            return { icon: Activity, color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-200', bar: 'bg-slate-500' };
+    }
 }
 
 function cleanCode(code?: string): string {
     return code ? code.trim().toUpperCase() : '';
 }
 
-export default async function VakResultPage({ searchParams }: { searchParams: Promise<{ id?: string }>; }) {
+export default async function VarkResultPage({ searchParams }: { searchParams: Promise<{ id?: string }>; }) {
     const resolvedParams = await searchParams;
-    let resultId = resolvedParams.id;
+    const resultId = resolvedParams.id;
     const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -78,52 +87,33 @@ export default async function VakResultPage({ searchParams }: { searchParams: Pr
         else phaseKey = 'SMK_Transisi';
     }
 
-    if (!resultId) {
-        const { data: latestResult } = await supabase
-            .from('assessment_results')
-            .select('id')
-            .eq('student_id', student.id)
-            .eq('scoring_version', 'VAK-SCORING-v1')
-            .order('calculated_at', { ascending: false })
-            .limit(1)
-            .single();
+    // MEMANGGIL SINGLE SOURCE OF TRUTH DARI SERVICE
+    const resultData = await getVarkResultData(student.id, resultId);
 
-        if (latestResult) resultId = latestResult.id;
-        else redirect('/student/dashboard?error=Hasil_Tidak_Ditemukan');
+    if (!resultData || !resultData.profile) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 font-sans">
+                <div className="bg-white p-8 rounded-xl shadow-sm text-center">
+                    <h3 className="font-bold text-lg text-slate-800">Profil Belum Ditemukan</h3>
+                    <p className="text-slate-500 mt-2 text-sm">Pastikan Anda telah menyelesaikan kuesioner Gaya Belajar versi terbaru.</p>
+                    <Link href="/student/dashboard" className="mt-6 inline-flex items-center gap-2 px-6 py-2.5 bg-teal-600 text-white text-sm font-bold rounded-lg transition-all hover:bg-teal-500 hover:-translate-y-0.5">
+                        <ArrowRight className="h-4 w-4" /> Kembali ke Dashboard
+                    </Link>
+                </div>
+            </div>
+        );
     }
 
-    // PERBAIKAN SSOT: Memanggil dominant_code langsung dari tabel vak_profiles
-    const { data: resultData, error: resultError } = await supabase
-        .from('assessment_results')
-        .select(`
-            id, total_score,
-            vak_profiles ( code, dominant_code, vak_results ( code, raw_score ) )
-        `)
-        .eq('id', resultId)
-        .eq('student_id', student.id)
-        .single();
-
-    if (resultError || !resultData) {
-        redirect('/student/dashboard?error=Data_Gagal_Dimuat');
-    }
-
-    // Tambahkan penegasan tipe data agar sinkron dengan src/lib/data/vak.ts
-    const typedResult = resultData as unknown as AssessmentResultVak;
-    const rawProfile = Array.isArray(typedResult.vak_profiles) ? typedResult.vak_profiles[0] : typedResult.vak_profiles;
-    const profile = rawProfile as VakProfile | null;
-
-    if (!profile) return <div className="p-8 text-center bg-slate-50 min-h-screen pt-20">Profil VAK Belum Ditemukan.</div>;
-
-    const rawResults = profile.vak_results || [];
+    const { profile } = resultData;
+    const rawResults = profile.vark_results || [];
 
     // Sorting hanya untuk keperluan visual grafik batang
     const sortedScores = [...rawResults].sort((a, b) => Number(b.raw_score) - Number(a.raw_score));
     const maxScore = Math.max(...sortedScores.map(s => Number(s.raw_score)), 1);
 
-    // MENGGUNAKAN SINGLE SOURCE OF TRUTH DARI DATABASE
     const dominantCode = cleanCode(profile.dominant_code) || 'V';
-    const dominantData = vakDictionary[dominantCode];
-    const dominantStyle = getVakStyle(dominantCode);
+    const dominantData = varkDictionary[dominantCode];
+    const dominantStyle = getVarkStyle(dominantCode);
     const DominantIcon = dominantStyle.icon;
 
     const phaseData: PhaseData = dominantData.levels[phaseKey] || dominantData.levels['SMP_Awal'];
@@ -161,18 +151,17 @@ export default async function VakResultPage({ searchParams }: { searchParams: Pr
 
                 <section className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200">
                     <h3 className="text-base font-bold text-slate-800 mb-6 flex items-center gap-2 border-b pb-3">
-                        <Activity className="h-5 w-5 text-teal-500" /> Profil Detail V-A-K Kamu
+                        <Activity className="h-5 w-5 text-teal-500" /> Profil Detail V-A-R-K Kamu
                     </h3>
                     <div className="space-y-6">
                         {sortedScores.map((score) => {
                             const code = cleanCode(score.code);
-                            const data = vakDictionary[code] || { title: code };
-                            const style = getVakStyle(code);
+                            const data = varkDictionary[code] || { title: code };
+                            const style = getVarkStyle(code);
                             const rawScoreNum = Number(score.raw_score);
                             const percentage = Math.min((rawScoreNum / maxScore) * 100, 100);
                             const Icon = style.icon;
 
-                            // PERBAIKAN: Mengecek jika skornya menyentuh nilai tertinggi (seri di pucuk sama seperti PDF)
                             const isDominant = rawScoreNum === maxScore;
                             const statusText = isDominant ? 'Dominan' : 'Pendukung';
 
@@ -184,7 +173,6 @@ export default async function VakResultPage({ searchParams }: { searchParams: Pr
                                     <div className="flex-1">
                                         <div className="flex justify-between items-center mb-1">
                                             <span className="font-bold text-slate-800 text-sm">{data.title}</span>
-                                            {/* Warna teks poin berubah hijau jika statusnya Dominan (seri) */}
                                             <span className={`text-sm font-bold ${isDominant ? 'text-emerald-600' : 'text-slate-600'}`}>
                                                 {rawScoreNum} Poin ({statusText})
                                             </span>

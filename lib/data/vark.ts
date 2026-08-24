@@ -1,14 +1,14 @@
-// Lokasi file: src/lib/data/vak.ts
+// Lokasi file: src/lib/data/vark.ts
 
-export type VakResultItem = { code: string; raw_score: number; };
-export type VakProfile = {
+export type VarkResultItem = { code: string; raw_score: number; };
+export type VarkProfile = {
     code: string;
     dominant_code?: string;   // SSOT Database
     secondary_code?: string;  // SSOT Database
     tertiary_code?: string;   // SSOT Database
-    vak_results: VakResultItem[];
+    vark_results: VarkResultItem[];
 };
-export type AssessmentResultVak = { id: string; vak_profiles: VakProfile | VakProfile[] | null; };
+export type AssessmentResultVark = { id: string; vark_profiles: VarkProfile | VarkProfile[] | null; };
 
 export type PhaseData = {
     eduTitle1: string; eduList1: string[];
@@ -27,19 +27,20 @@ export type LevelData = {
     MA_Awal: PhaseData; MA_Transisi: PhaseData;
 };
 
-export type ProfileDetailVak = {
+export type ProfileDetailVark = {
     title: string; indonesianTitle: string; desc: string;
     karir: string[]; freelance: string[];
     levels: LevelData;
 };
 
-export const dimensionDefsVak: Record<string, { name: string; meaning: string; behavior: string }> = {
-    V: { name: "Visual", meaning: "Menyerap informasi paling baik melalui penglihatan (gambar, warna, tulisan).", behavior: "Suka membaca, mencatat rapi, dan mudah mengingat apa yang dilihat." },
-    A: { name: "Auditori", meaning: "Menyerap informasi paling baik melalui pendengaran (cerita, penjelasan lisan).", behavior: "Suka berdiskusi, mendengarkan, dan terkadang membaca dengan bersuara." },
-    K: { name: "Kinestetik", meaning: "Menyerap informasi paling baik melalui gerakan dan sentuhan fisik.", behavior: "Sulit duduk diam lama, suka belajar melalui praktik langsung." }
+export const dimensionDefsVark: Record<string, { name: string; meaning: string; behavior: string }> = {
+    V: { name: "Visual", meaning: "Menyerap informasi paling baik melalui penglihatan (gambar, warna, tulisan/grafik).", behavior: "Suka melihat diagram, mencatat dengan warna-warni, dan mudah mengingat letak visual." },
+    A: { name: "Auditori", meaning: "Menyerap informasi paling baik melalui pendengaran (cerita, penjelasan lisan).", behavior: "Suka berdiskusi, mendengarkan podcast/penjelasan guru, dan terkadang membaca dengan bersuara." },
+    R: { name: "Read/Write", meaning: "Menyerap informasi paling baik melalui teks (membaca dan menulis).", behavior: "Suka membaca buku tebal, membuat daftar (list), merangkum dengan teks panjang, dan mencatat detail." },
+    K: { name: "Kinestetik", meaning: "Menyerap informasi paling baik melalui gerakan dan sentuhan fisik.", behavior: "Sulit duduk diam lama, suka belajar melalui praktik langsung dan eksperimen." }
 };
 
-export const vakDictionary: Record<string, ProfileDetailVak> = {
+export const varkDictionary: Record<string, ProfileDetailVark> = {
     V: {
         title: "Visual", indonesianTitle: "Visual (Penglihatan)",
         desc: "Kamu memiliki keunggulan kecerdasan visual-spasial. Mengubah informasi menjadi bentuk gambar, diagram, dan warna adalah cara paling efektif untuk mengoptimalkan daya ingatmu.",
@@ -243,6 +244,109 @@ export const vakDictionary: Record<string, ProfileDetailVak> = {
                 eduTitle2: "Alternatif Studi Lanjut Vokasi", eduList2: ["D3 Hubungan Masyarakat (Public Relations)", "D3 Penyiaran (Broadcasting)", "D4 Bahasa Asing Terapan Pariwisata"],
                 materi: ["Simulasi *Interview* Panel Rekrutmen Perusahaan", "Keterampilan Komunikasi Asertif di Lingkungan Kerja"], layanan: ["Pelatihan Intensif *Mock Interview* Bersama Praktisi HRD di Bursa Kerja Khusus"],
                 guruBk: ["Ciptakan suasana simulasi *Interview* yang penuh tekanan (*stress interview*) agar mental komunikasi siswa terasah tangguh di hadapan HRD industri."], siswa: ["Senjata terhebatmu dalam melamar kerja adalah 'Cara Bicaramu'. Latih ketenangan, kejernihan suara, dan kontak matamu secara profesional!"]
+            }
+        }
+    },
+    R: {
+        title: "Read/Write", indonesianTitle: "Membaca & Menulis",
+        desc: "Kamu memiliki kecerdasan linguistik berbasis teks yang luar biasa. Otakmu paling cepat menyerap, memahami, dan menstrukturkan informasi ketika kamu membacanya dari teks atau menulis ulang materi tersebut.",
+        karir: ["Penulis/Jurnalis", "Editor/Copywriter", "Programmer", "Peneliti/Data Analis", "Akuntan/Administrasi"], freelance: ["Blogger", "Penerjemah Teks", "Pembuat Resume"],
+        levels: {
+            SD_Awal: {
+                eduTitle1: "Metode Belajar", eduList1: ["Banyak membaca buku cerita pendek bergambar", "Menulis ulang kata-kata baru di buku tulis khusus"],
+                eduTitle2: "Karakteristik", eduList2: ["Cepat mengenali huruf dan struktur kalimat sederhana", "Suka melihat tulisan di papan tulis, poster, atau buku"],
+                materi: ["Literasi Membaca Dasar", "Keterampilan Menulis Rapi"], layanan: ["Fasilitasi perpustakaan mini atau sudut baca di kelas"],
+                guruBk: ["Gunakan media teks sederhana seperti kartu kata (*word cards*) untuk membantu anak mengekspresikan perasaannya."], siswa: ["Yuk, rajin menulis kata-kata baru yang kamu pelajari hari ini di buku catatan kecilmu!"]
+            },
+            SD_Akhir: {
+                eduTitle1: "Metode Belajar", eduList1: ["Membuat daftar (*to-do list*) untuk tugas sekolah", "Merangkum bacaan menjadi paragraf pendek"],
+                eduTitle2: "Karakteristik", eduList2: ["Lebih suka membaca instruksi tertulis daripada disuruh secara lisan", "Mulai gemar menulis buku harian (diary)"],
+                materi: ["Teknik Merangkum Buku Cerita", "Pengenalan Jurnal Pribadi"], layanan: ["Bimbingan cara menyusun jadwal kegiatan tertulis"],
+                guruBk: ["Arahkan siswa untuk menuliskan masalah atau cita-citanya di selembar kertas agar lebih mudah didiskusikan."], siswa: ["Mulai biasakan menulis jadwal pelajaran dan PR-mu di buku agendamu sendiri."]
+            },
+            SD_Transisi: {
+                eduTitle1: "Target Lingkungan SMP", eduList1: ["Sekolah dengan perpustakaan yang lengkap dan nyaman", "Sekolah yang mewajibkan literasi membaca sebelum masuk kelas"],
+                eduTitle2: "Persiapan Ekskul SMP", eduList2: ["Klub Mading / Jurnalistik Sekolah", "Klub Karya Ilmiah Remaja (KIR) Dasar"],
+                materi: ["Keterampilan Mencatat Efektif", "Strategi Membaca Buku Teks Tebal"], layanan: ["Konseling persiapan penyesuaian beban tugas membaca di SMP"],
+                guruBk: ["Bantu siswa mengenali format buku teks SMP yang lebih padat tulisan dan latih cara menemukan ide pokok paragraf."], siswa: ["Siapkan dirimu untuk membaca buku pelajaran yang lebih tebal di SMP dengan cara membiasakan diri membaca buku cerita panjang."]
+            },
+            MI_Awal: {
+                eduTitle1: "Metode Belajar Islami", eduList1: ["Menebalkan huruf hijaiyah dan belajar menulis bahasa Arab dasar", "Membaca kisah Nabi dari buku bergambar dengan teks besar"],
+                eduTitle2: "Karakteristik Dasar", eduList2: ["Teliti saat mencocokkan bentuk huruf Arab", "Mudah menghafal dari melihat teks tertulis di Iqro/Al-Quran"],
+                materi: ["Khat (Kaligrafi Tulis) Dasar", "Pengenalan Kosakata Arab (Mufradat)"], layanan: ["Penyediaan instrumen lembar kerja (Worksheet) Islami"],
+                guruBk: ["Gunakan media cerita tertulis bertema akhlak untuk mendiskusikan nilai-nilai kebaikan dengan anak."], siswa: ["Terus berlatih menulis huruf hijaiyah di buku tulismu agar tulisan Arab-mu makin rapi dan bagus!"]
+            },
+            MI_Akhir: {
+                eduTitle1: "Metode Belajar Islami", eduList1: ["Menyalin dalil (Al-Quran/Hadis) ke dalam buku catatan khusus", "Membuat ringkasan materi Akidah Akhlak dan SKI"],
+                eduTitle2: "Tanggung Jawab Akademik", eduList2: ["Menjadi tim redaksi Mading madrasah", "Bertanggung jawab mencatat tugas kelompok"],
+                materi: ["Tata Cara Penulisan Arab yang Benar", "Pemahaman Bacaan Literasi Islami"], layanan: ["Pendampingan teknik menyalin materi agama dengan rapi"],
+                guruBk: ["Fasilitasi siswa dengan metode *Journaling* (menulis jurnal harian) untuk sarana refleksi diri dan ibadah."], siswa: ["Jangan lupa membuat daftar catatan hafalan surah-surah pendekmu agar mudah dilacak kemajuannya."]
+            },
+            MI_Transisi: {
+                eduTitle1: "Target Lingkungan MTs", eduList1: ["Madrasah yang memiliki program unggulan literasi/penulisan", "Madrasah dengan perpustakaan berbasis digital/referensi Islam lengkap"],
+                eduTitle2: "Persiapan Ekskul", eduList2: ["Klub Jurnalistik / Penulis Cilik Madrasah", "Klub Bahasa dan Sastra Arab/Indonesia"],
+                materi: ["Teknik Membuat Resume Materi Keagamaan", "Pengenalan Struktur Buku Teks MTs"], layanan: ["Konseling transisi dan pengenalan literasi tingkat menengah"],
+                guruBk: ["Berikan gambaran beban bacaan di MTs (seperti Fikih, SKI) dan latih anak cara membaca cepat (*skimming*)."], siswa: ["Latih kecepatan membacamu, karena di MTs nanti kamu akan banyak membaca kitab dan buku teks yang tebal-tebal."]
+            },
+            SMP_Awal: {
+                eduTitle1: "Strategi Belajar", eduList1: ["Menulis ulang catatan kelas menjadi lebih rapi di rumah", "Mengubah bagan/diagram guru menjadi teks poin-poin (Bullet points)"],
+                eduTitle2: "Karakteristik", eduList2: ["Mampu berkonsentrasi tinggi saat membaca buku teks dalam keadaan hening", "Sangat bergantung pada silabus atau modul tertulis"],
+                materi: ["Teknik Mencatat Cornell (Cornell Note-taking)", "Manajemen Informasi Berbasis Teks"], layanan: ["Pelatihan penulisan resume dan rangkuman efektif"],
+                guruBk: ["Gunakan instrumen *Self-Reflection Questionnaire* (kuesioner refleksi diri tertulis) sebelum sesi konseling tatap muka."], siswa: ["Tulis ulang catatanmu di rumah! Proses menulis ulang adalah cara terbaik bagi otakmu untuk menyimpan informasi."]
+            },
+            SMP_Transisi: {
+                eduTitle1: "Pilihan Jurusan SMA/MA", eduList1: ["Jurusan IPS / Bahasa (Sangat cocok dengan literatur tebal)"],
+                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Manajemen Perkantoran", "Akuntansi dan Keuangan", "Rekayasa Perangkat Lunak (Coding)"],
+                materi: ["Eksplorasi Karir Berbasis Data dan Teks", "Strategi Ujian Tertulis Pilihan Ganda/Esai"], layanan: ["Konseling arah minat bidang administrasi, kepenulisan, atau analisis data"],
+                guruBk: ["Bantu siswa membedah brosur atau *booklet* profil SMA/SMK karena mereka sangat analitis terhadap informasi tertulis."], siswa: ["Jika kamu sangat suka menganalisis bacaan dan data, pertimbangkan jalur SMK Administrasi, Akuntansi, atau SMA jurusan IPS."]
+            },
+            MTs_Awal: {
+                eduTitle1: "Strategi Belajar", eduList1: ["Membuat *Glosarium* (kamus kecil) untuk istilah-istilah bahasa Arab/Fikih", "Menulis terjemahan langsung di bawah teks Arab pada kitab/buku"],
+                eduTitle2: "Karakteristik", eduList2: ["Sangat teliti dalam mendeteksi kesalahan penulisan (*typo*) pada materi", "Lebih mudah memahami instruksi tugas jika diberikan panduan tertulis (*rubrik*)"],
+                materi: ["Teknik Menyusun Glosarium Mandiri", "Keterampilan Membaca Kritis Literatur Islam"], layanan: ["Bimbingan teknik literasi dan pemahaman teks bahasa Arab"],
+                guruBk: ["Sediakan formulir atau lembar kerja (worksheet) saat konseling agar siswa bisa mengurai akar masalahnya secara tertulis."], siswa: ["Buatlah buku saku khusus yang berisi kumpulan kosakata Arab (Mufradat) atau dalil-dalil penting agar mudah kamu baca kapan saja."]
+            },
+            MTs_Transisi: {
+                eduTitle1: "Pilihan Jurusan MA/SMA", eduList1: ["MA Keagamaan (Ilmu Tafsir/Hadis yang butuh analisis teks mendalam)", "MA Jurusan Bahasa / IPS"],
+                eduTitle2: "Pilihan Jurusan SMK", eduList2: ["Akuntansi Keuangan Lembaga", "Rekayasa Perangkat Lunak (Programming)", "Otomatisasi Tata Kelola Perkantoran"],
+                materi: ["Eksplorasi Profesi Peneliti/Penulis Keagamaan", "Teknik Menjawab Soal Esai Panjang"], layanan: ["Tes Penelusuran Minat Bakat (Fokus Klerikal & Linguistik)"],
+                guruBk: ["Gunakan asesmen kepribadian tertulis yang komprehensif sebagai data dukung penentuan jurusan siswa."], siswa: ["Kemampuanmu membaca kitab dan literatur tebal sangat berharga. Jurusan Keagamaan di MA atau Perkantoran di SMK bisa jadi wadah yang pas!"]
+            },
+            SMA_Awal: {
+                eduTitle1: "Strategi Belajar (Fase E/F)", eduList1: ["Menggunakan modul, diktat, dan buku referensi eksternal sebagai sumber utama", "Membuat ringkasan eksekutif (*executive summary*) setiap kali selesai bab pelajaran"],
+                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Teknik *Copywriting* untuk publikasi organisasi/ekskul", "Kemampuan menyusun proposal kegiatan, surat resmi, dan Laporan Pertanggungjawaban (LPJ)"],
+                materi: ["Teknik Penulisan Karya Tulis Ilmiah (KTI)", "Manajemen Pengutipan (Sitasi) dan Referensi"], layanan: ["Bimbingan metodologi penelitian dan penulisan karya ilmiah remaja (KIR)"],
+                guruBk: ["Anjurkan siswa menyusun *Action Plan* (Rencana Tindakan) tertulis untuk memonitor progres pencapaian akademik dan karir mereka."], siswa: ["Jadilah penyusun proposal atau penulis notulensi di organisasimu. Kehebatanmu merangkai kata akan membuat program kerjamu cepat disetujui!"]
+            },
+            SMA_Transisi: {
+                eduTitle1: "Persiapan UTBK/PTN", eduList1: ["Latihan intensif soal Literasi Bahasa Indonesia, Bahasa Inggris, dan Penalaran Umum", "Membaca artikel opini, tajuk rencana koran, dan jurnal untuk memperkaya kosakata ujian"],
+                eduTitle2: "Alternatif Karier", eduList2: ["Editor Naskah / Jurnalis / *Content Writer*", "Analis Data / Programmer (Bahasa Kode/Teks)", "Staf Administrasi / Akuntan"],
+                materi: ["Strategi Taktis Soal Literasi Panjang di UTBK", "Manajemen Waktu Membaca Teks (Scanning/Skimming Ekstrem)"], layanan: ["Tryout Khusus Kemampuan Membaca dan Menulis (Literasi SNBT)"],
+                guruBk: ["Berikan banyak referensi bacaan terkait prospek kerja masa depan agar siswa bisa melakukan riset karir secara mandiri dan komprehensif."], siswa: ["Ujian SNBT saat ini sangat didominasi oleh Literasi Teks Panjang. Ini adalah medan perangmu, pastikan kamu meraih poin maksimal di subtes ini!"]
+            },
+            MA_Awal: {
+                eduTitle1: "Strategi Belajar (Fase E/F)", eduList1: ["Menelaah kitab kuning atau buku literatur sejarah Islam dengan mendalam", "Menulis makalah atau *paper* pendek terkait perbandingan mazhab atau kajian tafsir"],
+                eduTitle2: "Keterampilan Soft-Skill", eduList2: ["Penyusunan naskah pidato, khutbah, atau teks dakwah", "Kecakapan administrasi, surat-menyurat (kesekretariatan) organisasi madrasah"],
+                materi: ["Metodologi Kajian Literatur Islam", "Teknik Parafrase dan Menghindari Plagiarisme"], layanan: ["Pendampingan penulisan esai kompetisi/beasiswa"],
+                guruBk: ["Manfaatkan layanan Bimbingan Klasikal dengan memberikan modul atau *handout* tertulis yang bisa dibaca berulang oleh siswa di asrama/rumah."], siswa: ["Tulislah intisari dari setiap kajian atau halaqah yang kamu ikuti. Tulisanmu kelak bisa menjadi referensi berharga bagi orang lain."]
+            },
+            MA_Transisi: {
+                eduTitle1: "Persiapan UTBK/PTKIN", eduList1: ["Menguasai teknik analisis wacana kritis untuk soal-soal bacaan Bahasa Arab/Inggris", "Latihan menulis esai motivasi (Motivation Letter) untuk syarat pendaftaran beasiswa"],
+                eduTitle2: "Alternatif Karier", eduList2: ["Peneliti/Dosen Agama", "Staf Kesekretariatan Lembaga Islam", "Penulis Buku / Pegawai Perpustakaan (Pustakawan)"],
+                materi: ["Taktik Menaklukkan Soal *Reading Comprehension* (TOAFL/TOEFL)", "Bedah Esai Beasiswa (KIP-Kuliah / PBSB)"], layanan: ["Klinik Penulisan Esai dan *Curriculum Vitae* (CV)"],
+                guruBk: ["Bantu me-review dan mengoreksi struktur kalimat pada esai beasiswa siswa agar terlihat lebih profesional dan meyakinkan."], siswa: ["Kuasai teknik *Skimming* (membaca cepat untuk mencari ide pokok). Kemampuan ini sangat krusial untuk menghemat waktu saat ujian UM-PTKIN/SNBT."]
+            },
+            SMK_Awal: {
+                eduTitle1: "Fokus Praktik Kejuruan", eduList1: ["Membaca secara detail Buku Manual Operasional (SOP / *Instruction Manual*) sebelum menggunakan mesin/software", "Menulis *Logbook* (buku catatan harian) praktikum/bengkel dengan sangat rinci dan runut"],
+                eduTitle2: "Persiapan Magang/PKL", eduList2: ["Menyusun laporan kegiatan magang harian (*Daily Report*) dengan format industri yang baku", "Melakukan korespondensi email bisnis (*Business Email*) dengan pihak industri secara profesional"],
+                materi: ["Literasi Dokumen Teknis dan SOP Industri", "Korespondensi Bisnis dan Administrasi Perkantoran Dasar"], layanan: ["Bimbingan penulisan proposal magang dan korespondensi industri"],
+                guruBk: ["Berikan *template* baku (dokumen SOP/Buku Panduan Magang) secara tertulis agar siswa memahami aturan PKL dengan jelas tanpa ambiguitas."], siswa: ["Sebelum menyentuh mesin atau software, baca dulu buku panduannya (*Manual Book*) sampai tuntas agar terhindar dari kecelakaan kerja atau *error*."]
+            },
+            SMK_Transisi: {
+                eduTitle1: "Persiapan Rekrutmen Kerja", eduList1: ["Menyusun Surat Lamaran Kerja (*Cover Letter*) dan *Curriculum Vitae* (CV) yang tajam, terstruktur, dan *ATS-Friendly*", "Mempelajari profil perusahaan, budaya kerja, dan kontrak kerja secara tertulis sebelum *interview*"],
+                eduTitle2: "Alternatif Studi Lanjut Vokasi", eduList2: ["D4 Rekayasa Perangkat Lunak / Keamanan Siber", "D3 Akuntansi / Administrasi Bisnis Terapan", "D3 Kearsipan / Perpustakaan"],
+                materi: ["Strategi Pembuatan CV dan Surat Lamaran Kerja Profesional", "Psikotes Berbasis Tes Klerikal (Ketelitian Data, Angka, dan Huruf)"], layanan: ["Klinik *Review* CV dan Simulasi Tes Klerikal/Administratif Industri"],
+                guruBk: ["Fokuskan bimbingan pada penyempurnaan diksi dan tata bahasa dalam dokumen lamaran kerja (CV/Cover Letter) siswa agar lolos *screening* sistem ATS HRD."], siswa: ["Telitilah dalam membaca Surat Perjanjian Kerja (Kontrak) nanti. Kejelianmu membaca poin-poin teks akan menyelamatkanmu dari kerugian di dunia kerja."]
             }
         }
     },

@@ -1,5 +1,4 @@
-// Lokasi file: src/app/student/potential/result/page.tsx
-
+// src/app/student/potential/result/page.tsx
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -9,11 +8,12 @@ import {
     UserCheck, HeartHandshake, Sparkles, Target
 } from 'lucide-react';
 
+// IMPORT SERVICE SSOT
+import { getRiasecResultData } from '@/features/assessments/services/result.service';
+
 import {
     dimensionDefs,
     riasecDictionary,
-    type AssessmentResult,
-    type RiasecProfile,
     type LevelData,
     type PhaseData
 } from '@/lib/data/riasec';
@@ -27,7 +27,6 @@ function cleanCode(code?: string): string {
     return code ? code.trim().toUpperCase() : '';
 }
 
-// PERBAIKAN: Menambahkan helper untuk menyelaraskan warna RIASEC dengan PDF
 const getRiasecStyle = (code: string) => {
     switch (code) {
         case 'R': return { color: 'text-red-600', bar: 'bg-red-500' };
@@ -42,7 +41,7 @@ const getRiasecStyle = (code: string) => {
 
 export default async function ResultPage({ searchParams }: { searchParams: Promise<{ id?: string }>; }) {
     const resolvedParams = await searchParams;
-    let resultId = resolvedParams.id;
+    const resultId = resolvedParams.id;
     const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -93,47 +92,27 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
         else { phaseKey = 'SMK_Transisi'; isTransisi = true; bannerMessage = "Persiapan Karier Lulusan: Perkuat sertifikasi, uji kompetensi (UKK), dan kesiapan wawancara kerja!"; }
     }
 
-    if (!resultId) {
-        const { data: latestResult } = await supabase.from('assessment_results')
-            .select('id').eq('student_id', student.id).order('calculated_at', { ascending: false }).limit(1).single();
-        if (latestResult) resultId = latestResult.id;
-        else redirect('/student/dashboard?error=Hasil_Tidak_Ditemukan');
+    // MEMANGGIL SINGLE SOURCE OF TRUTH DARI SERVICE
+    const resultData = await getRiasecResultData(student.id, resultId);
+
+    if (!resultData || !resultData.profile) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 font-sans">
+                <div className="bg-white p-8 rounded-xl shadow-sm text-center">
+                    <h3 className="font-bold text-lg text-slate-800">Profil Belum Ditemukan</h3>
+                    <p className="text-slate-500 mt-2 text-sm">Pastikan Anda telah menyelesaikan kuesioner RIASEC versi terbaru.</p>
+                    <Link href="/student/dashboard" className="mt-6 inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-lg transition-all hover:bg-blue-500 hover:-translate-y-0.5">
+                        <ArrowRight className="h-4 w-4" /> Kembali ke Dashboard
+                    </Link>
+                </div>
+            </div>
+        );
     }
 
-    // Memanggil primary, secondary, tertiary code langsung dari tabel riasec_profiles
-    const { data: resultData, error: resultError } = await supabase.from('assessment_results')
-        .select(`
-            id, 
-            riasec_profiles ( 
-                code, primary_code, secondary_code, tertiary_code, 
-                riasec_results ( code, raw_score ) 
-            )
-        `)
-        .eq('id', resultId).eq('student_id', student.id).single();
-
-    if (resultError || !resultData) {
-        redirect('/student/dashboard?error=Data_Gagal_Dimuat');
-    }
-
-    const typedResult = resultData as unknown as AssessmentResult;
-
-    // Kita sudah tidak butuh ExtendedRiasecProfile karena RiasecProfile di database sudah lengkap
-    const rawProfile = Array.isArray(typedResult.riasec_profiles) ? typedResult.riasec_profiles[0] : typedResult.riasec_profiles;
-
-    // Langsung cast ke RiasecProfile asli
-    const profile = rawProfile as RiasecProfile | null;
-
-    if (!profile) return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 font-sans">
-            <div className="bg-white p-8 rounded-xl shadow-sm text-center">Profil Belum Ditemukan.</div>
-        </div>
-    );
-
+    const { profile } = resultData;
     const rawResults = profile.riasec_results || [];
-    // Sorting hanya untuk visual grafik batang
     const sortedScores = [...rawResults].sort((a, b) => Number(b.raw_score) - Number(a.raw_score));
 
-    // MENGGUNAKAN SINGLE SOURCE OF TRUTH DARI DATABASE
     const code1 = cleanCode(profile.primary_code) || 'C';
     const code2 = cleanCode(profile.secondary_code) || 'S';
     const code3 = cleanCode(profile.tertiary_code) || 'I';
@@ -143,7 +122,6 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
     const data2 = riasecDictionary[code2] || riasecDictionary['S'];
     const data3 = riasecDictionary[code3] || riasecDictionary['I'];
 
-    // Pesan kesimpulan yang disederhanakan dan presisi
     const dynamicConclusion = `Tipe dominan kamu adalah ${data1.title} (${data1.indonesianTitle}) dan ${data2.title} (${data2.indonesianTitle}) dengan pola gabungan ${hyphenatedCodes}.\n\n• ${data1.title}: ${data1.desc}\n• ${data2.title}: ${data2.desc}`;
     const dominantTieMessage = `Hebat! Kamu memiliki kecerdasan minat yang seimbang pada beberapa bidang sekaligus. Perpaduan ini membuatmu lebih mudah beradaptasi di berbagai lingkungan!`;
 
@@ -216,8 +194,6 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
                             const percentage = Math.min((Number(score.raw_score) / 35) * 100, 100);
                             const safeCode = cleanCode(score.code);
                             const dimInfo = dimensionDefs[safeCode] || { name: safeCode, meaning: '' };
-
-                            // PERBAIKAN: Memanggil helper warna untuk setiap skor
                             const style = getRiasecStyle(safeCode);
 
                             return (
@@ -227,13 +203,11 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
                                             <span className="font-bold text-slate-800 text-sm">{dimInfo.name}</span>
                                             <p className="text-xs text-slate-500 mt-0.5">{dimInfo.meaning}</p>
                                         </div>
-                                        {/* PERBAIKAN: Warna text poin disesuaikan & ditambah teks persentase seperti PDF */}
                                         <span className={`text-sm font-bold ${style.color}`}>
                                             {score.raw_score} ({Math.round(percentage)}%)
                                         </span>
                                     </div>
                                     <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                        {/* Warna grafik bar disesuaikan */}
                                         <div className={`h-full rounded-full transition-all duration-1000 ${style.bar}`} style={{ width: `${percentage}%` }}></div>
                                     </div>
                                 </div>

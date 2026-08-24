@@ -1,4 +1,4 @@
-// D:\APLIKASI\digibk\app\student\potential\page.tsx
+// src/app/student/potential/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -9,14 +9,13 @@ import { Brain, Loader2, ArrowLeft, ArrowRight, AlertCircle, Sparkles, CheckCirc
 type Question = {
     id: string;
     text: string;
-    dimensionId: string;
-    dimensionCode: string;
+    dimensionId?: string | null;
+    dimensionCode?: string | null;
+    displayOrder?: number;
 };
 
 type Answer = {
     questionId: string;
-    dimensionId: string;
-    dimensionCode: string;
     value: number;
 };
 
@@ -63,10 +62,9 @@ export default function PotentialAssessmentPage() {
 
     const handleAnswer = (value: number) => {
         const currentQ = questions[currentIndex];
+
         const newAnswer: Answer = {
             questionId: currentQ.id,
-            dimensionId: currentQ.dimensionId,
-            dimensionCode: currentQ.dimensionCode,
             value
         };
 
@@ -80,7 +78,6 @@ export default function PotentialAssessmentPage() {
             return [...prev, newAnswer];
         });
 
-        // Pindah otomatis hanya jika bukan soal terakhir
         if (currentIndex < questions.length - 1) {
             setTimeout(() => {
                 setCurrentIndex((prev) => prev + 1);
@@ -98,14 +95,16 @@ export default function PotentialAssessmentPage() {
         setIsSubmitting(true);
         setErrorMessage(null);
         try {
-            const resultId = await submitRiasecAssessment(versionId, finalAnswers);
+            const result = await submitRiasecAssessment(versionId, finalAnswers);
             localStorage.removeItem('riasecProgress_answers');
             localStorage.removeItem('riasecProgress_index');
-            router.push(`/student/potential/result?id=${resultId}`);
-        } catch (error: any) {
+            router.push(`/student/potential/result?id=${result.resultId}`);
+        } catch (error: unknown) {
+            // PERBAIKAN: Mengganti error: any menjadi error: unknown
             console.error(error);
             setIsSubmitting(false);
-            setErrorMessage(error.message || 'Terjadi kesalahan saat menyimpan jawaban. Silakan coba lagi.');
+            const errMessage = error instanceof Error ? error.message : 'Terjadi kesalahan saat menyimpan jawaban. Silakan coba lagi.';
+            setErrorMessage(errMessage);
         }
     };
 
@@ -257,7 +256,6 @@ export default function PotentialAssessmentPage() {
                         })}
                     </div>
 
-                    {/* PERBAIKAN: Syarat hasAnsweredCurrent dihilangkan agar selalu tampil di soal terakhir */}
                     {isLastQuestion && (
                         <div className="mt-10 flex justify-center animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <button

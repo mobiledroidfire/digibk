@@ -1,10 +1,11 @@
-// D:\APLIKASI\digibk\features\auth\actions\auth.actions.ts
+// src/features/auth/actions/auth.actions.ts
+
 'use server';
 
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
-// IMPORT SKEMA YANG BARU DIBUAT
+import { headers } from 'next/headers';
 import { publicLoginSchema, registeredLoginSchema, claimSchema } from '@/features/auth/schemas/auth.schema';
 
 export type AuthState = {
@@ -29,6 +30,26 @@ function detectEducationLevel(schoolName: string): 'SD' | 'MI' | 'SMP' | 'SMA' |
     return 'SMP';
 }
 
+// FUNGSI PEMBANTU UNTUK MENDAPATKAN IP ADDRESS (Super Deteksi)
+async function getIpAddress(): Promise<string> {
+    const headersList = await headers();
+
+    const fallbacks = [
+        headersList.get('cf-connecting-ip'),
+        headersList.get('x-real-ip'),
+        headersList.get('x-forwarded-for'),
+        headersList.get('x-client-ip')
+    ];
+
+    for (const ip of fallbacks) {
+        if (ip) {
+            return ip.split(',')[0].trim();
+        }
+    }
+
+    return '127.0.0.1 (Localhost)';
+}
+
 export async function publicLoginAction(prevState: AuthState | null, formData: FormData): Promise<AuthState> {
     const validated = publicLoginSchema.safeParse({
         studentCode: formData.get('studentCode')?.toString().trim(),
@@ -42,46 +63,94 @@ export async function publicLoginAction(prevState: AuthState | null, formData: F
     const { studentCode, fullName, className, schoolName } = validated.data;
     const supabase = await createClient();
     const detectedLevel = detectEducationLevel(schoolName);
+    const GUEST_PASSWORD = 'DigibkGuest2026!';
+
+    // TANGKAP IP ADDRESS
+    const currentIp = await getIpAddress();
 
     try {
-        const randomId = Math.random().toString(36).substring(2, 8);
-        const guestEmail = `guest-${studentCode.replace(/\s/g, '')}-${randomId}@digibk.local`;
-        const tempPassword = `Temp${randomId}!`;
-
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email: guestEmail,
-            password: tempPassword,
-            options: { data: { full_name: fullName, is_guest: true } }
-        });
-
-        if (signUpError || !signUpData.user) return { error: 'Gagal membuat sesi publik. Coba lagi.', success: false };
-        const userId = signUpData.user.id;
-
         let schoolId;
-        const { data: existSchool } = await supabase.from('schools').select('id').ilike('name', schoolName).limit(1).maybeSingle();
+        const { data: existSchool } = await supabaseAdmin.from('schools').select('id').ilike('name', schoolName).limit(1).maybeSingle();
         if (existSchool) {
             schoolId = existSchool.id;
         } else {
-            const { data: newSchool } = await supabase.from('schools').insert({ name: schoolName, code: `SCH-${randomId}`, education_level: detectedLevel }).select('id').single();
-            schoolId = newSchool!.id;
+            const randomSch = Math.random().toString(36).substring(2, 8);
+            const { data: newSchool, error: schoolErr } = await supabaseAdmin.from('schools').insert({ name: schoolName, code: `SCH-${randomSch}`, education_level: detectedLevel }).select('id').single();
+            if (schoolErr || !newSchool) throw new Error(`Gagal menyimpan sekolah: ${schoolErr?.message}`);
+            schoolId = newSchool.id;
         }
 
         let classId;
-        const { data: existClass } = await supabase.from('classes').select('id').eq('school_id', schoolId).ilike('name', className).limit(1).maybeSingle();
+        const { data: existClass } = await supabaseAdmin.from('classes').select('id').eq('school_id', schoolId).ilike('name', className).limit(1).maybeSingle();
         if (existClass) {
             classId = existClass.id;
         } else {
-            const { data: newClass } = await supabase.from('classes').insert({ school_id: schoolId, name: className, education_level: detectedLevel }).select('id').single();
-            classId = newClass!.id;
+            const { data: newClass, error: classErr } = await supabaseAdmin.from('classes').insert({ school_id: schoolId, name: className, education_level: detectedLevel }).select('id').single();
+            if (classErr || !newClass) throw new Error(`Gagal menyimpan kelas: ${classErr?.message}`);
+            classId = newClass.id;
         }
 
-        await supabase.from('user_roles').insert({ user_id: userId, role: 'STUDENT', school_id: schoolId });
-        const { data: studentRecord } = await supabase.from('students').insert({ user_id: userId, school_id: schoolId, student_code: studentCode, full_name: fullName, education_level: detectedLevel }).select('id').single();
-        await supabase.from('class_memberships').insert({ class_id: classId, student_id: studentRecord!.id, is_active: true });
+        const { data: existingStudent } = await supabaseAdmin
+            .from('students')
+            .select('id, user_id, full_name')
+            .eq('school_id', schoolId)
+            .eq('student_code', studentCode)
+            .limit(1)
+            .maybeSingle();
+
+        if (existingStudent) {
+            if (existingStudent.full_name.toLowerCase() !== fullName.toLowerCase()) {
+                return { error: 'NISN/Nomor Induk ini sudah terdaftar atas nama orang lain. Silakan periksa kembali.', success: false };
+            }
+
+            const { data: authData, error: authErr } = await supabaseAdmin.auth.admin.getUserById(existingStudent.user_id);
+            if (authErr || !authData.user) throw new Error('Data autentikasi siswa tidak ditemukan.');
+
+            const isGuest = authData.user.user_metadata?.is_guest;
+            const userEmail = authData.user.email;
+
+            if (!isGuest) {
+                return { error: 'Akun Anda sudah disimpan permanen! Silakan masuk melalui tab "Gunakan Akun".', success: false };
+            }
+
+            await supabaseAdmin.auth.admin.updateUserById(existingStudent.user_id, { password: GUEST_PASSWORD });
+            const { error: signInErr } = await supabase.auth.signInWithPassword({ email: userEmail!, password: GUEST_PASSWORD });
+            if (signInErr) throw new Error('Gagal memulihkan sesi Tamu.');
+
+            // PERBAIKAN 1: UPDATE IP ADDRESS SAAT PEMULIHAN SESI DENGAN PENANGKAP ERROR
+            const { error: updateIpErr1 } = await supabaseAdmin.from('users').update({ ip_address: currentIp }).eq('id', existingStudent.user_id);
+            if (updateIpErr1) console.error("Gagal update IP (Pemulihan Tamu):", updateIpErr1.message);
+
+        } else {
+            const randomId = Math.random().toString(36).substring(2, 8);
+            const guestEmail = `guest-${studentCode.replace(/\s/g, '')}-${randomId}@digibk.local`;
+
+            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                email: guestEmail,
+                password: GUEST_PASSWORD,
+                options: { data: { full_name: fullName, is_guest: true } }
+            });
+
+            if (signUpError || !signUpData.user) return { error: 'Gagal membuat sesi publik. Coba lagi.', success: false };
+            const userId = signUpData.user.id;
+
+            const { error: roleErr } = await supabaseAdmin.from('user_roles').insert({ user_id: userId, role: 'STUDENT', school_id: schoolId });
+            if (roleErr) throw new Error(`Gagal menetapkan peran: ${roleErr.message}`);
+
+            const { data: studentRecord, error: studentErr } = await supabaseAdmin.from('students').insert({ user_id: userId, school_id: schoolId, student_code: studentCode, full_name: fullName, education_level: detectedLevel }).select('id').single();
+            if (studentErr || !studentRecord) throw new Error(`Gagal membuat profil siswa: ${studentErr?.message}`);
+
+            const { error: memberErr } = await supabaseAdmin.from('class_memberships').insert({ class_id: classId, student_id: studentRecord.id, is_active: true });
+            if (memberErr) throw new Error(`Gagal menetapkan anggota kelas: ${memberErr.message}`);
+
+            // PERBAIKAN 2: UPDATE IP ADDRESS SAAT AKUN BARU DIBUAT DENGAN PENANGKAP ERROR
+            const { error: updateIpErr2 } = await supabaseAdmin.from('users').update({ ip_address: currentIp }).eq('id', userId);
+            if (updateIpErr2) console.error("Gagal update IP (Tamu Baru):", updateIpErr2.message);
+        }
 
     } catch (err: unknown) {
         const exactError = err instanceof Error ? err.message : String(err);
-        return { error: `Sistem Error: ${exactError}`, success: false };
+        return { error: `Sistem Database: ${exactError}`, success: false };
     }
 
     redirect('/student/dashboard');
@@ -114,19 +183,23 @@ export async function registeredLoginAction(prevState: AuthState | null, formDat
     const { data, error } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
     if (error || !data.user) return { error: 'Kredensial salah. Pastikan NISN/Email dan Kata Sandi benar.', success: false };
 
+    // PERBAIKAN 3: TANGKAP DAN UPDATE IP ADDRESS SETELAH LOGIN SUKSES DENGAN PENANGKAP ERROR
+    const currentIp = await getIpAddress();
+    const { error: updateIpErr3 } = await supabaseAdmin.from('users').update({ ip_address: currentIp }).eq('id', data.user.id);
+    if (updateIpErr3) console.error("Gagal update IP (Login Permanen):", updateIpErr3.message);
+
     const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', data.user.id).limit(1).single();
 
-    // Arahkan ke dashboard yang sesuai dengan jabatannya (Role)
     if (roleData) {
         if (roleData.role === 'SUPER_ADMIN') {
-            redirect('/admin/dashboard'); // Ke halaman super admin
+            redirect('/admin/dashboard');
         } else if (['BK_COUNSELOR', 'TEACHER'].includes(roleData.role)) {
-            redirect('/bk/dashboard'); // Ke halaman guru
+            redirect('/bk/dashboard');
         } else {
-            redirect('/student/dashboard'); // Ke halaman siswa
+            redirect('/student/dashboard');
         }
     } else {
-        redirect('/student/dashboard'); // Default
+        redirect('/student/dashboard');
     }
 }
 
@@ -136,10 +209,7 @@ export async function logoutAction(): Promise<void> {
     redirect('/login');
 }
 
-// Tambahkan fungsi ini di baris paling bawah pada auth.actions.ts
-
 export async function claimAccountAction(nisn: string, password: string): Promise<AuthState> {
-    // 1. Validasi dengan Zod (claimSchema yang sudah Anda buat)
     const validated = claimSchema.safeParse({
         newNisn: nisn,
         newPassword: password
@@ -150,15 +220,13 @@ export async function claimAccountAction(nisn: string, password: string): Promis
     }
 
     const supabase = await createClient();
-
-    // 2. Pastikan user sedang login
     const { data: { user }, error: userError } = await supabase.auth.getUser();
+
     if (userError || !user) {
         return { error: 'Sesi tidak valid. Silakan muat ulang halaman.', success: false };
     }
 
     try {
-        // 3. Update NISN di tabel 'students' (jika siswa mengganti NISN sementaranya)
         const { error: dbError } = await supabase
             .from('students')
             .update({ student_code: validated.data.newNisn })
@@ -166,10 +234,9 @@ export async function claimAccountAction(nisn: string, password: string): Promis
 
         if (dbError) throw new Error('Gagal memperbarui data NISN di database.');
 
-        // 4. Update Password dan hapus label 'is_guest' di Supabase Auth
         const { error: authError } = await supabase.auth.updateUser({
             password: validated.data.newPassword,
-            data: { is_guest: false } // Mengubah status menjadi akun permanen
+            data: { is_guest: false }
         });
 
         if (authError) throw authError;

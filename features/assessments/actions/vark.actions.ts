@@ -1,11 +1,11 @@
-// Lokasi file: src/features/assessments/actions/riasec.actions.ts
+// Lokasi file: src/features/assessments/actions/vark.actions.ts
 
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
-import type { RiasecProfile } from "@/types/database";
+import type { VarkProfile } from "@/types/database";
 
 // ============================================================
 // ADMIN CLIENT
@@ -20,8 +20,8 @@ const supabaseAdmin = createAdminClient(
 // TYPES
 // ============================================================
 
-// Mengambil tipe murni "R" | "I" | "A" | "S" | "E" | "C" dari database.ts (membuang nilai null)
-type RiasecCode = Exclude<RiasecProfile['primary_code'], null>;
+// Mengambil tipe 'V' | 'A' | 'R' | 'K' langsung dari database.ts
+type VarkCode = VarkProfile['dominant_code'];
 
 type DimensionRecord = {
     code: string;
@@ -39,48 +39,53 @@ type QuestionRecord = {
     | null;
 };
 
-type RiasecAnswer = {
+type VarkAnswer = {
     questionId: string;
     value: number;
 };
 
 // ============================================================
-// KONFIGURASI
+// CONFIG
 // ============================================================
 
-const RIASEC_CODES: RiasecCode[] = ["R", "I", "A", "S", "E", "C"];
-const RIASEC_EXPECTED_QUESTIONS = 42;
-const RIASEC_SCORE_MIN = 1;
-const RIASEC_SCORE_MAX = 5;
-const RIASEC_SCORING_VERSION = "RIASEC-SCORING-v1";
+const VARK_CODES: VarkCode[] = ["V", "A", "R", "K"];
 
-const RIASEC_VERSION_MAP: Record<string, string> = {
-    SD: "RIASEC-SD-v1",
-    MI: "RIASEC-MI-v1",
-    SMP: "RIASEC-SMP-v1",
-    MTs: "RIASEC-MTs-v1",
-    SMA: "RIASEC-SMA-v1",
-    MA: "RIASEC-MA-v1",
-    SMK: "RIASEC-SMK-v1",
+const VARK_EXPECTED_QUESTIONS = 20;
+const VARK_SCORE_MIN = 1;
+const VARK_SCORE_MAX = 5;
+const VARK_SCORING_VERSION = "VARK-SCORING-v1";
+
+// ============================================================
+// VERSION MAP
+// ============================================================
+
+const VARK_VERSION_MAP: Record<string, string> = {
+    SD: "VARK-SD-v1",
+    MI: "VARK-MI-v1",
+    SMP: "VARK-SMP-v1", // <-- Perbaikan (sebelumnya VARK-SMP-SMA-v1)
+    MTs: "VARK-MTs-v1",
+    SMA: "VARK-SMA-v1", // <-- Perbaikan (sebelumnya VARK-SMP-SMA-v1)
+    MA: "VARK-MA-v1",
+    SMK: "VARK-SMK-v1",
 };
 
 // ============================================================
 // HELPER
 // ============================================================
 
-function normalizeDimensionCode(value: unknown): RiasecCode | null {
+function normalizeDimensionCode(value: unknown): VarkCode | null {
     const code = String(value ?? "").trim().toUpperCase();
-    if (code === "R" || code === "I" || code === "A" || code === "S" || code === "E" || code === "C") {
-        return code as RiasecCode;
+    if (code === "V" || code === "A" || code === "R" || code === "K") {
+        return code as VarkCode;
     }
     return null;
 }
 
 // ============================================================
-// GET RIASEC QUESTIONS
+// GET VARK QUESTIONS
 // ============================================================
 
-export async function getRiasecQuestions() {
+export async function getVarkQuestions() {
     const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -94,8 +99,8 @@ export async function getRiasecQuestions() {
 
     if (studentError || !student) throw new Error("Data siswa tidak ditemukan di database.");
 
-    const targetVersionCode = RIASEC_VERSION_MAP[student.education_level];
-    if (!targetVersionCode) throw new Error(`Sistem belum memiliki versi RIASEC untuk jenjang ${student.education_level}.`);
+    const targetVersionCode = VARK_VERSION_MAP[student.education_level];
+    if (!targetVersionCode) throw new Error(`Sistem belum memiliki versi VARK untuk jenjang ${student.education_level}.`);
 
     const { data: version, error: versionError } = await supabase
         .from("assessment_versions")
@@ -112,30 +117,27 @@ export async function getRiasecQuestions() {
         .eq("assessment_version_id", version.id)
         .order("display_order", { ascending: true });
 
-    if (questionsError || !questions) throw new Error("Gagal mengambil daftar soal RIASEC.");
-    if (questions.length !== RIASEC_EXPECTED_QUESTIONS) {
-        throw new Error(`Konfigurasi RIASEC tidak valid. Sistem mengharapkan ${RIASEC_EXPECTED_QUESTIONS} soal, tetapi database memiliki ${questions.length} soal.`);
+    if (questionsError || !questions) throw new Error("Gagal mengambil daftar soal VARK.");
+    if (questions.length !== VARK_EXPECTED_QUESTIONS) {
+        throw new Error(`Konfigurasi VARK tidak valid. Sistem mengharapkan ${VARK_EXPECTED_QUESTIONS} soal, tetapi database memiliki ${questions.length} soal.`);
     }
 
     const typedQuestions = questions as unknown as QuestionRecord[];
-    const invalidQuestions = typedQuestions.filter((q) => {
-        const dim = q.assessment_dimensions;
-        const rawCode = Array.isArray(dim) ? dim[0]?.code : dim?.code;
-        return !normalizeDimensionCode(rawCode);
-    });
+    const distribution: Record<VarkCode, number> = { V: 0, A: 0, R: 0, K: 0 };
 
-    if (invalidQuestions.length > 0) throw new Error("Terdapat soal RIASEC dengan dimensi yang tidak valid.");
-
-    const distribution: Record<RiasecCode, number> = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
-    typedQuestions.forEach((q) => {
-        const dim = q.assessment_dimensions;
+    for (const question of typedQuestions) {
+        const dim = question.assessment_dimensions;
         const rawCode = Array.isArray(dim) ? dim[0]?.code : dim?.code;
         const code = normalizeDimensionCode(rawCode);
-        if (code) distribution[code]++;
-    });
 
-    for (const code of RIASEC_CODES) {
-        if (distribution[code] !== 7) throw new Error(`Distribusi soal RIASEC tidak valid. Dimensi ${code} memiliki ${distribution[code]} soal, seharusnya 7.`);
+        if (!code) throw new Error("Terdapat soal VARK dengan dimensi tidak valid.");
+        distribution[code]++;
+    }
+
+    for (const code of VARK_CODES) {
+        if (distribution[code] !== 5) {
+            throw new Error(`Distribusi soal VARK tidak valid. Dimensi ${code} memiliki ${distribution[code]} soal, seharusnya 5.`);
+        }
     }
 
     return {
@@ -144,25 +146,25 @@ export async function getRiasecQuestions() {
         versionId: version.id,
         versionCode: version.version_code,
         questionCount: typedQuestions.length,
-        questions: typedQuestions.map((q) => {
-            const dim = q.assessment_dimensions;
+        questions: typedQuestions.map((question) => {
+            const dim = question.assessment_dimensions;
             const rawCode = Array.isArray(dim) ? dim[0]?.code : dim?.code;
             return {
-                id: q.id,
-                text: q.question_text,
-                dimensionId: q.dimension_id,
+                id: question.id,
+                text: question.question_text,
+                dimensionId: question.dimension_id,
                 dimensionCode: normalizeDimensionCode(rawCode),
-                displayOrder: q.display_order,
+                displayOrder: question.display_order,
             };
         }),
     };
 }
 
 // ============================================================
-// SUBMIT RIASEC
+// SUBMIT VARK
 // ============================================================
 
-export async function submitRiasecAssessment(versionId: string, answers: RiasecAnswer[]) {
+export async function submitVarkAssessment(versionId: string, answers: VarkAnswer[]) {
     const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -176,8 +178,8 @@ export async function submitRiasecAssessment(versionId: string, answers: RiasecA
 
     if (studentError || !student) throw new Error("Data siswa tidak ditemukan.");
 
-    const expectedVersionCode = RIASEC_VERSION_MAP[student.education_level];
-    if (!expectedVersionCode) throw new Error("Jenjang pendidikan belum memiliki versi RIASEC.");
+    const expectedVersionCode = VARK_VERSION_MAP[student.education_level];
+    if (!expectedVersionCode) throw new Error("Jenjang pendidikan belum memiliki versi VARK.");
 
     const { data: version, error: versionError } = await supabase
         .from("assessment_versions")
@@ -186,7 +188,7 @@ export async function submitRiasecAssessment(versionId: string, answers: RiasecA
         .eq("status", "PUBLISHED")
         .single();
 
-    if (versionError || !version) throw new Error("Versi RIASEC tidak valid.");
+    if (versionError || !version) throw new Error("Versi VARK tidak valid.");
     if (version.version_code !== expectedVersionCode) throw new Error("Versi asesmen tidak sesuai dengan jenjang siswa.");
 
     const { data: dbQuestions, error: questionError } = await supabase
@@ -194,15 +196,15 @@ export async function submitRiasecAssessment(versionId: string, answers: RiasecA
         .select(`id, dimension_id, assessment_version_id, assessment_dimensions ( code )`)
         .eq("assessment_version_id", versionId);
 
-    if (questionError || !dbQuestions) throw new Error("Gagal memvalidasi soal RIASEC.");
-    if (dbQuestions.length !== RIASEC_EXPECTED_QUESTIONS) throw new Error("Konfigurasi soal RIASEC di database tidak valid.");
-    if (!Array.isArray(answers) || answers.length !== RIASEC_EXPECTED_QUESTIONS) throw new Error(`Semua ${RIASEC_EXPECTED_QUESTIONS} soal RIASEC harus dijawab.`);
+    if (questionError || !dbQuestions) throw new Error("Gagal memvalidasi soal VARK.");
+    if (dbQuestions.length !== VARK_EXPECTED_QUESTIONS) throw new Error("Konfigurasi soal VARK di database tidak valid.");
+    if (!Array.isArray(answers) || answers.length !== VARK_EXPECTED_QUESTIONS) throw new Error(`Semua ${VARK_EXPECTED_QUESTIONS} soal VARK harus dijawab.`);
 
     const questionIds = answers.map((answer) => answer.questionId);
     const uniqueQuestionIds = new Set(questionIds);
     if (uniqueQuestionIds.size !== answers.length) throw new Error("Terdapat jawaban soal yang duplikat.");
 
-    const questionMap = new Map<string, RiasecCode>();
+    const questionMap = new Map<string, VarkCode>();
     const typedDbQuestions = dbQuestions as unknown as QuestionRecord[];
 
     for (const question of typedDbQuestions) {
@@ -210,18 +212,18 @@ export async function submitRiasecAssessment(versionId: string, answers: RiasecA
         const rawCode = Array.isArray(dim) ? dim[0]?.code : dim?.code;
         const code = normalizeDimensionCode(rawCode);
 
-        if (!code) throw new Error("Terdapat soal dengan dimensi RIASEC tidak valid.");
+        if (!code) throw new Error("Terdapat soal VARK dengan dimensi tidak valid.");
         questionMap.set(question.id, code);
     }
 
     for (const answer of answers) {
-        if (!questionMap.has(answer.questionId)) throw new Error("Terdapat question ID yang tidak berasal dari versi RIASEC ini.");
-        if (!Number.isFinite(answer.value) || answer.value < RIASEC_SCORE_MIN || answer.value > RIASEC_SCORE_MAX) {
-            throw new Error("Nilai jawaban RIASEC tidak valid.");
+        if (!questionMap.has(answer.questionId)) throw new Error("Terdapat question ID yang bukan bagian dari asesmen VARK ini.");
+        if (!Number.isFinite(answer.value) || answer.value < VARK_SCORE_MIN || answer.value > VARK_SCORE_MAX) {
+            throw new Error("Nilai jawaban VARK tidak valid.");
         }
     }
 
-    const scores: Record<RiasecCode, number> = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+    const scores: Record<VarkCode, number> = { V: 0, A: 0, R: 0, K: 0 };
     for (const answer of answers) {
         const dimensionCode = questionMap.get(answer.questionId);
         if (!dimensionCode) throw new Error("Dimensi soal tidak ditemukan.");
@@ -230,16 +232,18 @@ export async function submitRiasecAssessment(versionId: string, answers: RiasecA
 
     const totalScore = Object.values(scores).reduce((total, score) => total + score, 0);
 
-    const dimensionPriority: Record<RiasecCode, number> = { R: 1, I: 2, A: 3, S: 4, E: 5, C: 6 };
+    const dimensionPriority: Record<VarkCode, number> = { V: 1, A: 2, R: 3, K: 4 };
     const sortedScores = Object.entries(scores).sort(([codeA, scoreA], [codeB, scoreB]) => {
         if (scoreB !== scoreA) return scoreB - scoreA;
-        return dimensionPriority[codeA as RiasecCode] - dimensionPriority[codeB as RiasecCode];
+        return dimensionPriority[codeA as VarkCode] - dimensionPriority[codeB as VarkCode];
     });
 
-    const dominantCode = sortedScores[0][0] as RiasecCode;
-    const secondaryCode = sortedScores[1][0] as RiasecCode;
-    const tertiaryCode = sortedScores[2][0] as RiasecCode;
-    const profileCode = sortedScores.slice(0, 3).map(([code]) => code).join("");
+    const dominantCode = sortedScores[0][0] as VarkCode;
+    const secondaryCode = sortedScores[1][0] as VarkCode;
+    const tertiaryCode = sortedScores[2][0] as VarkCode;
+    // 1. TAMBAHKAN BARIS INI
+    const quaternaryCode = sortedScores[3][0] as VarkCode;
+    const profileCode = sortedScores.map(([code]) => code).join("");
 
     // ----------------------------------------------------------
     // SESSION (TABEL INDUK)
@@ -255,7 +259,7 @@ export async function submitRiasecAssessment(versionId: string, answers: RiasecA
         .select("id")
         .single();
 
-    if (sessionError || !session) throw new Error("Gagal membuat sesi asesmen RIASEC.");
+    if (sessionError || !session) throw new Error("Gagal membuat sesi asesmen VARK.");
     const sessionId = session.id;
 
     // ----------------------------------------------------------
@@ -270,7 +274,7 @@ export async function submitRiasecAssessment(versionId: string, answers: RiasecA
     const { error: responseError } = await supabase.from("assessment_responses").insert(responsesToInsert);
     if (responseError) {
         await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId); // ROLLBACK
-        throw new Error("Gagal menyimpan jawaban RIASEC.");
+        throw new Error("Gagal menyimpan jawaban VARK.");
     }
 
     const { data: result, error: resultError } = await supabaseAdmin
@@ -279,7 +283,7 @@ export async function submitRiasecAssessment(versionId: string, answers: RiasecA
             session_id: sessionId,
             student_id: student.id,
             assessment_version_id: versionId,
-            scoring_version: RIASEC_SCORING_VERSION,
+            scoring_version: VARK_SCORING_VERSION,
             total_score: totalScore,
             profile_code: profileCode,
             interpretation: null,
@@ -289,40 +293,40 @@ export async function submitRiasecAssessment(versionId: string, answers: RiasecA
 
     if (resultError || !result) {
         await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId); // ROLLBACK
-        throw new Error(`Gagal menyimpan hasil RIASEC: ${resultError?.message ?? ""}`);
+        throw new Error(`Gagal menyimpan hasil VARK: ${resultError?.message ?? ""}`);
     }
 
     const { data: profile, error: profileError } = await supabaseAdmin
-        .from("riasec_profiles")
+        .from("vark_profiles")
         .insert({
             result_id: result.id,
             code: profileCode,
-            primary_code: dominantCode,
+            dominant_code: dominantCode,
             secondary_code: secondaryCode,
             tertiary_code: tertiaryCode,
-            profile_name: null,
-            interpretation: null,
+            // 2. TAMBAHKAN BARIS INI
+            quaternary_code: quaternaryCode,
         })
         .select("id")
         .single();
 
     if (profileError || !profile) {
         await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId); // ROLLBACK
-        throw new Error("Gagal menyimpan profil RIASEC.");
+        throw new Error("Gagal menyimpan profil VARK.");
     }
 
-    const riasecResults = RIASEC_CODES.map((code) => ({
-        riasec_profile_id: profile.id,
+    const varkResults = VARK_CODES.map((code) => ({
+        vark_profile_id: profile.id,
         code,
         raw_score: scores[code],
         normalized_score: null,
         rank: sortedScores.findIndex(([sortedCode]) => sortedCode === code) + 1,
     }));
 
-    const { error: riasecResultsError } = await supabaseAdmin.from("riasec_results").insert(riasecResults);
-    if (riasecResultsError) {
+    const { error: varkResultsError } = await supabaseAdmin.from("vark_results").insert(varkResults);
+    if (varkResultsError) {
         await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId); // ROLLBACK
-        throw new Error("Gagal menyimpan skor dimensi RIASEC.");
+        throw new Error("Gagal menyimpan skor dimensi VARK.");
     }
 
     // ----------------------------------------------------------
