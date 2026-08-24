@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 // Aturan untuk Siswa/Tamu
 export const publicLoginSchema = z.object({
-    studentCode: z.string().min(3, "Masukkan NISN/Nomor Absen minimal 3 karakter"),
+    studentCode: z.string().min(3, "Masukkan NISN/Nomor Induk minimal 3 karakter"),
     fullName: z.string().min(3, "Nama Lengkap wajib diisi minimal 3 karakter"),
     className: z.string().min(1, "Kelas wajib diisi"),
     schoolName: z.string().min(3, "Asal Sekolah wajib diisi minimal 3 karakter"),

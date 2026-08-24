@@ -103,25 +103,59 @@ export async function publicLoginAction(prevState: AuthState | null, formData: F
                 return { error: 'NISN/Nomor Induk ini sudah terdaftar atas nama orang lain. Silakan periksa kembali.', success: false };
             }
 
-            const { data: authData, error: authErr } = await supabaseAdmin.auth.admin.getUserById(existingStudent.user_id);
-            if (authErr || !authData.user) throw new Error('Data autentikasi siswa tidak ditemukan.');
+            // =================================================================
+            // PERBAIKAN: TANGANI KASUS DATA SISWA YATIM (AKUN AUTH TERHAPUS)
+            // =================================================================
+            if (!existingStudent.user_id) {
+                // Buat ulang akun auth Tamu (Guest)
+                const randomId = Math.random().toString(36).substring(2, 8);
+                const guestEmail = `guest-${studentCode.replace(/\s/g, '')}-${randomId}@digibk.local`;
 
-            const isGuest = authData.user.user_metadata?.is_guest;
-            const userEmail = authData.user.email;
+                const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                    email: guestEmail,
+                    password: GUEST_PASSWORD,
+                    options: { data: { full_name: fullName, is_guest: true } }
+                });
 
-            if (!isGuest) {
-                return { error: 'Akun Anda sudah disimpan permanen! Silakan masuk melalui tab "Gunakan Akun".', success: false };
+                if (signUpError || !signUpData.user) return { error: 'Gagal memulihkan sesi publik. Coba lagi.', success: false };
+                const newUserId = signUpData.user.id;
+
+                // Tetapkan Role
+                await supabaseAdmin.from('user_roles').insert({ user_id: newUserId, role: 'STUDENT', school_id: schoolId });
+
+                // Sambungkan (Link) kembali akun Auth baru ke data Siswa lama
+                await supabaseAdmin.from('students').update({ user_id: newUserId }).eq('id', existingStudent.id);
+
+                // Update IP Address
+                const { error: updateIpErr } = await supabaseAdmin.from('users').update({ ip_address: currentIp }).eq('id', newUserId);
+                if (updateIpErr) console.error("Gagal update IP (Pemulihan Siswa Yatim):", updateIpErr.message);
+
+            } else {
+                // =================================================================
+                // ALUR NORMAL JIKA USER_ID ADA (TIDAK TERHAPUS)
+                // =================================================================
+                const { data: authData, error: authErr } = await supabaseAdmin.auth.admin.getUserById(existingStudent.user_id);
+                if (authErr || !authData.user) throw new Error('Data autentikasi siswa tidak ditemukan.');
+
+                const isGuest = authData.user.user_metadata?.is_guest;
+                const userEmail = authData.user.email;
+
+                if (!isGuest) {
+                    return { error: 'Akun Anda sudah disimpan permanen! Silakan masuk melalui tab "Gunakan Akun".', success: false };
+                }
+
+                await supabaseAdmin.auth.admin.updateUserById(existingStudent.user_id, { password: GUEST_PASSWORD });
+                const { error: signInErr } = await supabase.auth.signInWithPassword({ email: userEmail!, password: GUEST_PASSWORD });
+                if (signInErr) throw new Error('Gagal memulihkan sesi Tamu.');
+
+                const { error: updateIpErr1 } = await supabaseAdmin.from('users').update({ ip_address: currentIp }).eq('id', existingStudent.user_id);
+                if (updateIpErr1) console.error("Gagal update IP (Pemulihan Tamu):", updateIpErr1.message);
             }
 
-            await supabaseAdmin.auth.admin.updateUserById(existingStudent.user_id, { password: GUEST_PASSWORD });
-            const { error: signInErr } = await supabase.auth.signInWithPassword({ email: userEmail!, password: GUEST_PASSWORD });
-            if (signInErr) throw new Error('Gagal memulihkan sesi Tamu.');
-
-            // PERBAIKAN 1: UPDATE IP ADDRESS SAAT PEMULIHAN SESI DENGAN PENANGKAP ERROR
-            const { error: updateIpErr1 } = await supabaseAdmin.from('users').update({ ip_address: currentIp }).eq('id', existingStudent.user_id);
-            if (updateIpErr1) console.error("Gagal update IP (Pemulihan Tamu):", updateIpErr1.message);
-
         } else {
+            // =================================================================
+            // ALUR UNTUK SISWA YANG BENAR-BENAR BARU
+            // =================================================================
             const randomId = Math.random().toString(36).substring(2, 8);
             const guestEmail = `guest-${studentCode.replace(/\s/g, '')}-${randomId}@digibk.local`;
 
@@ -143,7 +177,6 @@ export async function publicLoginAction(prevState: AuthState | null, formData: F
             const { error: memberErr } = await supabaseAdmin.from('class_memberships').insert({ class_id: classId, student_id: studentRecord.id, is_active: true });
             if (memberErr) throw new Error(`Gagal menetapkan anggota kelas: ${memberErr.message}`);
 
-            // PERBAIKAN 2: UPDATE IP ADDRESS SAAT AKUN BARU DIBUAT DENGAN PENANGKAP ERROR
             const { error: updateIpErr2 } = await supabaseAdmin.from('users').update({ ip_address: currentIp }).eq('id', userId);
             if (updateIpErr2) console.error("Gagal update IP (Tamu Baru):", updateIpErr2.message);
         }
