@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
     alertBlue: { backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', padding: 10, borderRadius: 6, marginTop: 8 },
     alertBlueText: { color: '#1e40af', fontSize: 9.5, lineHeight: 1.4 },
     scoreRowContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
-    scoreItem: { width: '48%' },
+    scoreItem: { width: '48%' }, // Digunakan untuk membagi kolom menjadi 2 bagian
     scoreItemFull: { width: '100%', marginBottom: 16 },
     scoreTextRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
     scoreLabel: { fontSize: 10, fontWeight: 'bold', color: '#1e293b' },
@@ -40,7 +40,6 @@ const styles = StyleSheet.create({
     boxLightTitle: { fontSize: 11, fontWeight: 'bold', color: '#1e40af', marginBottom: 8 },
     boxLightText: { flex: 1, fontSize: 9.5, color: '#1e3a8a', lineHeight: 1.4 },
 
-    // PERBAIKAN: Kotak Profil Dikecilkan
     varkProfileRow: { flexDirection: 'row', gap: 15, alignItems: 'flex-start' },
     varkBadgeGroup: { flexDirection: 'row', gap: 5, flexWrap: 'wrap', justifyContent: 'center' },
     varkBadge: { width: 34, height: 34, borderRadius: 8, borderWidth: 2, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
@@ -60,10 +59,10 @@ const varkLabels: Record<string, string> = {
 const varkColors: Record<string, string> = { 'V': '#3b82f6', 'A': '#10b981', 'R': '#8b5cf6', 'K': '#f59e0b' };
 
 const varkDescriptions: Record<string, string> = {
-    'V': 'Kamu sangat peka terhadap informasi visual. Menggunakan gambar, diagram, grafik, peta konsep, atau video akan membuat materi pelajaran jauh lebih mudah menempel di ingatanmu.',
-    'A': 'Kamu memiliki kekuatan menyerap informasi dengan cara mendengarkan. Penjelasan lisan dari guru, berdiskusi dengan teman, atau merekam dan mendengarkan ulang materi adalah metode belajar paling jitu untukmu.',
-    'R': 'Kamu sangat kuat dalam memahami instruksi berbasis teks. Belajar dengan cara membaca buku teks, merangkum materi dengan bahasamu sendiri, atau menulis ulang catatan adalah cara yang paling efektif.',
-    'K': 'Kamu adalah tipe pembelajar yang harus "bergerak" atau melakukan tindakan. Melakukan eksperimen, simulasi, bermain peran, atau menyentuh objek secara langsung akan membuatmu sangat cepat paham.'
+    'V': 'Kamu peka terhadap informasi visual. Menggunakan gambar, diagram, grafik, atau video akan membuat materi jauh lebih mudah diingat.',
+    'A': 'Kamu menyerap informasi dengan mendengarkan. Penjelasan guru, diskusi, atau merekam materi adalah metode paling jitu untukmu.',
+    'R': 'Kamu kuat memahami instruksi teks. Membaca buku teks, merangkum materi, atau menulis ulang catatan adalah cara paling efektif.',
+    'K': 'Kamu tipe pembelajar yang harus "bergerak". Melakukan eksperimen, simulasi, atau praktik langsung akan membuatmu cepat paham.'
 };
 
 const getVarkPdfStyle = (code: string) => {
@@ -115,7 +114,6 @@ export async function POST(request: Request) {
                 }
             };
 
-            // PERBAIKAN: Resolusi gambar diperbesar dari 250 menjadi 400
             const riasecChartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(riasecChartConfig))}&w=400&h=400`;
 
             ModuleContent = (
@@ -127,8 +125,6 @@ export async function POST(request: Request) {
 
                     <View style={styles.sectionCard} wrap={false}>
                         <View style={styles.varkProfileRow}>
-
-                            {/* PERBAIKAN: Lebar kolom diperbesar dari 140 menjadi 160 */}
                             <View style={{ width: 160, alignItems: 'center' }}>
                                 <Text style={styles.varkBadgeLabel}>KODE PROFIL</Text>
 
@@ -144,7 +140,6 @@ export async function POST(request: Request) {
                                     })}
                                 </View>
 
-                                {/* PERBAIKAN: Ukuran image radarnya dibesarkan menjadi 135x135 */}
                                 <View style={{ marginTop: 10, width: '100%', backgroundColor: '#f8fafc', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center' }}>
                                     <Text style={{ fontSize: 8, fontWeight: 'bold', color: '#64748b', marginBottom: 5 }}>PETA POTENSI RIASEC</Text>
                                     <Image src={riasecChartUrl} style={{ width: 135, height: 135 }} />
@@ -165,7 +160,6 @@ export async function POST(request: Request) {
                                     <Text style={styles.alertBlueText}>* {data.profileData.dominantTieMessage}</Text>
                                 </View>
                             </View>
-
                         </View>
                     </View>
 
@@ -270,8 +264,13 @@ export async function POST(request: Request) {
                 }
             };
 
-            // PERBAIKAN: Resolusi gambar diperbesar dari 250 menjadi 400
             const chartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(chartConfig))}&w=400&h=400`;
+
+            // PERBAIKAN: Membagi array data V-A-R-K menjadi grup berpasangan (2 baris x 2 kolom)
+            const varkScoreRows = [];
+            for (let i = 0; i < data.uiData.sortedScores.length; i += 2) {
+                varkScoreRows.push(data.uiData.sortedScores.slice(i, i + 2));
+            }
 
             ModuleContent = (
                 <View style={styles.container}>
@@ -284,8 +283,6 @@ export async function POST(request: Request) {
                         <Text style={styles.sectionTitle}>Profil Preferensi Belajar</Text>
 
                         <View style={styles.varkProfileRow}>
-
-                            {/* PERBAIKAN: Lebar kolom diperbesar dari 140 menjadi 160 */}
                             <View style={{ width: 160, alignItems: 'center' }}>
                                 <Text style={styles.varkBadgeLabel}>
                                     Tipe {data.uiData.isMultimodal ? 'Multimodal' : 'Dominan'}
@@ -302,7 +299,6 @@ export async function POST(request: Request) {
                                     })}
                                 </View>
 
-                                {/* PERBAIKAN: Ukuran image radarnya dibesarkan menjadi 135x135 */}
                                 <View style={{ marginTop: 10, width: '100%', backgroundColor: '#f8fafc', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center' }}>
                                     <Text style={{ fontSize: 8, fontWeight: 'bold', color: '#64748b', marginBottom: 5 }}>PETA KESEIMBANGAN</Text>
                                     <Image src={chartUrl} style={{ width: 135, height: 135 }} />
@@ -330,37 +326,45 @@ export async function POST(request: Request) {
                         </View>
                     </View>
 
+                    {/* PERBAIKAN: Mengubah layout Detail Profil V-A-R-K Kamu menjadi kotak grid (2 kolom) mirip RIASEC */}
                     <View style={styles.sectionCard} wrap={false}>
                         <Text style={styles.sectionTitle}>Detail Profil V-A-R-K Kamu</Text>
-                        {data.uiData.sortedScores.map((score: ScoreItem) => {
-                            const code = (score.code || '').trim().toUpperCase();
-                            const scoreVal = Number(score.raw_score);
-                            const isDominant = scoreVal === data.uiData.maxScore;
-                            const pct = Math.min(Math.round((scoreVal / data.uiData.maxScore) * 100), 100);
-                            const barColor = varkColors[code] || '#94a3b8';
 
-                            return (
-                                <View key={code} style={styles.scoreItemFull}>
-                                    <View style={styles.scoreTextRow}>
-                                        <Text style={styles.scoreLabel}>{code} - {varkLabels[code]}</Text>
-                                        <View style={{ alignItems: 'flex-end' }}>
-                                            <Text style={[styles.scoreVal, { color: isDominant ? '#0f172a' : '#64748b' }]}>
-                                                {scoreVal} Poin ({pct}%)
-                                            </Text>
-                                            <Text style={{ fontSize: 8, color: '#64748b', fontWeight: 'bold' }}>
-                                                {isDominant ? 'Dominan' : 'Pendukung'}
+                        {varkScoreRows.map((row, idx) => (
+                            <View key={idx} style={styles.scoreRowContainer}>
+                                {row.map((score: ScoreItem) => {
+                                    const code = (score.code || '').trim().toUpperCase();
+                                    const scoreVal = Number(score.raw_score);
+                                    const isDominant = scoreVal === data.uiData.maxScore;
+                                    const pct = Math.min(Math.round((scoreVal / data.uiData.maxScore) * 100), 100);
+                                    const barColor = varkColors[code] || '#94a3b8';
+
+                                    return (
+                                        <View key={code} style={styles.scoreItem}>
+                                            <View style={styles.scoreTextRow}>
+                                                <Text style={styles.scoreLabel}>{code} - {varkLabels[code]}</Text>
+                                                <View style={{ alignItems: 'flex-end' }}>
+                                                    <Text style={[styles.scoreVal, { color: isDominant ? '#0f172a' : '#64748b' }]}>
+                                                        {scoreVal} Poin ({pct}%)
+                                                    </Text>
+                                                    <Text style={{ fontSize: 8, color: '#64748b', fontWeight: 'bold' }}>
+                                                        {isDominant ? 'Dominan' : 'Pendukung'}
+                                                    </Text>
+                                                </View>
+                                            </View>
+
+                                            <View style={styles.barBg}>
+                                                <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: barColor }]} />
+                                            </View>
+
+                                            <Text style={{ fontSize: 8.5, color: isDominant ? '#334155' : '#64748b', marginTop: 5, lineHeight: 1.4, textAlign: 'justify' }}>
+                                                {varkDescriptions[code]}
                                             </Text>
                                         </View>
-                                    </View>
-                                    <View style={styles.barBg}>
-                                        <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: barColor }]} />
-                                    </View>
-                                    <Text style={{ fontSize: 9, color: isDominant ? '#334155' : '#64748b', marginTop: 5, lineHeight: 1.3 }}>
-                                        {varkDescriptions[code]}
-                                    </Text>
-                                </View>
-                            );
-                        })}
+                                    );
+                                })}
+                            </View>
+                        ))}
                     </View>
 
                     <View style={styles.gridRow} break>
