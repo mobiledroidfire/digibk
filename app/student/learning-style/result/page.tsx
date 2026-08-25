@@ -101,11 +101,11 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                     </div>
                 )}
 
-                {/* --- PERUBAHAN UTAMA: SECTION 1 (PROFIL + RADAR CHART DI BAWAH KOTAK) --- */}
+                {/* --- PERUBAHAN UTAMA: SECTION PROFIL & DETAIL DIGABUNGKAN --- */}
                 <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
 
+                    {/* BAGIAN ATAS: Ringkasan & Radar Chart */}
                     <div className="flex flex-col sm:flex-row gap-8 items-start">
-
                         {/* Kolom Kiri: Kotak Huruf (Badges) + Grafik Radar */}
                         <div className="shrink-0 flex flex-col items-center mx-auto sm:mx-0 w-full sm:w-72">
                             <div className="text-xs font-bold text-slate-400 mb-3 tracking-widest uppercase">
@@ -124,12 +124,10 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                                 })}
                             </div>
 
-                            {/* Grafik Radar diletakkan di SINI, tepat di bawah kotak huruf */}
                             <div className="w-full bg-slate-50 rounded-xl border border-slate-100 p-3 shadow-inner">
                                 <h4 className="text-center text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
                                     Peta Keseimbangan
                                 </h4>
-                                {/* Batasi tinggi area grafik agar tidak terlalu besar di kolom kecil */}
                                 <div className="h-55 w-full flex items-center justify-center">
                                     <VarkRadarChart data={uiData.sortedScores} />
                                 </div>
@@ -157,58 +155,62 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                             </div>
                         </div>
                     </div>
-                </section>
 
-                {/* --- SECTION 2: DETAIL PROGRESS BAR --- */}
-                <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
-                    <h3 className="text-base font-bold text-slate-800 mb-6 flex items-center gap-2 border-b pb-3">
-                        <Activity className="h-5 w-5 text-indigo-500" /> Detail Profil V-A-R-K Kamu
-                    </h3>
+                    {/* PEMBATAS (Garis Horizontal) */}
+                    <hr className="my-8 border-slate-100" />
 
-                    <div className="space-y-6">
-                        {uiData.sortedScores.map((score: ScoreItem) => {
-                            const code = (score.code || '').trim().toUpperCase();
-                            const scoreVal = Number(score.raw_score);
-                            const style = getVarkStyle(code);
-                            const IconCmp = style.icon;
+                    {/* BAGIAN BAWAH: Detail Skor (Grid 2 Kolom) */}
+                    <div>
+                        <h3 className="text-base font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <Activity className="h-5 w-5 text-indigo-500" /> Detail Profil V-A-R-K Kamu
+                        </h3>
 
-                            const isDominant = scoreVal === uiData.maxScore;
-                            const percentage = Math.min((scoreVal / uiData.maxScore) * 100, 100);
+                        {/* Grid diterapkan di sini */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                            {uiData.sortedScores.map((score: ScoreItem) => {
+                                const code = (score.code || '').trim().toUpperCase();
+                                const scoreVal = Number(score.raw_score);
+                                const style = getVarkStyle(code);
+                                const IconCmp = style.icon;
 
-                            return (
-                                <div key={code} className="relative">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`p-2 rounded-lg ${style.bg} border ${style.border}`}>
-                                                <IconCmp className={`h-4 w-4 ${style.color}`} />
+                                const isDominant = scoreVal === uiData.maxScore;
+                                const percentage = Math.min((scoreVal / uiData.maxScore) * 100, 100);
+
+                                return (
+                                    <div key={code} className="relative">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded-lg ${style.bg} border ${style.border}`}>
+                                                    <IconCmp className={`h-4 w-4 ${style.color}`} />
+                                                </div>
+                                                <span className="font-bold text-slate-700">{style.label}</span>
                                             </div>
-                                            <span className="font-bold text-slate-700">{style.label}</span>
+                                            <div className="flex items-center gap-2">
+                                                {isDominant ? (
+                                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wider">Dominan</span>
+                                                ) : (
+                                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 uppercase tracking-wider">Pendukung</span>
+                                                )}
+                                                <span className={`text-sm font-bold ${isDominant ? 'text-slate-900' : 'text-slate-500'}`}>
+                                                    {scoreVal} Poin ({Math.round(percentage)}%)
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            {isDominant ? (
-                                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wider">Dominan</span>
-                                            ) : (
-                                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 uppercase tracking-wider">Pendukung</span>
-                                            )}
-                                            <span className={`text-sm font-bold ${isDominant ? 'text-slate-900' : 'text-slate-500'}`}>
-                                                {scoreVal} Poin ({Math.round(percentage)}%)
-                                            </span>
+
+                                        <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden mb-2.5">
+                                            <div
+                                                className={`h-full rounded-full transition-all duration-1000 ease-out ${style.bar} ${!isDominant && 'opacity-50'}`}
+                                                style={{ width: `${percentage}%` }}
+                                            />
                                         </div>
-                                    </div>
 
-                                    <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden mb-2.5">
-                                        <div
-                                            className={`h-full rounded-full transition-all duration-1000 ease-out ${style.bar} ${!isDominant && 'opacity-50'}`}
-                                            style={{ width: `${percentage}%` }}
-                                        />
+                                        <p className={`text-sm leading-relaxed text-justify ${isDominant ? 'text-slate-700 font-medium' : 'text-slate-500'}`}>
+                                            {varkDescriptions[code]}
+                                        </p>
                                     </div>
-
-                                    <p className={`text-sm leading-relaxed ${isDominant ? 'text-slate-700 font-medium' : 'text-slate-500'} pl-11 sm:pl-0`}>
-                                        {varkDescriptions[code]}
-                                    </p>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                     </div>
                 </section>
 
@@ -276,7 +278,7 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                         <ul className="space-y-3">
                             {uiData.phaseData.siswa.slice(0, 10).map((item: string, i: number) => (
                                 <li key={i} className="text-sm text-slate-800 flex items-start gap-3">
-                                    <Sparkles className={`h-4 w-4 shrink-0 mt-0.5 ${mainStyle.color}`} />
+                                    <span className="shrink-0 mt-0.5 text-slate-500">-</span>
                                     <span className="leading-relaxed font-medium">{item}</span>
                                 </li>
                             ))}
