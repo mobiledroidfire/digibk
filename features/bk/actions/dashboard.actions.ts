@@ -29,11 +29,12 @@ export interface BkDashboardData {
     currentPage: number;
 }
 
+// Definisi statis murni agar TypeScript tidak mengamuk (ParserError)
 type StudentWithClass = {
     id: string;
     full_name: string;
     student_code: string;
-    class_memberships: { class_id?: string, classes: { name: string } | null }[] | null;
+    class_memberships: { class_id: string; classes: { name: string } | null }[] | null;
 };
 
 export async function getBkDashboardDataAction(
@@ -66,45 +67,52 @@ export async function getBkDashboardDataAction(
             throw new Error('Akun Anda belum ditugaskan ke sekolah.');
         }
 
-        // TAHAP 1: Cari ID Siswa di Kelas tersebut
-        let filteredStudentIds: string[] | null = null;
+        // ==============================================================
+        // TAHAP 1: Ambil Total Siswa & ID untuk Statistik Emosi
+        // KUNCI PERBAIKAN: Pisahkan query agar tidak terjadi "ParserError"
+        // ==============================================================
+        let allStudentIds: string[] = [];
+        let totalStudents = 0;
+
         if (classId) {
-            const { data: memberships } = await supabase
-                .from('class_memberships')
-                .select('student_id')
-                .eq('class_id', classId);
+            const { data, error } = await supabase
+                .from('students')
+                .select('id, class_memberships!inner(class_id)')
+                .eq('school_id', schoolId)
+                .eq('class_memberships.class_id', classId);
 
-            filteredStudentIds = memberships?.map(m => m.student_id) || [];
+            if (error) throw new Error('Gagal mengambil data kelas.');
+            allStudentIds = data?.map(s => s.id) || [];
+            totalStudents = allStudentIds.length;
+        } else {
+            const { data, error } = await supabase
+                .from('students')
+                .select('id')
+                .eq('school_id', schoolId);
 
-            if (filteredStudentIds.length === 0) {
-                return {
-                    success: true,
-                    data: {
-                        userRole: roleData.role,
-                        totalStudents: 0,
-                        assessedStudents: 0,
-                        emotionStats: [],
-                        students: [],
-                        totalPages: 1,
-                        currentPage: page
-                    }
-                };
-            }
+            if (error) throw new Error('Gagal mengambil data global.');
+            allStudentIds = data?.map(s => s.id) || [];
+            totalStudents = allStudentIds.length;
         }
 
-        // TAHAP 2: Ambil Data Global Siswa
-        // PERBAIKAN: .eq('status', 'ACTIVE') Dihapus agar siswa tetap tampil 
-        // meskipun status di databasenya kosong atau berbeda penulisan.
-        let globalQuery = supabase.from('students').select('id').eq('school_id', schoolId);
-        if (filteredStudentIds !== null) {
-            globalQuery = globalQuery.in('id', filteredStudentIds);
+        if (totalStudents === 0) {
+            return {
+                success: true,
+                data: {
+                    userRole: roleData.role,
+                    totalStudents: 0,
+                    assessedStudents: 0,
+                    emotionStats: [],
+                    students: [],
+                    totalPages: 1,
+                    currentPage: page
+                }
+            };
         }
 
-        const { data: allActiveStudents } = await globalQuery;
-        const totalStudents = allActiveStudents?.length || 0;
-        const allStudentIds = allActiveStudents?.map(s => s.id) || [];
-
-        // TAHAP 3: Ambil Emosi Terakhir
+        // ==============================================================
+        // TAHAP 2: Hitung Peta Emosi
+        // ==============================================================
         const { data: allEmotions } = await supabase
             .from('emotional_checkins')
             .select('student_id, emotion, intensity, created_at')
@@ -129,32 +137,54 @@ export async function getBkDashboardDataAction(
             percentage: Math.round((emotionCounts[key] / totalAssessed) * 100)
         })).sort((a, b) => b.count - a.count);
 
-        // TAHAP 4: Ambil Data Siswa UNTUK TABEL 
+        // ==============================================================
+        // TAHAP 3: Ambil Data Tabel Siswa
+        // ==============================================================
         const from = (page - 1) * limit;
         const to = from + limit - 1;
 
-        // PERBAIKAN: Menggunakan !inner join agar tabel hanya memunculkan siswa di kelas yang dipilih
-        const selectString = classId
-            ? 'id, full_name, student_code, class_memberships!inner ( class_id, classes ( name ) )'
-            : 'id, full_name, student_code, class_memberships ( classes ( name ) )';
+        let pagedStudentsRaw: StudentWithClass[] | null = [];
+        let count = 0;
 
-        // PERBAIKAN: .eq('status', 'ACTIVE') juga Dihapus dari sini
-        let tableQuery = supabase
-            .from('students')
-            .select(selectString, { count: 'exact' })
-            .eq('school_id', schoolId);
-
+        // Memisahkan query lagi untuk keamanan kompilasi TypeScript
         if (classId) {
-            tableQuery = tableQuery.eq('class_memberships.class_id', classId);
+            let query = supabase
+                .from('students')
+                .select('id, full_name, student_code, class_memberships!inner(class_id, classes(name))', { count: 'exact' })
+                .eq('school_id', schoolId)
+                .eq('class_memberships.class_id', classId);
+
+            if (searchQuery) {
+                query = query.or(`full_name.ilike.%${searchQuery}%,student_code.ilike.%${searchQuery}%`);
+            }
+
+            const { data, count: c, error } = await query
+                .order('full_name', { ascending: true })
+                .range(from, to)
+                .returns<StudentWithClass[]>();
+
+            if (error) throw new Error('Gagal memuat tabel siswa kelas.');
+            pagedStudentsRaw = data;
+            count = c || 0;
+        } else {
+            let query = supabase
+                .from('students')
+                .select('id, full_name, student_code, class_memberships(class_id, classes(name))', { count: 'exact' })
+                .eq('school_id', schoolId);
+
+            if (searchQuery) {
+                query = query.or(`full_name.ilike.%${searchQuery}%,student_code.ilike.%${searchQuery}%`);
+            }
+
+            const { data, count: c, error } = await query
+                .order('full_name', { ascending: true })
+                .range(from, to)
+                .returns<StudentWithClass[]>();
+
+            if (error) throw new Error('Gagal memuat tabel siswa global.');
+            pagedStudentsRaw = data;
+            count = c || 0;
         }
-
-        if (searchQuery) {
-            tableQuery = tableQuery.or(`full_name.ilike.%${searchQuery}%,student_code.ilike.%${searchQuery}%`);
-        }
-
-        const { data: pagedStudentsRaw, count, error: studentsError } = await tableQuery.range(from, to).returns<StudentWithClass[]>();
-
-        if (studentsError) throw new Error('Gagal memuat tabel siswa.');
 
         const studentList: StudentListItem[] = (pagedStudentsRaw || []).map((student) => {
             const studentEmotion = allEmotions?.find(e => e.student_id === student.id);
@@ -162,11 +192,17 @@ export async function getBkDashboardDataAction(
                 ? ['SAD', 'DISAPPOINTED', 'ANGRY', 'AFRAID', 'ANXIOUS'].includes(studentEmotion.emotion) && studentEmotion.intensity >= 7
                 : false;
 
+            // Ekstrak nama kelas dengan aman
+            let cName = 'Belum Ada Kelas';
+            if (student.class_memberships && student.class_memberships.length > 0) {
+                cName = student.class_memberships[0].classes?.name || 'Belum Ada Kelas';
+            }
+
             return {
                 id: student.id,
                 full_name: student.full_name,
                 student_code: student.student_code,
-                class_name: student.class_memberships?.[0]?.classes?.name || 'Belum Ada Kelas',
+                class_name: cName,
                 latest_emotion: (studentEmotion?.emotion as EmotionType) || null,
                 is_at_risk: isCritical
             };
@@ -180,7 +216,7 @@ export async function getBkDashboardDataAction(
                 assessedStudents: totalAssessed,
                 emotionStats,
                 students: studentList,
-                totalPages: Math.ceil((count || 0) / limit),
+                totalPages: Math.ceil(count / limit),
                 currentPage: page
             }
         };
