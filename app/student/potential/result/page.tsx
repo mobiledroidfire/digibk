@@ -92,9 +92,16 @@ export default async function RiasecResultPage({ searchParams }: { searchParams:
 
                 <section className="bg-white rounded-xl p-6 md:p-8 shadow-sm border border-slate-200">
                     <div className="flex flex-col md:flex-row md:items-start gap-6">
-                        <div className="h-20 w-20 bg-blue-50 border border-blue-100 rounded-2xl flex flex-col items-center justify-center shrink-0 shadow-sm">
-                            <span className="text-xs font-bold text-blue-400 mb-1">PROFIL</span>
-                            <span className="text-2xl font-black text-blue-700 tracking-widest">{profileData.hyphenatedCodes.replace(/-/g, '')}</span>
+                        {/* PERBAIKAN: Kotak Profil dengan huruf warna-warni */}
+                        <div className="h-20 w-20 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col items-center justify-center shrink-0 shadow-sm">
+                            <span className="text-xs font-bold text-slate-500 mb-1">PROFIL</span>
+                            <div className="flex flex-row">
+                                {profileData.hyphenatedCodes.split('-').map((char: string, index: number) => (
+                                    <span key={index} className={`text-2xl font-black tracking-widest ${getRiasecStyle(char).color}`}>
+                                        {char}
+                                    </span>
+                                ))}
+                            </div>
                         </div>
                         <div className="flex-1">
                             <h2 className="text-lg font-bold text-slate-900 mb-3">Ringkasan Kesimpulan</h2>
@@ -145,7 +152,6 @@ export default async function RiasecResultPage({ searchParams }: { searchParams:
                         </h4>
                         <div className="mb-4">
                             <span className="text-xs font-semibold text-slate-400 uppercase">{mixedData.phase1.eduTitle1}</span>
-                            {/* PERBAIKAN: Diubah menjadi maksimal 10 item */}
                             <ul className="mt-2 space-y-1.5">{mixedData.mixedEdu1.slice(0, 10).map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}</ul>
                         </div>
                         <div>

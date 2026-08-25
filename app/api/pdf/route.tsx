@@ -15,22 +15,21 @@ const styles = StyleSheet.create({
     phaseSub: { color: '#eff6ff', fontSize: 10 },
     sectionCard: { backgroundColor: '#ffffff', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 15 },
     sectionTitle: { fontSize: 13, fontWeight: 'bold', color: '#0f172a', marginBottom: 8, textTransform: 'uppercase' },
-    // Ganti dua baris ini di dalam /app/api/pdf/route.tsx
     badgeProfil: {
-        backgroundColor: '#f8fafc', // Latar belakang abu-abu sangat muda/bersih
+        backgroundColor: '#f8fafc',
         padding: 15,
         borderRadius: 12,
-        border: '2px solid #e2e8f0', // Garis pinggir yang lebih tegas
-        width: 120, // Diperlebar agar huruf tidak sesak
+        border: '2px solid #e2e8f0',
+        width: 120,
         textAlign: 'center',
         justifyContent: 'center',
         marginBottom: 10,
     },
     badgeText: {
-        fontSize: 28, // Huruf diperbesar drastis (sebelumnya 16)
+        fontSize: 28,
         fontWeight: 'bold',
-        color: '#0f172a', // Warna biru dongker kehitaman agar lebih profesional
-        letterSpacing: 4 // Jarak antar huruf agar terlihat elegan dan premium
+        color: '#0f172a',
+        letterSpacing: 4
     },
     alertBlue: { backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', padding: 10, borderRadius: 6, marginTop: 8 },
     alertBlueText: { color: '#1e40af', fontSize: 9.5, lineHeight: 1.4 },
@@ -122,12 +121,18 @@ export async function POST(request: Request) {
                         <View style={{ flexDirection: 'row' }}>
                             <View style={styles.badgeProfil}>
                                 <Text style={{ fontSize: 8, color: '#3b82f6', textAlign: 'center', marginBottom: 2 }}>KODE PROFIL</Text>
-                                <Text style={styles.badgeText}>{data.profileData.hyphenatedCodes.replace(/-/g, '')}</Text>
+                                {/* PERBAIKAN 1: Pewarnaan dinamis untuk setiap huruf KODE PROFIL */}
+                                <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+                                    {data.profileData.hyphenatedCodes.split('-').map((char: string, index: number) => (
+                                        <Text key={index} style={[styles.badgeText, { color: riasecColors[char] || '#0f172a' }]}>
+                                            {char}
+                                        </Text>
+                                    ))}
+                                </View>
                             </View>
                             <View style={{ flex: 1, paddingLeft: 12 }}>
                                 <Text style={styles.sectionTitle}>Ringkasan Kesimpulan</Text>
 
-                                {/* PERBAIKAN: Menambahkan data3 agar PDF menampilkan 3 profil lengkap */}
                                 <Text style={{ fontSize: 9.5, color: '#334155', lineHeight: 1.4 }}>
                                     Tipe dominan kamu membentuk pola gabungan <Text style={{ fontWeight: 'bold' }}>{data.profileData.hyphenatedCodes}</Text>, yang mewakili {data.profileData.data1.title} ({data.profileData.data1.indonesianTitle}), {data.profileData.data2.title} ({data.profileData.data2.indonesianTitle}), dan {data.profileData.data3.title} ({data.profileData.data3.indonesianTitle}).
                                 </Text>
@@ -138,7 +143,6 @@ export async function POST(request: Request) {
                             </View>
                         </View>
                         <View style={styles.alertBlue}>
-                            {/* PERBAIKAN: Menggunakan pesan dinamis dari service */}
                             <Text style={styles.alertBlueText}>* {data.profileData.dominantTieMessage}</Text>
                         </View>
                     </View>
@@ -162,7 +166,11 @@ export async function POST(request: Request) {
                                                     <Text style={styles.scoreLabel}>{code} - {def.name} ({translatedName})</Text>
                                                     <Text style={styles.scoreSub}>{def.meaning}</Text>
                                                 </View>
-                                                <Text style={[styles.scoreVal, { color: barColor }]}>{scoreNum} ({pct}%)</Text>
+                                                {/* PERBAIKAN 2: Teks skor dan persentase dibuat atas-bawah mengikuti warna batang */}
+                                                <View style={{ alignItems: 'flex-end', marginLeft: 6 }}>
+                                                    <Text style={[styles.scoreVal, { color: barColor }]}>{scoreNum} Poin</Text>
+                                                    <Text style={[styles.scoreVal, { color: barColor }]}>({pct}%)</Text>
+                                                </View>
                                             </View>
                                             <View style={styles.barBg}>
                                                 <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: barColor }]} />
@@ -281,9 +289,14 @@ export async function POST(request: Request) {
                                 <View key={code} style={styles.scoreItemFull}>
                                     <View style={styles.scoreTextRow}>
                                         <Text style={styles.scoreLabel}>{code} - {varkLabels[code]}</Text>
-                                        <Text style={[styles.scoreVal, { color: isDominant ? '#0f172a' : '#64748b' }]}>
-                                            {scoreVal} Poin ({pct}%) - {isDominant ? 'Dominan' : 'Pendukung'}
-                                        </Text>
+                                        <View style={{ alignItems: 'flex-end' }}>
+                                            <Text style={[styles.scoreVal, { color: isDominant ? '#0f172a' : '#64748b' }]}>
+                                                {scoreVal} Poin ({pct}%)
+                                            </Text>
+                                            <Text style={{ fontSize: 8, color: '#64748b', fontWeight: 'bold' }}>
+                                                {isDominant ? 'Dominan' : 'Pendukung'}
+                                            </Text>
+                                        </View>
                                     </View>
                                     <View style={styles.barBg}>
                                         <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: barColor }]} />
