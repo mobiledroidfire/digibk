@@ -20,12 +20,12 @@ export interface EmotionStat {
 }
 
 export interface BkDashboardData {
-    userRole: string; // BARU: Untuk mengecek apakah ini Super Admin
+    userRole: string;
     totalStudents: number;
     assessedStudents: number;
     emotionStats: EmotionStat[];
     students: StudentListItem[];
-    totalPages: number; // BARU: Untuk komponen Pagination
+    totalPages: number;
     currentPage: number;
 }
 
@@ -33,10 +33,15 @@ type StudentWithClass = {
     id: string;
     full_name: string;
     student_code: string;
-    class_memberships: { classes: { name: string } | null }[] | null;
+    class_memberships: { class_id?: string, classes: { name: string } | null }[] | null;
 };
 
-export async function getBkDashboardDataAction(page: number = 1, limit: number = 10, searchQuery: string = ''): Promise<{ success: boolean; data?: BkDashboardData; error?: string }> {
+export async function getBkDashboardDataAction(
+    page: number = 1,
+    limit: number = 10,
+    searchQuery: string = '',
+    classId: string = ''
+): Promise<{ success: boolean; data?: BkDashboardData; error?: string }> {
     const supabase = await createClient();
 
     try {
@@ -61,17 +66,45 @@ export async function getBkDashboardDataAction(page: number = 1, limit: number =
             throw new Error('Akun Anda belum ditugaskan ke sekolah.');
         }
 
-        // 1. Ambil ID Semua Siswa (Untuk Statistik Global Grafik)
-        const { data: allActiveStudents } = await supabase
-            .from('students')
-            .select('id')
-            .eq('school_id', schoolId)
-            .eq('status', 'ACTIVE');
+        // TAHAP 1: Cari ID Siswa di Kelas tersebut
+        let filteredStudentIds: string[] | null = null;
+        if (classId) {
+            const { data: memberships } = await supabase
+                .from('class_memberships')
+                .select('student_id')
+                .eq('class_id', classId);
 
+            filteredStudentIds = memberships?.map(m => m.student_id) || [];
+
+            if (filteredStudentIds.length === 0) {
+                return {
+                    success: true,
+                    data: {
+                        userRole: roleData.role,
+                        totalStudents: 0,
+                        assessedStudents: 0,
+                        emotionStats: [],
+                        students: [],
+                        totalPages: 1,
+                        currentPage: page
+                    }
+                };
+            }
+        }
+
+        // TAHAP 2: Ambil Data Global Siswa
+        // PERBAIKAN: .eq('status', 'ACTIVE') Dihapus agar siswa tetap tampil 
+        // meskipun status di databasenya kosong atau berbeda penulisan.
+        let globalQuery = supabase.from('students').select('id').eq('school_id', schoolId);
+        if (filteredStudentIds !== null) {
+            globalQuery = globalQuery.in('id', filteredStudentIds);
+        }
+
+        const { data: allActiveStudents } = await globalQuery;
         const totalStudents = allActiveStudents?.length || 0;
         const allStudentIds = allActiveStudents?.map(s => s.id) || [];
 
-        // 2. Ambil Semua Emosi Terakhir (Untuk Statistik Global Grafik)
+        // TAHAP 3: Ambil Emosi Terakhir
         const { data: allEmotions } = await supabase
             .from('emotional_checkins')
             .select('student_id, emotion, intensity, created_at')
@@ -96,26 +129,34 @@ export async function getBkDashboardDataAction(page: number = 1, limit: number =
             percentage: Math.round((emotionCounts[key] / totalAssessed) * 100)
         })).sort((a, b) => b.count - a.count);
 
-        // 3. Ambil Data Siswa UNTUK TABEL (Berlaku Pagination & Pencarian)
+        // TAHAP 4: Ambil Data Siswa UNTUK TABEL 
         const from = (page - 1) * limit;
         const to = from + limit - 1;
 
-        let query = supabase
-            .from('students')
-            .select(`id, full_name, student_code, class_memberships ( classes ( name ) )`, { count: 'exact' })
-            .eq('school_id', schoolId)
-            .eq('status', 'ACTIVE');
+        // PERBAIKAN: Menggunakan !inner join agar tabel hanya memunculkan siswa di kelas yang dipilih
+        const selectString = classId
+            ? 'id, full_name, student_code, class_memberships!inner ( class_id, classes ( name ) )'
+            : 'id, full_name, student_code, class_memberships ( classes ( name ) )';
 
-        if (searchQuery) {
-            query = query.or(`full_name.ilike.%${searchQuery}%,student_code.ilike.%${searchQuery}%`);
+        // PERBAIKAN: .eq('status', 'ACTIVE') juga Dihapus dari sini
+        let tableQuery = supabase
+            .from('students')
+            .select(selectString, { count: 'exact' })
+            .eq('school_id', schoolId);
+
+        if (classId) {
+            tableQuery = tableQuery.eq('class_memberships.class_id', classId);
         }
 
-        const { data: pagedStudentsRaw, count, error: studentsError } = await query.range(from, to).returns<StudentWithClass[]>();
+        if (searchQuery) {
+            tableQuery = tableQuery.or(`full_name.ilike.%${searchQuery}%,student_code.ilike.%${searchQuery}%`);
+        }
+
+        const { data: pagedStudentsRaw, count, error: studentsError } = await tableQuery.range(from, to).returns<StudentWithClass[]>();
 
         if (studentsError) throw new Error('Gagal memuat tabel siswa.');
 
         const studentList: StudentListItem[] = (pagedStudentsRaw || []).map((student) => {
-            // Cocokkan emosinya dari data global tadi
             const studentEmotion = allEmotions?.find(e => e.student_id === student.id);
             const isCritical = studentEmotion
                 ? ['SAD', 'DISAPPOINTED', 'ANGRY', 'AFRAID', 'ANXIOUS'].includes(studentEmotion.emotion) && studentEmotion.intensity >= 7
@@ -134,7 +175,7 @@ export async function getBkDashboardDataAction(page: number = 1, limit: number =
         return {
             success: true,
             data: {
-                userRole: roleData.role, // Kita butuh ini untuk memunculkan tombol 'Kembali'
+                userRole: roleData.role,
                 totalStudents,
                 assessedStudents: totalAssessed,
                 emotionStats,

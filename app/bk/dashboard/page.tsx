@@ -3,29 +3,47 @@ import React from 'react';
 import Link from 'next/link';
 import {
     Users, ShieldAlert, BookOpen, Activity,
-    Search, Filter, HeartPulse, ShieldCheck, ArrowLeft
+    Search, HeartPulse, ShieldCheck, ArrowLeft, BarChart3, PieChart
 } from 'lucide-react';
 import { getBkDashboardDataAction } from '@/features/bk/actions/dashboard.actions';
+import { getVarkClassStatsAction, getRiasecClassStatsAction } from '@/features/bk/actions/class-stats.actions';
 import EmotionSummaryChart from '@/components/charts/EmotionSummaryChart';
 import Pagination from '@/components/ui/Pagination';
 import LogoutConfirmButton from '@/components/admin/AdminLogoutButton';
+import VarkPieChart from '@/features/bk/components/VarkPieChart';
+import RiasecBarChart from '@/features/bk/components/RiasecBarChart';
+import ClassSelector from '@/features/bk/components/ClassSelector';
+import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
-// Karena ini Next.js App Router, kita bisa menangkap searchParams dari props
 interface BkDashboardProps {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function BkDashboardPage({ searchParams }: BkDashboardProps) {
-    // 1. Ambil parameter dari URL untuk Pagination & Pencarian
     const resolvedParams = await searchParams;
     const currentPage = Number(resolvedParams?.page) || 1;
     const searchQuery = typeof resolvedParams?.search === 'string' ? resolvedParams.search : '';
-    const limit = 10; // Jumlah data per halaman
+    const selectedClassId = typeof resolvedParams?.class === 'string' ? resolvedParams.class : '';
+    const limit = 10;
 
-    // 2. Panggil Logika Server
-    const { success, data, error } = await getBkDashboardDataAction(currentPage, limit, searchQuery);
+    const supabase = await createClient();
+
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: roleData } = await supabase.from('user_roles').select('role, school_id').eq('user_id', user?.id).single();
+
+    let classesQuery = supabase.from('classes').select('id, name').order('name');
+
+    if (roleData?.role !== 'SUPER_ADMIN' && roleData?.school_id) {
+        classesQuery = classesQuery.eq('school_id', roleData.school_id);
+    }
+
+    const { data: classesData } = await classesQuery;
+    const availableClasses = classesData || [];
+    const activeClassId = selectedClassId || (availableClasses.length > 0 ? availableClasses[0].id : '');
+
+    const { success, data, error } = await getBkDashboardDataAction(currentPage, limit, searchQuery, activeClassId);
 
     if (!success || !data) {
         return (
@@ -40,15 +58,18 @@ export default async function BkDashboardPage({ searchParams }: BkDashboardProps
     const { userRole, totalStudents, assessedStudents, emotionStats, students, totalPages } = data;
     const criticalStudentsCount = students.filter(s => s.is_at_risk).length;
 
+    // AMBIL DATA KEDUA GRAFIK SECARA PARALEL (Lebih Cepat)
+    const [varkStats, riasecStats] = await Promise.all([
+        activeClassId ? getVarkClassStatsAction(activeClassId) : Promise.resolve(null),
+        activeClassId ? getRiasecClassStatsAction(activeClassId) : Promise.resolve(null)
+    ]);
+
     return (
         <div className="min-h-screen bg-slate-50/50 pb-16 font-sans">
-
             {/* --- HEADER --- */}
-            <header className="relative z-50 bg-slate-900 text-white overflow-hidden shadow-xl shadow-slate-900/10">
+            <header className="relative z-40 bg-slate-900 text-white overflow-hidden shadow-xl shadow-slate-900/10">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px] translate-x-1/3 -translate-y-1/3" />
                 <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between z-10">
-
-                    {/* Bagian Kiri: Logo dan Judul */}
                     <div className="flex items-center gap-3">
                         <div className="bg-white/10 backdrop-blur-md p-2 rounded-xl border border-white/10">
                             <BookOpen className="h-6 w-6 text-indigo-300" />
@@ -60,25 +81,18 @@ export default async function BkDashboardPage({ searchParams }: BkDashboardProps
                             {userRole === 'SUPER_ADMIN' && <span className="text-[10px] uppercase font-bold tracking-widest text-indigo-300 bg-indigo-900/50 px-2 py-0.5 rounded-sm">Mode Pratinjau Admin</span>}
                         </div>
                     </div>
-
-                    {/* Bagian Kanan: Tombol Kembali (Jika Admin) dan Tombol Keluar */}
                     <div className="flex items-center gap-4">
-                        {/* Jika Super Admin, tampilkan tombol kembali ke Dashboard Admin */}
                         {userRole === 'SUPER_ADMIN' && (
                             <Link href="/admin/dashboard" className="p-2 bg-white/5 hover:bg-white/20 border border-white/10 rounded-lg transition-colors group" title="Kembali ke Admin">
                                 <ArrowLeft className="h-5 w-5 text-slate-300 group-hover:text-white" />
                             </Link>
                         )}
-
-                        {/* Menggunakan Komponen Logout Ber-Dialog */}
                         <LogoutConfirmButton />
                     </div>
-
                 </div>
             </header>
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 space-y-8">
-
                 {/* --- STATISTIK ATAS --- */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden group">
@@ -89,7 +103,6 @@ export default async function BkDashboardPage({ searchParams }: BkDashboardProps
                         <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center relative z-10">
                             <Users size={28} />
                         </div>
-                        <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-50 rounded-full group-hover:scale-125 transition-transform duration-500 z-0 opacity-50" />
                     </div>
 
                     <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden group">
@@ -100,7 +113,6 @@ export default async function BkDashboardPage({ searchParams }: BkDashboardProps
                         <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center relative z-10">
                             <Activity size={28} />
                         </div>
-                        <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50 rounded-full group-hover:scale-125 transition-transform duration-500 z-0 opacity-50" />
                     </div>
 
                     <div className="bg-white p-6 rounded-3xl border border-rose-200 shadow-sm flex items-center justify-between relative overflow-hidden group bg-linear-to-br from-white to-rose-50/50">
@@ -111,17 +123,59 @@ export default async function BkDashboardPage({ searchParams }: BkDashboardProps
                         <div className="w-14 h-14 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center relative z-10 shadow-sm border border-rose-200">
                             <HeartPulse size={28} />
                         </div>
-                        <div className="absolute -right-6 -top-6 w-24 h-24 bg-rose-100 rounded-full group-hover:scale-125 transition-transform duration-500 z-0 opacity-50" />
                     </div>
                 </div>
 
+                {/* --- ANALISIS KELAS (GRAFIK VARK & RIASEC) --- */}
+                <section className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                <BarChart3 className="h-5 w-5 text-indigo-500" /> Analisis Asesmen Kelas
+                            </h3>
+                            <p className="text-sm text-slate-500 mt-1">Pilih kelas untuk melihat mayoritas gaya belajar (VARK) dan minat (RIASEC).</p>
+                        </div>
+                        <ClassSelector classes={availableClasses} selectedClassId={activeClassId} />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* KOTAK GRAFIK VARK */}
+                        <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-5">
+                            <div className="flex items-center gap-2 mb-6">
+                                <PieChart className="h-4 w-4 text-slate-400" />
+                                <h4 className="font-bold text-slate-700 text-sm">Distribusi Gaya Belajar (VARK)</h4>
+                            </div>
+                            {varkStats?.success && varkStats.data ? (
+                                <VarkPieChart data={varkStats.data} />
+                            ) : (
+                                <div className="flex items-center justify-center h-64">
+                                    <p className="text-slate-400 text-sm">{varkStats?.error || 'Tidak ada data.'}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* KOTAK GRAFIK RIASEC */}
+                        <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-5">
+                            <div className="flex items-center gap-2 mb-6">
+                                <BarChart3 className="h-4 w-4 text-slate-400" />
+                                <h4 className="font-bold text-slate-700 text-sm">Distribusi Minat Karier (RIASEC)</h4>
+                            </div>
+                            {riasecStats?.success && riasecStats.data ? (
+                                <RiasecBarChart data={riasecStats.data} />
+                            ) : (
+                                <div className="flex items-center justify-center h-64">
+                                    <p className="text-slate-400 text-sm">{riasecStats?.error || 'Tidak ada data.'}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </section>
+
                 {/* --- GRAFIK EMOSI KESELURUHAN --- */}
                 <section className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8">
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h3 className="text-lg font-bold text-slate-800">Peta Emosi Siswa Keseluruhan</h3>
-                            <p className="text-sm text-slate-500 mt-1">Berdasarkan data check-in terakhir yang dilakukan oleh siswa di sistem.</p>
-                        </div>
+                    <div className="mb-6">
+                        <h3 className="text-lg font-bold text-slate-800">Peta Emosi Siswa Keseluruhan</h3>
+                        <p className="text-sm text-slate-500 mt-1">Berdasarkan data check-in terakhir yang dilakukan oleh siswa di sistem.</p>
                     </div>
                     <EmotionSummaryChart data={emotionStats} total={assessedStudents} />
                 </section>
@@ -130,8 +184,6 @@ export default async function BkDashboardPage({ searchParams }: BkDashboardProps
                 <section className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/50">
                         <h2 className="text-lg font-bold text-slate-800 w-full sm:w-auto">Daftar Siswa Binaan</h2>
-
-                        {/* Nantinya form ini akan dibuat Client Component untuk handle ketikan search, tapi secara UI kita siapkan dulu */}
                         <div className="flex w-full sm:w-auto items-center gap-3">
                             <form action="/bk/dashboard" method="GET" className="relative w-full sm:w-64">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -142,10 +194,8 @@ export default async function BkDashboardPage({ searchParams }: BkDashboardProps
                                     placeholder="Cari nama atau NISN..."
                                     className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-xs transition-colors"
                                 />
+                                {activeClassId && <input type="hidden" name="class" value={activeClassId} />}
                             </form>
-                            <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shrink-0 shadow-xs">
-                                <Filter className="h-4 w-4" /> Kelas
-                            </button>
                         </div>
                     </div>
 
@@ -162,14 +212,10 @@ export default async function BkDashboardPage({ searchParams }: BkDashboardProps
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {students.map((student, index) => {
-                                    // Menghitung nomor urut otomatis
                                     const nomorUrut = (currentPage - 1) * limit + (index + 1);
-
                                     return (
                                         <tr key={student.id} className="hover:bg-slate-50/80 transition-colors">
-                                            <td className="px-6 py-4 font-semibold text-slate-400">
-                                                {nomorUrut}
-                                            </td>
+                                            <td className="px-6 py-4 font-semibold text-slate-400">{nomorUrut}</td>
                                             <td className="px-6 py-4">
                                                 <p className="font-bold text-slate-800">{student.full_name}</p>
                                                 <p className="text-xs text-slate-500 font-medium mt-0.5">NISN: {student.student_code}</p>
@@ -202,7 +248,6 @@ export default async function BkDashboardPage({ searchParams }: BkDashboardProps
                                         </tr>
                                     );
                                 })}
-
                                 {students.length === 0 && (
                                     <tr>
                                         <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
@@ -213,10 +258,7 @@ export default async function BkDashboardPage({ searchParams }: BkDashboardProps
                             </tbody>
                         </table>
                     </div>
-
-                    {/* --- KOMPONEN PAGINATION REUSABLE --- */}
                     <Pagination currentPage={currentPage} totalPages={totalPages} />
-
                 </section>
             </main>
         </div>
