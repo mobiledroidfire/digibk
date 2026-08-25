@@ -40,11 +40,11 @@ const styles = StyleSheet.create({
     boxLightTitle: { fontSize: 11, fontWeight: 'bold', color: '#1e40af', marginBottom: 8 },
     boxLightText: { flex: 1, fontSize: 9.5, color: '#1e3a8a', lineHeight: 1.4 },
 
-    // Layout untuk baris profil (Digunakan oleh VARK & RIASEC)
+    // PERBAIKAN: Kotak Profil Dikecilkan
     varkProfileRow: { flexDirection: 'row', gap: 15, alignItems: 'flex-start' },
-    varkBadgeGroup: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', justifyContent: 'center' },
-    varkBadge: { width: 45, height: 45, borderRadius: 8, borderWidth: 2, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
-    varkBadgeText: { fontSize: 24, fontWeight: 'bold' },
+    varkBadgeGroup: { flexDirection: 'row', gap: 5, flexWrap: 'wrap', justifyContent: 'center' },
+    varkBadge: { width: 34, height: 34, borderRadius: 8, borderWidth: 2, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+    varkBadgeText: { fontSize: 18, fontWeight: 'bold' },
     varkBadgeLabel: { fontSize: 8, color: '#64748b', fontWeight: 'bold', marginBottom: 4, textTransform: 'uppercase' },
 });
 
@@ -98,7 +98,6 @@ export async function POST(request: Request) {
                 scoreRows.push(data.profileData.sortedScores.slice(i, i + 2));
             }
 
-            // PERBAIKAN RIASEC: Konfigurasi QuickChart API untuk 6 sumbu
             const getScore = (code: string) => Number(data.profileData.sortedScores.find((s: ScoreItem) => s.code === code)?.raw_score) || 0;
             const riasecChartConfig = {
                 type: 'radar',
@@ -106,8 +105,8 @@ export async function POST(request: Request) {
                     labels: ['Realistis', 'Investigatif', 'Artistik', 'Sosial', 'Enterprising', 'Konvensional'],
                     datasets: [{
                         data: [getScore('R'), getScore('I'), getScore('A'), getScore('S'), getScore('E'), getScore('C')],
-                        backgroundColor: 'rgba(99, 102, 241, 0.4)', // Warna Indigo untuk fill
-                        borderColor: 'rgb(79, 70, 229)' // Warna Indigo untuk border
+                        backgroundColor: 'rgba(99, 102, 241, 0.4)',
+                        borderColor: 'rgb(79, 70, 229)'
                     }]
                 },
                 options: {
@@ -115,7 +114,9 @@ export async function POST(request: Request) {
                     scale: { ticks: { display: false, max: 35, min: 0 } }
                 }
             };
-            const riasecChartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(riasecChartConfig))}&w=250&h=250`;
+
+            // PERBAIKAN: Resolusi gambar diperbesar dari 250 menjadi 400
+            const riasecChartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(riasecChartConfig))}&w=400&h=400`;
 
             ModuleContent = (
                 <View style={styles.container}>
@@ -124,12 +125,11 @@ export async function POST(request: Request) {
                         <Text style={styles.phaseSub}>{data.phaseInfo.bannerMessage}</Text>
                     </View>
 
-                    {/* PERBAIKAN RIASEC: Layout Kesimpulan Diubah menjadi Split Kolom */}
                     <View style={styles.sectionCard} wrap={false}>
                         <View style={styles.varkProfileRow}>
 
-                            {/* KOLOM KIRI: Kotak Huruf Profil + Grafik Radar */}
-                            <View style={{ width: 140, alignItems: 'center' }}>
+                            {/* PERBAIKAN: Lebar kolom diperbesar dari 140 menjadi 160 */}
+                            <View style={{ width: 160, alignItems: 'center' }}>
                                 <Text style={styles.varkBadgeLabel}>KODE PROFIL</Text>
 
                                 <View style={styles.varkBadgeGroup}>
@@ -144,13 +144,13 @@ export async function POST(request: Request) {
                                     })}
                                 </View>
 
+                                {/* PERBAIKAN: Ukuran image radarnya dibesarkan menjadi 135x135 */}
                                 <View style={{ marginTop: 10, width: '100%', backgroundColor: '#f8fafc', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center' }}>
                                     <Text style={{ fontSize: 8, fontWeight: 'bold', color: '#64748b', marginBottom: 5 }}>PETA POTENSI RIASEC</Text>
-                                    <Image src={riasecChartUrl} style={{ width: 100, height: 100 }} />
+                                    <Image src={riasecChartUrl} style={{ width: 135, height: 135 }} />
                                 </View>
                             </View>
 
-                            {/* KOLOM KANAN: Deskripsi Profil */}
                             <View style={{ flex: 1, paddingLeft: 10 }}>
                                 <Text style={styles.sectionTitle}>Ringkasan Kesimpulan</Text>
 
@@ -249,7 +249,6 @@ export async function POST(request: Request) {
             const varkLabel = varkLabels[mainStyleCode] || 'Gaya Belajar';
             const mainColor = varkColors[mainStyleCode] || '#3b82f6';
 
-            // Menyiapkan URL Gambar QuickChart untuk PDF
             const vScore = data.uiData.sortedScores.find((s: ScoreItem) => s.code === 'V')?.raw_score || 0;
             const aScore = data.uiData.sortedScores.find((s: ScoreItem) => s.code === 'A')?.raw_score || 0;
             const rScore = data.uiData.sortedScores.find((s: ScoreItem) => s.code === 'R')?.raw_score || 0;
@@ -270,7 +269,9 @@ export async function POST(request: Request) {
                     scale: { ticks: { display: false, max: 20, min: 0 } }
                 }
             };
-            const chartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(chartConfig))}&w=250&h=250`;
+
+            // PERBAIKAN: Resolusi gambar diperbesar dari 250 menjadi 400
+            const chartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(chartConfig))}&w=400&h=400`;
 
             ModuleContent = (
                 <View style={styles.container}>
@@ -284,13 +285,12 @@ export async function POST(request: Request) {
 
                         <View style={styles.varkProfileRow}>
 
-                            {/* KOLOM KIRI: Kotak Huruf (Badges) + Grafik Radar */}
-                            <View style={{ width: 140, alignItems: 'center' }}>
+                            {/* PERBAIKAN: Lebar kolom diperbesar dari 140 menjadi 160 */}
+                            <View style={{ width: 160, alignItems: 'center' }}>
                                 <Text style={styles.varkBadgeLabel}>
                                     Tipe {data.uiData.isMultimodal ? 'Multimodal' : 'Dominan'}
                                 </Text>
 
-                                {/* Kotak Huruf */}
                                 <View style={styles.varkBadgeGroup}>
                                     {data.uiData.domCodesArray.map((code: string) => {
                                         const badgeStyle = getVarkPdfStyle(code);
@@ -302,14 +302,13 @@ export async function POST(request: Request) {
                                     })}
                                 </View>
 
-                                {/* Grafik Radar */}
+                                {/* PERBAIKAN: Ukuran image radarnya dibesarkan menjadi 135x135 */}
                                 <View style={{ marginTop: 10, width: '100%', backgroundColor: '#f8fafc', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center' }}>
                                     <Text style={{ fontSize: 8, fontWeight: 'bold', color: '#64748b', marginBottom: 5 }}>PETA KESEIMBANGAN</Text>
-                                    <Image src={chartUrl} style={{ width: 100, height: 100 }} />
+                                    <Image src={chartUrl} style={{ width: 135, height: 135 }} />
                                 </View>
                             </View>
 
-                            {/* KOLOM KANAN: Deskripsi Profil */}
                             <View style={{ flex: 1, paddingLeft: 10 }}>
                                 <Text style={{ fontSize: 13, color: '#0f172a', fontWeight: 'bold', marginBottom: 6 }}>
                                     {data.uiData.isMultimodal ? 'Gaya Belajar Fleksibel (Multimodal)' : varkLabel}
