@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import {
-    ArrowLeft, Target, Eye, Headphones,
+    ArrowLeft, ArrowRight, Target, Eye, Headphones, // PERBAIKAN: Menambahkan ArrowRight
     MousePointerClick, Sparkles, Activity,
     BookOpen, Lightbulb, UserCheck, HeartHandshake
 } from 'lucide-react';
@@ -136,7 +136,7 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                             <Target className="h-6 w-6 text-blue-400" />
                             <h1 className="text-3xl font-bold text-white tracking-tight">Hasil Gaya Belajar</h1>
                         </div>
-                        {/* Tombol PDF terintegrasi rapi di Header untuk kemudahan akses */}
+                        {/* Tombol PDF terintegrasi rapi di Header */}
                         <div className="w-full sm:w-auto">
                             <PrintPdfButton moduleType="VARK" studentData={{ id: student.id, name: student.full_name, school: schoolName }} />
                         </div>
@@ -147,7 +147,7 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
 
             <main className="max-w-4xl mx-auto px-4 sm:px-6 -mt-14 relative z-20 space-y-6">
 
-                {/* Kartu Kesimpulan Utama (Deteksi Multimodal) */}
+                {/* Kartu Kesimpulan Utama */}
                 <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 flex flex-col sm:flex-row gap-8 items-start">
                     <div className="shrink-0 flex flex-col items-center mx-auto sm:mx-0">
                         <div className="text-xs font-bold text-slate-400 mb-3 tracking-widest uppercase">
@@ -211,8 +211,13 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                                             </div>
                                             <span className="font-bold text-slate-700">{style.label}</span>
                                         </div>
+                                        {/* PERBAIKAN: Menambahkan label Pendukung */}
                                         <div className="flex items-center gap-2">
-                                            {isDominant && <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 uppercase">Dominan</span>}
+                                            {isDominant ? (
+                                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wider">Dominan</span>
+                                            ) : (
+                                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 uppercase tracking-wider">Pendukung</span>
+                                            )}
                                             <span className={`text-sm font-bold ${isDominant ? 'text-slate-900' : 'text-slate-500'}`}>{scoreVal} Poin</span>
                                         </div>
                                     </div>
@@ -302,13 +307,13 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                     </div>
                 </div>
 
-                {/* Tombol Aksi Bawah */}
+                {/* Tombol Aksi Bawah - PERBAIKAN: Mengembalikan warna hijau menyala */}
                 <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row justify-end items-center gap-4">
                     <Link
                         href="/student/dashboard"
-                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3 bg-white border-2 border-slate-200 text-slate-700 text-sm font-bold rounded-xl transition-all hover:bg-slate-50 hover:border-slate-300"
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3 bg-teal-600 text-white text-sm font-bold rounded-xl transition-all duration-300 hover:bg-teal-500 hover:shadow-lg hover:shadow-teal-500/40 hover:-translate-y-0.5"
                     >
-                        Tutup & Kembali
+                        Selesai & Kembali <ArrowRight className="h-4 w-4" />
                     </Link>
                 </div>
             </main>
