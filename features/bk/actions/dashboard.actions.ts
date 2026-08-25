@@ -29,7 +29,6 @@ export interface BkDashboardData {
     currentPage: number;
 }
 
-// Definisi statis murni agar TypeScript tidak mengamuk (ParserError)
 type StudentWithClass = {
     id: string;
     full_name: string;
@@ -59,6 +58,24 @@ export async function getBkDashboardDataAction(
         if (roleError || !roleData) throw new Error('Akses ditolak.');
 
         let schoolId = roleData.school_id;
+
+        // ==============================================================
+        // PERBAIKAN BUG SUPER ADMIN (TAMU)
+        // Jika ada kelas yang dipilih, baca school_id langsung dari kelasnya
+        // ==============================================================
+        if (classId) {
+            const { data: classData } = await supabase
+                .from('classes')
+                .select('school_id')
+                .eq('id', classId)
+                .single();
+
+            if (classData?.school_id) {
+                schoolId = classData.school_id;
+            }
+        }
+
+        // Logika bawaan (*fallback*) jika tidak ada kelas yang dipilih
         if (roleData.role === 'SUPER_ADMIN' && !schoolId) {
             const { data: firstSchool } = await supabase.from('schools').select('id').limit(1).single();
             if (firstSchool) schoolId = firstSchool.id;
@@ -69,7 +86,6 @@ export async function getBkDashboardDataAction(
 
         // ==============================================================
         // TAHAP 1: Ambil Total Siswa & ID untuk Statistik Emosi
-        // KUNCI PERBAIKAN: Pisahkan query agar tidak terjadi "ParserError"
         // ==============================================================
         let allStudentIds: string[] = [];
         let totalStudents = 0;
@@ -146,7 +162,6 @@ export async function getBkDashboardDataAction(
         let pagedStudentsRaw: StudentWithClass[] | null = [];
         let count = 0;
 
-        // Memisahkan query lagi untuk keamanan kompilasi TypeScript
         if (classId) {
             let query = supabase
                 .from('students')
@@ -192,7 +207,6 @@ export async function getBkDashboardDataAction(
                 ? ['SAD', 'DISAPPOINTED', 'ANGRY', 'AFRAID', 'ANXIOUS'].includes(studentEmotion.emotion) && studentEmotion.intensity >= 7
                 : false;
 
-            // Ekstrak nama kelas dengan aman
             let cName = 'Belum Ada Kelas';
             if (student.class_memberships && student.class_memberships.length > 0) {
                 cName = student.class_memberships[0].classes?.name || 'Belum Ada Kelas';
