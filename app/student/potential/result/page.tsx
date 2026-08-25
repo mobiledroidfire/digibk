@@ -45,6 +45,16 @@ const getRiasecStyle = (code: string) => {
     }
 }
 
+// Helper: Daftar terjemahan untuk ditampilkan di dalam kurung
+const riasecTranslations: Record<string, string> = {
+    'Realistic': 'Realistis',
+    'Investigative': 'Investigatif',
+    'Artistic': 'Artistik',
+    'Social': 'Sosial',
+    'Enterprising': 'Wirausaha',
+    'Conventional': 'Konvensional'
+};
+
 function determinePhaseData(eduLvl: string, grade: number) {
     let phaseKey: keyof LevelData = 'SMP_Awal';
     let bannerMessage = null;
@@ -164,7 +174,7 @@ export default async function RiasecResultPage({ searchParams }: { searchParams:
     return (
         <div className="min-h-screen bg-slate-50 pb-20 font-sans text-slate-900">
 
-            {/* 1. STICKY NAVBAR (TETAP MUNCUL SAAT DI-SCROLL) - IDENTIK DENGAN VARK */}
+            {/* 1. STICKY NAVBAR (TETAP MUNCUL SAAT DI-SCROLL) */}
             <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 py-4 shadow-sm">
                 <div className="max-w-4xl mx-auto w-full flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -182,7 +192,7 @@ export default async function RiasecResultPage({ searchParams }: { searchParams:
                 </div>
             </header>
 
-            {/* 2. HERO BANNER (BERGULIR SECARA NORMAL) - IDENTIK DENGAN VARK */}
+            {/* 2. HERO BANNER (BERGULIR SECARA NORMAL) */}
             <div className="bg-slate-900 pt-8 pb-24 px-4 sm:px-6 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
                 <div className="max-w-4xl mx-auto relative z-10">
@@ -239,11 +249,15 @@ export default async function RiasecResultPage({ searchParams }: { searchParams:
                             const dimInfo = dimensionDefs[safeCode] || { name: safeCode, meaning: '' };
                             const style = getRiasecStyle(safeCode);
 
+                            // Logika untuk menampilkan format: NamaAsli (Terjemahan)
+                            const indonesianName = riasecTranslations[dimInfo.name];
+                            const displayName = indonesianName ? `${dimInfo.name} (${indonesianName})` : dimInfo.name;
+
                             return (
                                 <div key={safeCode} className="flex flex-col gap-2 relative">
                                     <div className="flex justify-between items-end">
                                         <div>
-                                            <span className="font-bold text-slate-800 text-sm">{dimInfo.name}</span>
+                                            <span className="font-bold text-slate-800 text-sm">{displayName}</span>
                                             <p className="text-xs text-slate-500 mt-0.5">{dimInfo.meaning}</p>
                                         </div>
                                         <span className={`text-sm font-bold ${style.color}`}>
