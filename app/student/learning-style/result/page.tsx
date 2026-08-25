@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import {
-    ArrowLeft, ArrowRight, Target, Eye, Headphones, // PERBAIKAN: Menambahkan ArrowRight
+    ArrowLeft, ArrowRight, Target, Eye, Headphones,
     MousePointerClick, Sparkles, Activity,
     BookOpen, Lightbulb, UserCheck, HeartHandshake
 } from 'lucide-react';
@@ -16,7 +16,7 @@ import PrintPdfButton from '@/components/pdf/PrintPdfButton';
 import { varkDictionary, type LevelData, type PhaseData } from '@/lib/data/vark';
 
 // ============================================================================
-// 1. BAGIAN LOGIKA & HELPER (Terpisah dari UI)
+// 1. BAGIAN LOGIKA & HELPER
 // ============================================================================
 
 const getVarkStyle = (code: string) => {
@@ -29,7 +29,6 @@ const getVarkStyle = (code: string) => {
     }
 }
 
-// Helper: Menentukan fase pendidikan
 function determinePhaseKey(eduLvl: string, grade: number): keyof LevelData {
     if (eduLvl === 'SD' || eduLvl === 'MI') {
         if (grade <= 3) return 'SD_Awal';
@@ -42,41 +41,28 @@ function determinePhaseKey(eduLvl: string, grade: number): keyof LevelData {
     } else if (eduLvl === 'SMK') {
         return grade <= 11 ? 'SMK_Awal' : 'SMK_Transisi';
     }
-    return 'SMP_Awal'; // Default fallback
+    return 'SMP_Awal';
 }
 
-// Helper: Memproses raw data menjadi data siap pakai untuk UI
 function processResultData(profile: any, phaseKey: keyof LevelData) {
     const rawResults = profile.vark_results || profile.vak_results || [];
-
-    // 1. Sorting & Nilai Maksimal
     const sortedScores = [...rawResults].sort((a: any, b: any) => Number(b.raw_score) - Number(a.raw_score));
     const maxScore = Math.max(...sortedScores.map(s => Number(s.raw_score)), 1);
 
-    // 2. Deteksi Multimodal
     const dominantItems = sortedScores.filter(s => Number(s.raw_score) === maxScore);
     const isMultimodal = dominantItems.length > 1;
     const domCodesArray = dominantItems.map(s => (s.code || '').trim().toUpperCase());
 
-    // 3. Ambil data utama (Jika multimodal, ambil yang pertama sebagai baseline fase)
     const primaryCode = domCodesArray[0] || 'V';
     const dominantData = varkDictionary[primaryCode] || varkDictionary['V'];
     const phaseData: PhaseData = dominantData.levels[phaseKey] || dominantData.levels['SMP_Awal'];
 
-    return {
-        sortedScores,
-        maxScore,
-        isMultimodal,
-        domCodesArray,
-        primaryCode,
-        dominantData,
-        phaseData
-    };
+    return { sortedScores, maxScore, isMultimodal, domCodesArray, primaryCode, dominantData, phaseData };
 }
 
 
 // ============================================================================
-// 2. BAGIAN UI KOMPONEN UTAMA (Fokus Render Saja)
+// 2. BAGIAN UI KOMPONEN UTAMA
 // ============================================================================
 
 export default async function VarkResultPage({ searchParams }: { searchParams: Promise<{ id?: string }>; }) {
@@ -84,7 +70,6 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
     const resultId = resolvedParams.id;
     const supabase = await createClient();
 
-    // 1. Validasi Akses & Ambil Data Base
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect('/login');
 
@@ -99,7 +84,6 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
     const schoolName = student.schools && typeof student.schools === 'object' && 'name' in student.schools
         ? String(student.schools.name) : 'Sekolah Anda';
 
-    // 2. Ambil Data Hasil dari Database
     const resultData = await getVarkResultData(student.id, resultId);
 
     if (!resultData || !resultData.profile) {
@@ -116,35 +100,44 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
         );
     }
 
-    // 3. Proses Data dengan Helper (UI tidak memikirkan logika rumit lagi)
     const phaseKey = determinePhaseKey(student.education_level || 'SMP', student.grade_level || 7);
     const uiData = processResultData(resultData.profile, phaseKey);
     const mainStyle = getVarkStyle(uiData.primaryCode);
 
-    // 4. Render UI
     return (
         <div className="min-h-screen bg-slate-50 pb-20 font-sans text-slate-900">
-            {/* Header Gelap */}
-            <div className="bg-slate-900 pt-12 pb-24 px-4 sm:px-6 relative overflow-hidden">
+
+            {/* 1. STICKY NAVBAR (TETAP MUNCUL SAAT DI-SCROLL) */}
+            <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 py-4 shadow-sm">
+                <div className="max-w-4xl mx-auto w-full flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Target className="h-6 w-6 text-blue-400" />
+                        <h1 className="text-xl font-bold text-white tracking-tight hidden sm:block">Hasil Gaya Belajar</h1>
+                        <h1 className="text-lg font-bold text-white tracking-tight sm:hidden">V-A-R-K</h1>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <Link href="/student/dashboard" className="hidden sm:inline-flex items-center gap-2 text-slate-300 hover:text-white transition-colors text-sm font-medium">
+                            <ArrowLeft className="h-4 w-4" /> Kembali
+                        </Link>
+                        {/* Tombol PDF terintegrasi rapi di Header yang Sticky */}
+                        <PrintPdfButton moduleType="VARK" studentData={{ id: student.id, name: student.full_name, school: schoolName }} />
+                    </div>
+                </div>
+            </header>
+
+            {/* 2. HERO BANNER (BERGULIR SECARA NORMAL) */}
+            <div className="bg-slate-900 pt-8 pb-24 px-4 sm:px-6 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
                 <div className="max-w-4xl mx-auto relative z-10">
-                    <Link href="/student/dashboard" className="inline-flex items-center gap-2 text-slate-300 hover:text-white transition-colors mb-6 text-sm font-medium">
+                    <Link href="/student/dashboard" className="sm:hidden inline-flex items-center gap-2 text-slate-300 hover:text-white transition-colors mb-6 text-sm font-medium">
                         <ArrowLeft className="h-4 w-4" /> Kembali ke Dashboard
                     </Link>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
-                        <div className="flex items-center gap-3">
-                            <Target className="h-6 w-6 text-blue-400" />
-                            <h1 className="text-3xl font-bold text-white tracking-tight">Hasil Gaya Belajar</h1>
-                        </div>
-                        {/* Tombol PDF terintegrasi rapi di Header */}
-                        <div className="w-full sm:w-auto">
-                            <PrintPdfButton moduleType="VARK" studentData={{ id: student.id, name: student.full_name, school: schoolName }} />
-                        </div>
-                    </div>
-                    <p className="text-slate-400">Analisis preferensi belajar untuk {student.full_name} ({schoolName}).</p>
+                    <h2 className="text-3xl font-bold text-white tracking-tight mb-2">Profil Preferensi Belajar</h2>
+                    <p className="text-slate-400">Analisis asesmen untuk {student.full_name} ({schoolName}).</p>
                 </div>
             </div>
 
+            {/* 3. KONTEN UTAMA */}
             <main className="max-w-4xl mx-auto px-4 sm:px-6 -mt-14 relative z-20 space-y-6">
 
                 {/* Kartu Kesimpulan Utama */}
@@ -211,7 +204,6 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                                             </div>
                                             <span className="font-bold text-slate-700">{style.label}</span>
                                         </div>
-                                        {/* PERBAIKAN: Menambahkan label Pendukung */}
                                         <div className="flex items-center gap-2">
                                             {isDominant ? (
                                                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wider">Dominan</span>
@@ -307,7 +299,7 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                     </div>
                 </div>
 
-                {/* Tombol Aksi Bawah - PERBAIKAN: Mengembalikan warna hijau menyala */}
+                {/* Tombol Aksi Bawah */}
                 <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row justify-end items-center gap-4">
                     <Link
                         href="/student/dashboard"
