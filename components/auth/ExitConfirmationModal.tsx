@@ -1,31 +1,37 @@
 // Lokasi file: src/components/auth/ExitConfirmationModal.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, Save, LogOut, X, Key, User, Loader2 } from 'lucide-react';
 
 interface ExitConfirmationModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirmExit: () => void; // Fungsi saat memilih keluar tanpa simpan
-    onSaveAccount: (nisn: string, password: string) => Promise<void>; // Fungsi saat menyimpan data
+    onConfirmExit: () => void;
+    onSaveAccount: (nisn: string, password: string) => Promise<void>;
 }
 
 export default function ExitConfirmationModal({ isOpen, onClose, onConfirmExit, onSaveAccount }: ExitConfirmationModalProps) {
-    // State untuk mengontrol apakah sedang melihat peringatan atau sedang mengisi form pendaftaran
     const [mode, setMode] = useState<'warning' | 'register'>('warning');
     const [nisn, setNisn] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    if (!isOpen) return null;
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        if (isOpen) setMode('warning');
+    }, [isOpen]);
+
+    if (!isOpen || !mounted) return null;
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         try {
             await onSaveAccount(nisn, password);
-            // Jika berhasil, modal bisa ditutup (biasanya diatur dari luar)
         } catch (error) {
             console.error("Gagal menyimpan", error);
         } finally {
@@ -33,22 +39,21 @@ export default function ExitConfirmationModal({ isOpen, onClose, onConfirmExit, 
         }
     };
 
-    return (
+    const modalContent = (
+        /* PERBAIKAN: Mengubah z-[9999] menjadi z-50 untuk menghilangkan warning linter */
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-300">
+            <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden relative max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
 
-                {/* Tombol Silang untuk Tutup */}
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+                    className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors z-10"
                 >
                     <X size={20} />
                 </button>
 
                 {mode === 'warning' ? (
-                    /* TAMPILAN 1: PERINGATAN KELUAR */
-                    <div className="p-8 text-center">
-                        <div className="w-20 h-20 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <div className="p-8 text-center mt-2">
+                        <div className="w-20 h-20 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
                             <AlertTriangle size={40} />
                         </div>
                         <h2 className="text-2xl font-bold text-slate-800 mb-3">Tunggu Dulu!</h2>
@@ -73,7 +78,6 @@ export default function ExitConfirmationModal({ isOpen, onClose, onConfirmExit, 
                         </div>
                     </div>
                 ) : (
-                    /* TAMPILAN 2: FORM PENGISIAN NISN & PASSWORD */
                     <div className="p-8">
                         <div className="mb-6">
                             <h2 className="text-2xl font-bold text-slate-800 mb-2">Simpan Hasilmu</h2>
@@ -93,7 +97,6 @@ export default function ExitConfirmationModal({ isOpen, onClose, onConfirmExit, 
                                         value={nisn}
                                         onChange={(e) => setNisn(e.target.value)}
                                         placeholder="Contoh: 0012345678"
-                                        /* PERBAIKAN CLASSNAME: Menghapus focus:border-teal-500 untuk menghindari peringatan linter */
                                         className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all"
                                     />
                                 </div>
@@ -111,7 +114,6 @@ export default function ExitConfirmationModal({ isOpen, onClose, onConfirmExit, 
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         placeholder="Buat kata sandi minimal 6 karakter"
-                                        /* PERBAIKAN CLASSNAME: Menghapus focus:border-teal-500 untuk menghindari peringatan linter */
                                         className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all"
                                     />
                                 </div>
@@ -140,4 +142,6 @@ export default function ExitConfirmationModal({ isOpen, onClose, onConfirmExit, 
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 }
