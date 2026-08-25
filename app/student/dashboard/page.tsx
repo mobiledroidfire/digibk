@@ -128,7 +128,7 @@ export default async function StudentDashboardPage() {
                         <span className="font-bold text-xl tracking-tight text-white">DIGIBK</span>
                     </div>
                     {/* Tombol Logout */}
-                    <LogoutButton isGuestAccount={isGuest} />
+                    <LogoutButton isGuestAccount={isGuest} studentNisn={studentData.student_code} />
                 </div>
             </header>
 

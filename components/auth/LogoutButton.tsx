@@ -10,9 +10,10 @@ import { claimAccountAction } from '@/features/auth/actions/auth.actions';
 
 interface LogoutButtonProps {
     isGuestAccount?: boolean;
+    studentNisn?: string; // TAMBAHAN 1: Menerima data NISN dari halaman utama
 }
 
-export default function LogoutButton({ isGuestAccount = false }: LogoutButtonProps) {
+export default function LogoutButton({ isGuestAccount = false, studentNisn = '' }: LogoutButtonProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const router = useRouter();
@@ -80,6 +81,7 @@ export default function LogoutButton({ isGuestAccount = false }: LogoutButtonPro
                 onClose={() => setIsModalOpen(false)}
                 onConfirmExit={handleForceExit}
                 onSaveAccount={handleSaveAccount}
+                initialNisn={studentNisn} // TAMBAHAN 2: Meneruskan NISN ke pop-up
             />
         </>
     );

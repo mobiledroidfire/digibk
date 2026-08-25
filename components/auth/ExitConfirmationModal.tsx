@@ -3,27 +3,42 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertTriangle, Save, LogOut, X, Key, User, Loader2 } from 'lucide-react';
+import { AlertTriangle, Save, LogOut, X, Key, User, Loader2, Eye, EyeOff } from 'lucide-react'; // PERBAIKAN: Import ikon Eye dan EyeOff
 
 interface ExitConfirmationModalProps {
     isOpen: boolean;
     onClose: () => void;
     onConfirmExit: () => void;
     onSaveAccount: (nisn: string, password: string) => Promise<void>;
+    initialNisn?: string;
 }
 
-export default function ExitConfirmationModal({ isOpen, onClose, onConfirmExit, onSaveAccount }: ExitConfirmationModalProps) {
+export default function ExitConfirmationModal({
+    isOpen,
+    onClose,
+    onConfirmExit,
+    onSaveAccount,
+    initialNisn = ''
+}: ExitConfirmationModalProps) {
     const [mode, setMode] = useState<'warning' | 'register'>('warning');
-    const [nisn, setNisn] = useState('');
+    const [nisn, setNisn] = useState(initialNisn);
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    // PERBAIKAN: State untuk mengontrol visibilitas password
+    const [showPassword, setShowPassword] = useState(false);
 
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         setMounted(true);
-        if (isOpen) setMode('warning');
-    }, [isOpen]);
+        if (isOpen) {
+            setMode('warning');
+            setNisn(initialNisn || '');
+            setPassword('');
+            setShowPassword(false); // Reset mata agar tertutup setiap kali modal dibuka
+        }
+    }, [isOpen, initialNisn]);
 
     if (!isOpen || !mounted) return null;
 
@@ -40,7 +55,6 @@ export default function ExitConfirmationModal({ isOpen, onClose, onConfirmExit, 
     };
 
     const modalContent = (
-        /* PERBAIKAN: Mengubah z-[9999] menjadi z-50 untuk menghilangkan warning linter */
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden relative max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
 
@@ -108,14 +122,27 @@ export default function ExitConfirmationModal({ isOpen, onClose, onConfirmExit, 
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                                         <Key size={18} />
                                     </div>
+                                    {/* PERBAIKAN: Input type dinamis dan padding kanan ditambahkan (pr-10) untuk ikon */}
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         required
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         placeholder="Buat kata sandi minimal 6 karakter"
-                                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+                                        className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all"
                                     />
+                                    {/* PERBAIKAN: Tombol untuk toggle mata */}
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff size={18} />
+                                        ) : (
+                                            <Eye size={18} />
+                                        )}
+                                    </button>
                                 </div>
                             </div>
 
