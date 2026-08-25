@@ -6,16 +6,14 @@ import {
     User, GraduationCap, School, PlayCircle,
     CheckCircle2, BrainCircuit,
     Clock, Lock, Activity, ShieldCheck,
-    Target, Users, Handshake, Lightbulb
+    Target, Users, Handshake, Lightbulb, Heart
 } from 'lucide-react';
 import Link from 'next/link';
 
-// Import komponen PrintPdfButton
 import PrintPdfButton from '@/components/pdf/PrintPdfButton';
-// Import komponen LogoutButton yang baru dibuat
 import LogoutButton from '@/components/auth/LogoutButton';
 
-// 1. Mendefinisikan Tipe Data
+// 1. Mendefinisikan Tipe Data Secara Ketat
 type StudentData = {
     id: string;
     full_name: string;
@@ -30,7 +28,6 @@ type SessionData = {
     assessment_versions: { assessments: { code: string; } }
 };
 
-// Tipe khusus untuk mengatasi Error Overlap TypeScript
 type AssessmentStatusType = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
 
 export default async function StudentDashboardPage() {
@@ -40,7 +37,6 @@ export default async function StudentDashboardPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect('/login');
 
-    // === Deteksi otomatis akun Tamu (Guest) ===
     const isGuest = user.user_metadata?.is_guest === true;
 
     // 3. Ambil Data Profil Siswa
@@ -58,15 +54,15 @@ export default async function StudentDashboardPage() {
         redirect('/login?error=Data siswa tidak ditemukan.');
     }
 
+    // Penegasan tipe (Type Assertion) yang aman karena kita sudah mendefinisikan strukturnberwarna-warni
     const studentData = studentRaw as unknown as StudentData;
     const schoolName = studentData.schools?.name || 'Sekolah Belum Diatur';
     const className = studentData.class_memberships?.[0]?.classes?.name || 'Kelas Belum Diatur';
 
-    // 4. Inisialisasi Status Asesmen
+    // 4. Inisialisasi Status Asesmen Jurus 1
     let riasecStatus: AssessmentStatusType = 'NOT_STARTED';
     let varkStatus: AssessmentStatusType = 'NOT_STARTED';
 
-    // Ambil data sesi
     const { data: sessionsRaw } = await supabase
         .from('assessment_sessions')
         .select(`
@@ -76,7 +72,6 @@ export default async function StudentDashboardPage() {
         `)
         .eq('student_id', studentData.id);
 
-    // Ambil data dari tabel hasil tes sebagai jaring pengaman
     const { data: resultsRaw } = await supabase
         .from('assessment_results')
         .select('session_id')
@@ -89,7 +84,6 @@ export default async function StudentDashboardPage() {
 
         for (const session of sessions) {
             const code = session.assessment_versions?.assessments?.code;
-
             const isCompleted = session.status === 'COMPLETED' || completedSessionIds.includes(session.id);
             const isProgress = session.status === 'IN_PROGRESS' && !isCompleted;
 
@@ -104,9 +98,11 @@ export default async function StudentDashboardPage() {
         }
     }
 
-    // 5. Data Konfigurasi untuk Jurus 2 sampai 7 (Terkunci)
+    // 5. Cek apakah Jurus 1 sudah selesai semua untuk membuka Jurus 2
+    const isJurus1Completed = riasecStatus === 'COMPLETED' && varkStatus === 'COMPLETED';
+
+    // Jurus 3 sampai 7 yang masih dikunci
     const lockedJurus = [
-        { id: 2, title: "Kelola Emosi", icon: Activity, color: "text-rose-500", bg: "bg-rose-50" },
         { id: 3, title: "Tumbuhkan Resiliensi", icon: ShieldCheck, color: "text-orange-500", bg: "bg-orange-50" },
         { id: 4, title: "Jaga Konsistensi", icon: Target, color: "text-emerald-500", bg: "bg-emerald-50" },
         { id: 5, title: "Jalin Koneksi", icon: Users, color: "text-purple-500", bg: "bg-purple-50" },
@@ -114,11 +110,8 @@ export default async function StudentDashboardPage() {
         { id: 7, title: "Menata Situasi", icon: Lightbulb, color: "text-amber-500", bg: "bg-amber-50" },
     ];
 
-    // 6. Render Tampilan UI Modern
     return (
         <div className="min-h-screen bg-slate-50 pb-16 font-sans text-slate-900">
-
-            {/* 1. STICKY NAVBAR (TETAP MUNCUL SAAT DI-SCROLL) - IDENTIK DENGAN HALAMAN HASIL */}
             <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 py-4 shadow-sm">
                 <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -127,12 +120,10 @@ export default async function StudentDashboardPage() {
                         </div>
                         <span className="font-bold text-xl tracking-tight text-white">DIGIBK</span>
                     </div>
-                    {/* Tombol Logout */}
                     <LogoutButton isGuestAccount={isGuest} studentNisn={studentData.student_code} />
                 </div>
             </header>
 
-            {/* 2. HERO BANNER (BERGULIR SECARA NORMAL) */}
             <div className="bg-slate-900 pt-8 pb-28 px-4 sm:px-6 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
                 <div className="max-w-7xl mx-auto relative z-10">
@@ -141,9 +132,7 @@ export default async function StudentDashboardPage() {
                 </div>
             </div>
 
-            {/* 3. KONTEN UTAMA (DITARIK KE ATAS DENGAN -mt-14) */}
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-14 relative z-20 space-y-8">
-
                 {/* KARTU PROFIL SISWA */}
                 <section className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center gap-6 relative overflow-hidden">
                     <div className="absolute right-0 top-0 w-64 h-64 bg-blue-50 rounded-full blur-3xl -mr-20 -mt-20 opacity-60 z-0"></div>
@@ -167,7 +156,6 @@ export default async function StudentDashboardPage() {
 
                 <section>
                     <h2 className="text-xl font-bold text-slate-800 mb-6">Peta Perjalananmu (7 Jurus)</h2>
-
                     <div className="flex flex-col gap-6">
 
                         {/* JURUS 1: SATU BINGKAI BESAR UNTUK RIASEC & VARK */}
@@ -181,9 +169,7 @@ export default async function StudentDashboardPage() {
                                     <p className="text-sm text-slate-400 mt-1">Selesaikan dua asesmen dasar ini untuk membuka kunci ke jurus berikutnya.</p>
                                 </div>
                             </div>
-
                             <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100">
-
                                 {/* Modul 1: RIASEC */}
                                 <div className="p-6 md:p-8 flex flex-col h-full bg-slate-50/50">
                                     <div className="flex items-start justify-between mb-4">
@@ -191,9 +177,9 @@ export default async function StudentDashboardPage() {
                                             <h4 className="font-bold text-slate-800 text-lg">1. Minat & Bakat (RIASEC)</h4>
                                             <p className="text-sm text-slate-500 mt-1 mb-6">Kenali potensi karir dan penjurusan yang sesuai dengan kepribadianmu.</p>
                                         </div>
-                                        {riasecStatus === 'COMPLETED' ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200"><CheckCircle2 className="h-4 w-4" /> Selesai</span> : null}
-                                        {riasecStatus === 'IN_PROGRESS' ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200"><Clock className="h-4 w-4" /> Tertunda</span> : null}
-                                        {riasecStatus === 'NOT_STARTED' ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">Belum</span> : null}
+                                        {riasecStatus === 'COMPLETED' && <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200"><CheckCircle2 className="h-4 w-4" /> Selesai</span>}
+                                        {riasecStatus === 'IN_PROGRESS' && <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200"><Clock className="h-4 w-4" /> Tertunda</span>}
+                                        {riasecStatus === 'NOT_STARTED' && <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">Belum</span>}
                                     </div>
                                     <div className="mt-auto flex flex-col sm:flex-row gap-3">
                                         {riasecStatus !== 'COMPLETED' ? (
@@ -205,14 +191,7 @@ export default async function StudentDashboardPage() {
                                                 <Link href="/student/potential/result" className="flex-1 inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-sm font-bold py-2.5 px-4 rounded-xl transition-colors">
                                                     Lihat Hasil
                                                 </Link>
-                                                <PrintPdfButton
-                                                    moduleType="RIASEC"
-                                                    studentData={{
-                                                        id: studentData.id,
-                                                        name: studentData.full_name,
-                                                        school: schoolName
-                                                    }}
-                                                />
+                                                <PrintPdfButton moduleType="RIASEC" studentData={{ id: studentData.id, name: studentData.full_name, school: schoolName }} />
                                             </>
                                         )}
                                     </div>
@@ -225,9 +204,9 @@ export default async function StudentDashboardPage() {
                                             <h4 className="font-bold text-slate-800 text-lg">2. Gaya Belajar (VARK)</h4>
                                             <p className="text-sm text-slate-500 mt-1 mb-6">Ketahui cara belajar paling efektif: Visual, Auditori, Reading, atau Kinestetik.</p>
                                         </div>
-                                        {varkStatus === 'COMPLETED' ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200"><CheckCircle2 className="h-4 w-4" /> Selesai</span> : null}
-                                        {varkStatus === 'IN_PROGRESS' ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200"><Clock className="h-4 w-4" /> Tertunda</span> : null}
-                                        {varkStatus === 'NOT_STARTED' ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">Belum</span> : null}
+                                        {varkStatus === 'COMPLETED' && <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200"><CheckCircle2 className="h-4 w-4" /> Selesai</span>}
+                                        {varkStatus === 'IN_PROGRESS' && <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200"><Clock className="h-4 w-4" /> Tertunda</span>}
+                                        {varkStatus === 'NOT_STARTED' && <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">Belum</span>}
                                     </div>
                                     <div className="mt-auto flex flex-col sm:flex-row gap-3">
                                         {varkStatus !== 'COMPLETED' ? (
@@ -239,14 +218,7 @@ export default async function StudentDashboardPage() {
                                                 <Link href="/student/learning-style/result" className="flex-1 inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-sm font-bold py-2.5 px-4 rounded-xl transition-colors">
                                                     Lihat Hasil
                                                 </Link>
-                                                <PrintPdfButton
-                                                    moduleType="VARK"
-                                                    studentData={{
-                                                        id: studentData.id,
-                                                        name: studentData.full_name,
-                                                        school: schoolName
-                                                    }}
-                                                />
+                                                <PrintPdfButton moduleType="VARK" studentData={{ id: studentData.id, name: studentData.full_name, school: schoolName }} />
                                             </>
                                         )}
                                     </div>
@@ -254,8 +226,43 @@ export default async function StudentDashboardPage() {
                             </div>
                         </div>
 
-                        {/* JURUS 2 SAMPAI 7 (TERKUNCI) */}
+                        {/* JURUS 2 SAMPAI 7 */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                            {/* LOGIKA JURUS 2: Terbuka jika isJurus1Completed bernilai True */}
+                            {isJurus1Completed ? (
+                                <Link href="/student/emotion" className="group bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md hover:border-rose-300 flex flex-col h-full min-h-64 relative transition-all duration-300">
+                                    <div className="flex-1 flex flex-col items-center justify-center text-center">
+                                        <div className="h-16 w-16 rounded-2xl bg-rose-50 flex items-center justify-center mb-4 border border-rose-100 shadow-xs group-hover:scale-110 transition-transform">
+                                            <Heart className="h-8 w-8 text-rose-500" />
+                                        </div>
+                                        <h3 className="font-bold text-lg text-slate-800">Jurus 2</h3>
+                                        <p className="font-semibold text-rose-600 mt-1">Kelola Emosi</p>
+                                        <p className="text-xs text-slate-500 mt-4 px-2">Bagaimana perasaanmu hari ini? Yuk, ceritakan kondisimu.</p>
+                                    </div>
+                                    <div className="absolute top-4 right-4 bg-rose-100 text-rose-600 p-1.5 rounded-full">
+                                        <PlayCircle className="h-4 w-4" />
+                                    </div>
+                                </Link>
+                            ) : (
+                                <div className="bg-slate-100/50 rounded-2xl p-6 border border-slate-200 border-dashed flex flex-col h-full min-h-64 relative group overflow-hidden">
+                                    <div className="absolute top-4 right-4 p-2 bg-white/50 rounded-lg">
+                                        <Lock className="h-4 w-4 text-slate-400" />
+                                    </div>
+                                    <div className="flex-1 flex flex-col items-center justify-center text-center">
+                                        <div className="h-16 w-16 rounded-2xl bg-rose-50 flex items-center justify-center mb-4 border border-white shadow-xs">
+                                            <Activity className="h-8 w-8 text-rose-500 opacity-60" />
+                                        </div>
+                                        <h3 className="font-bold text-lg text-slate-600">Jurus 2</h3>
+                                        <p className="font-semibold text-slate-700 mt-1">Kelola Emosi</p>
+                                        <span className="text-xs font-medium bg-rose-100 text-rose-600 px-3 py-1 rounded-full mt-4">
+                                            Kunci: Selesaikan Jurus 1
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* JURUS 3-7 (TERKUNCI) */}
                             {lockedJurus.map((jurus) => {
                                 const IconComponent = jurus.icon;
                                 return (
@@ -277,7 +284,6 @@ export default async function StudentDashboardPage() {
                                 );
                             })}
                         </div>
-
                     </div>
                 </section>
             </main>
