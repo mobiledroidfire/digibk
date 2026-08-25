@@ -35,9 +35,11 @@ export default function PrintPdfButton({ moduleType, studentData }: PrintPdfButt
             const url = window.URL.createObjectURL(blob);
             window.open(url, '_blank');
 
-        } catch (error: any) {
+        } catch (error: unknown) {
+            // PERBAIKAN: Mengubah 'any' menjadi 'unknown' dan menambahkan pengecekan tipe (Type Guard)
             console.error('Error printing PDF:', error);
-            alert(`Maaf, gagal menyiapkan PDF.\nAlasan: ${error.message}`);
+            const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
+            alert(`Maaf, gagal menyiapkan PDF.\nAlasan: ${errorMessage}`);
         } finally {
             setIsLoading(false);
         }

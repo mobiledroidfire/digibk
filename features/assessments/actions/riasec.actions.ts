@@ -1,27 +1,20 @@
 // Lokasi file: src/features/assessments/actions/riasec.actions.ts
-
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import type { RiasecProfile } from "@/types/database";
-
-// ============================================================
-// ADMIN CLIENT
-// ============================================================
+import { submitRiasecSchema, type answerItemSchema } from "../schemas/assessment.schema";
+import { z } from "zod";
 
 const supabaseAdmin = createAdminClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// ============================================================
-// TYPES
-// ============================================================
-
-// Mengambil tipe murni "R" | "I" | "A" | "S" | "E" | "C" dari database.ts (membuang nilai null)
 type RiasecCode = Exclude<RiasecProfile['primary_code'], null>;
+type RiasecAnswer = z.infer<typeof answerItemSchema>;
 
 type DimensionRecord = {
     code: string;
@@ -39,19 +32,19 @@ type QuestionRecord = {
     | null;
 };
 
-type RiasecAnswer = {
-    questionId: string;
-    value: number;
+// Tipe data baru untuk hasil query di submitRiasecAssessment
+type DatabaseQuestionRecord = {
+    id: string;
+    dimension_id: string;
+    assessment_version_id: string;
+    assessment_dimensions:
+    | DimensionRecord
+    | DimensionRecord[]
+    | null;
 };
-
-// ============================================================
-// KONFIGURASI
-// ============================================================
 
 const RIASEC_CODES: RiasecCode[] = ["R", "I", "A", "S", "E", "C"];
 const RIASEC_EXPECTED_QUESTIONS = 42;
-const RIASEC_SCORE_MIN = 1;
-const RIASEC_SCORE_MAX = 5;
 const RIASEC_SCORING_VERSION = "RIASEC-SCORING-v1";
 
 const RIASEC_VERSION_MAP: Record<string, string> = {
@@ -64,13 +57,9 @@ const RIASEC_VERSION_MAP: Record<string, string> = {
     SMK: "RIASEC-SMK-v1",
 };
 
-// ============================================================
-// HELPER
-// ============================================================
-
 function normalizeDimensionCode(value: unknown): RiasecCode | null {
     const code = String(value ?? "").trim().toUpperCase();
-    if (code === "R" || code === "I" || code === "A" || code === "S" || code === "E" || code === "C") {
+    if (["R", "I", "A", "S", "E", "C"].includes(code)) {
         return code as RiasecCode;
     }
     return null;
@@ -159,12 +148,24 @@ export async function getRiasecQuestions() {
 }
 
 // ============================================================
-// SUBMIT RIASEC
+// SUBMIT RIASEC ASSESSMENT
 // ============================================================
 
-export async function submitRiasecAssessment(versionId: string, answers: RiasecAnswer[]) {
-    const supabase = await createClient();
+export async function submitRiasecAssessment(versionId: string, unvalidatedAnswers: RiasecAnswer[]) {
+    // 1. VALIDASI INPUT MENGGUNAKAN ZOD
+    const parseResult = submitRiasecSchema.safeParse({
+        versionId,
+        answers: unvalidatedAnswers,
+    });
 
+    if (!parseResult.success) {
+        const errorMessage = parseResult.error.issues[0]?.message || "Input tidak valid.";
+        throw new Error(errorMessage);
+    }
+
+    const { versionId: validVersionId, answers } = parseResult.data;
+
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect("/login");
 
@@ -182,7 +183,7 @@ export async function submitRiasecAssessment(versionId: string, answers: RiasecA
     const { data: version, error: versionError } = await supabase
         .from("assessment_versions")
         .select(`id, version_code, status`)
-        .eq("id", versionId)
+        .eq("id", validVersionId)
         .eq("status", "PUBLISHED")
         .single();
 
@@ -192,43 +193,36 @@ export async function submitRiasecAssessment(versionId: string, answers: RiasecA
     const { data: dbQuestions, error: questionError } = await supabase
         .from("questions")
         .select(`id, dimension_id, assessment_version_id, assessment_dimensions ( code )`)
-        .eq("assessment_version_id", versionId);
+        .eq("assessment_version_id", validVersionId);
 
-    if (questionError || !dbQuestions) throw new Error("Gagal memvalidasi soal RIASEC.");
-    if (dbQuestions.length !== RIASEC_EXPECTED_QUESTIONS) throw new Error("Konfigurasi soal RIASEC di database tidak valid.");
-    if (!Array.isArray(answers) || answers.length !== RIASEC_EXPECTED_QUESTIONS) throw new Error(`Semua ${RIASEC_EXPECTED_QUESTIONS} soal RIASEC harus dijawab.`);
+    if (questionError || !dbQuestions || dbQuestions.length !== RIASEC_EXPECTED_QUESTIONS) {
+        throw new Error("Konfigurasi soal RIASEC di database tidak valid.");
+    }
 
-    const questionIds = answers.map((answer) => answer.questionId);
-    const uniqueQuestionIds = new Set(questionIds);
+    // Cek duplikasi pertanyaan
+    const uniqueQuestionIds = new Set(answers.map((a) => a.questionId));
     if (uniqueQuestionIds.size !== answers.length) throw new Error("Terdapat jawaban soal yang duplikat.");
 
     const questionMap = new Map<string, RiasecCode>();
-    const typedDbQuestions = dbQuestions as unknown as QuestionRecord[];
 
-    for (const question of typedDbQuestions) {
+    // PERBAIKAN: Mengganti any[] dengan DatabaseQuestionRecord[]
+    for (const question of dbQuestions as unknown as DatabaseQuestionRecord[]) {
         const dim = question.assessment_dimensions;
         const rawCode = Array.isArray(dim) ? dim[0]?.code : dim?.code;
         const code = normalizeDimensionCode(rawCode);
-
         if (!code) throw new Error("Terdapat soal dengan dimensi RIASEC tidak valid.");
         questionMap.set(question.id, code);
     }
 
-    for (const answer of answers) {
-        if (!questionMap.has(answer.questionId)) throw new Error("Terdapat question ID yang tidak berasal dari versi RIASEC ini.");
-        if (!Number.isFinite(answer.value) || answer.value < RIASEC_SCORE_MIN || answer.value > RIASEC_SCORE_MAX) {
-            throw new Error("Nilai jawaban RIASEC tidak valid.");
-        }
-    }
-
+    // Hitung Skor
     const scores: Record<RiasecCode, number> = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
     for (const answer of answers) {
         const dimensionCode = questionMap.get(answer.questionId);
-        if (!dimensionCode) throw new Error("Dimensi soal tidak ditemukan.");
+        if (!dimensionCode) throw new Error("Terdapat soal yang tidak sesuai dengan versi asesmen ini.");
         scores[dimensionCode] += answer.value;
     }
 
-    const totalScore = Object.values(scores).reduce((total, score) => total + score, 0);
+    const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
 
     const dimensionPriority: Record<RiasecCode, number> = { R: 1, I: 2, A: 3, S: 4, E: 5, C: 6 };
     const sortedScores = Object.entries(scores).sort(([codeA, scoreA], [codeB, scoreB]) => {
@@ -242,13 +236,13 @@ export async function submitRiasecAssessment(versionId: string, answers: RiasecA
     const profileCode = sortedScores.slice(0, 3).map(([code]) => code).join("");
 
     // ----------------------------------------------------------
-    // SESSION (TABEL INDUK)
+    // DATABASE INSERTS DENGAN ROLLBACK
     // ----------------------------------------------------------
     const { data: session, error: sessionError } = await supabase
         .from("assessment_sessions")
         .insert({
             student_id: student.id,
-            assessment_version_id: versionId,
+            assessment_version_id: validVersionId,
             status: "COMPLETED",
             completed_at: new Date().toISOString(),
         })
@@ -258,9 +252,6 @@ export async function submitRiasecAssessment(versionId: string, answers: RiasecA
     if (sessionError || !session) throw new Error("Gagal membuat sesi asesmen RIASEC.");
     const sessionId = session.id;
 
-    // ----------------------------------------------------------
-    // RESPONSES & RESULTS DENGAN ROLLBACK MANUAL
-    // ----------------------------------------------------------
     const responsesToInsert = answers.map((answer) => ({
         session_id: sessionId,
         question_id: answer.questionId,
@@ -269,7 +260,7 @@ export async function submitRiasecAssessment(versionId: string, answers: RiasecA
 
     const { error: responseError } = await supabase.from("assessment_responses").insert(responsesToInsert);
     if (responseError) {
-        await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId); // ROLLBACK
+        await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId);
         throw new Error("Gagal menyimpan jawaban RIASEC.");
     }
 
@@ -278,7 +269,7 @@ export async function submitRiasecAssessment(versionId: string, answers: RiasecA
         .insert({
             session_id: sessionId,
             student_id: student.id,
-            assessment_version_id: versionId,
+            assessment_version_id: validVersionId,
             scoring_version: RIASEC_SCORING_VERSION,
             total_score: totalScore,
             profile_code: profileCode,
@@ -288,7 +279,7 @@ export async function submitRiasecAssessment(versionId: string, answers: RiasecA
         .single();
 
     if (resultError || !result) {
-        await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId); // ROLLBACK
+        await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId);
         throw new Error(`Gagal menyimpan hasil RIASEC: ${resultError?.message ?? ""}`);
     }
 
@@ -307,7 +298,7 @@ export async function submitRiasecAssessment(versionId: string, answers: RiasecA
         .single();
 
     if (profileError || !profile) {
-        await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId); // ROLLBACK
+        await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId);
         throw new Error("Gagal menyimpan profil RIASEC.");
     }
 
@@ -321,13 +312,10 @@ export async function submitRiasecAssessment(versionId: string, answers: RiasecA
 
     const { error: riasecResultsError } = await supabaseAdmin.from("riasec_results").insert(riasecResults);
     if (riasecResultsError) {
-        await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId); // ROLLBACK
+        await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId);
         throw new Error("Gagal menyimpan skor dimensi RIASEC.");
     }
 
-    // ----------------------------------------------------------
-    // RETURN
-    // ----------------------------------------------------------
     return {
         resultId: result.id,
         sessionId,

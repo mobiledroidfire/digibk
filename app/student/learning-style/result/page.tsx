@@ -1,5 +1,5 @@
-// Lokasi file: src/app/student/learning-style/result/page.tsx
-import { createClient } from '@/lib/supabase/server';
+// Lokasi file: /app/student/learning-style/result/page.tsx
+
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -8,16 +8,9 @@ import {
     BookOpen, Lightbulb, UserCheck, HeartHandshake
 } from 'lucide-react';
 
-// Import Service & Komponen
-import { getVarkResultData } from '@/features/assessments/services/result.service';
 import PrintPdfButton from '@/components/pdf/PrintPdfButton';
-
-// Import Data Dictionary
-import { varkDictionary, type LevelData, type PhaseData } from '@/lib/data/vark';
-
-// ============================================================================
-// 1. BAGIAN LOGIKA & HELPER
-// ============================================================================
+import { getVarkDisplayLogic } from '@/features/student/services/vark-result.service';
+import type { ScoreItem } from '@/features/student/types/result.types';
 
 const getVarkStyle = (code: string) => {
     switch (code.toUpperCase()) {
@@ -29,64 +22,25 @@ const getVarkStyle = (code: string) => {
     }
 }
 
-function determinePhaseKey(eduLvl: string, grade: number): keyof LevelData {
-    if (eduLvl === 'SD' || eduLvl === 'MI') {
-        if (grade <= 3) return 'SD_Awal';
-        if (grade <= 5) return 'SD_Akhir';
-        return 'SD_Transisi';
-    } else if (eduLvl === 'SMP' || eduLvl === 'MTs') {
-        return grade <= 8 ? 'SMP_Awal' : 'SMP_Transisi';
-    } else if (eduLvl === 'SMA' || eduLvl === 'MA') {
-        return grade <= 11 ? 'SMA_Awal' : 'SMA_Transisi';
-    } else if (eduLvl === 'SMK') {
-        return grade <= 11 ? 'SMK_Awal' : 'SMK_Transisi';
-    }
-    return 'SMP_Awal';
-}
-
-function processResultData(profile: any, phaseKey: keyof LevelData) {
-    const rawResults = profile.vark_results || profile.vak_results || [];
-    const sortedScores = [...rawResults].sort((a: any, b: any) => Number(b.raw_score) - Number(a.raw_score));
-    const maxScore = Math.max(...sortedScores.map(s => Number(s.raw_score)), 1);
-
-    const dominantItems = sortedScores.filter(s => Number(s.raw_score) === maxScore);
-    const isMultimodal = dominantItems.length > 1;
-    const domCodesArray = dominantItems.map(s => (s.code || '').trim().toUpperCase());
-
-    const primaryCode = domCodesArray[0] || 'V';
-    const dominantData = varkDictionary[primaryCode] || varkDictionary['V'];
-    const phaseData: PhaseData = dominantData.levels[phaseKey] || dominantData.levels['SMP_Awal'];
-
-    return { sortedScores, maxScore, isMultimodal, domCodesArray, primaryCode, dominantData, phaseData };
-}
-
-
-// ============================================================================
-// 2. BAGIAN UI KOMPONEN UTAMA
-// ============================================================================
+const varkDescriptions: Record<string, string> = {
+    'V': 'Kamu sangat peka terhadap informasi visual. Menggunakan gambar, diagram, grafik, peta konsep, atau video akan membuat materi pelajaran jauh lebih mudah menempel di ingatanmu.',
+    'A': 'Kamu memiliki kekuatan menyerap informasi dengan cara mendengarkan. Penjelasan lisan dari guru, berdiskusi dengan teman, atau merekam dan mendengarkan ulang materi adalah metode belajar paling jitu untukmu.',
+    'R': 'Kamu sangat kuat dalam memahami instruksi berbasis teks. Belajar dengan cara membaca buku teks, merangkum materi dengan bahasamu sendiri, atau menulis ulang catatan adalah cara yang paling efektif.',
+    'K': 'Kamu adalah tipe pembelajar yang harus "bergerak" atau melakukan tindakan. Melakukan eksperimen, simulasi, bermain peran, atau menyentuh objek secara langsung akan membuatmu sangat cepat paham.'
+};
 
 export default async function VarkResultPage({ searchParams }: { searchParams: Promise<{ id?: string }>; }) {
     const resolvedParams = await searchParams;
-    const resultId = resolvedParams.id;
-    const supabase = await createClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) redirect('/login');
+    let displayData;
+    try {
+        displayData = await getVarkDisplayLogic(resolvedParams.id);
+    } catch (error: unknown) {
+        if (error instanceof Error && error.message === 'UNAUTHORIZED') redirect('/login');
+        redirect('/student/dashboard?error=Akses_Ditolak');
+    }
 
-    const { data: student } = await supabase
-        .from('students')
-        .select(`id, full_name, education_level, grade_level, schools (name)`)
-        .eq('user_id', user.id)
-        .single();
-
-    if (!student) redirect('/student/dashboard?error=Akses_Ditolak');
-
-    const schoolName = student.schools && typeof student.schools === 'object' && 'name' in student.schools
-        ? String(student.schools.name) : 'Sekolah Anda';
-
-    const resultData = await getVarkResultData(student.id, resultId);
-
-    if (!resultData || !resultData.profile) {
+    if (!displayData) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 font-sans">
                 <div className="bg-white p-8 rounded-xl shadow-sm text-center">
@@ -100,14 +54,11 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
         );
     }
 
-    const phaseKey = determinePhaseKey(student.education_level || 'SMP', student.grade_level || 7);
-    const uiData = processResultData(resultData.profile, phaseKey);
+    const { student, phaseInfo, uiData } = displayData;
     const mainStyle = getVarkStyle(uiData.primaryCode);
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20 font-sans text-slate-900">
-
-            {/* 1. STICKY NAVBAR (TETAP MUNCUL SAAT DI-SCROLL) */}
             <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 py-4 shadow-sm">
                 <div className="max-w-4xl mx-auto w-full flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -119,13 +70,11 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                         <Link href="/student/dashboard" className="hidden sm:inline-flex items-center gap-2 text-slate-300 hover:text-white transition-colors text-sm font-medium">
                             <ArrowLeft className="h-4 w-4" /> Kembali
                         </Link>
-                        {/* Tombol PDF terintegrasi rapi di Header yang Sticky */}
-                        <PrintPdfButton moduleType="VARK" studentData={{ id: student.id, name: student.full_name, school: schoolName }} />
+                        <PrintPdfButton moduleType="VARK" studentData={{ id: student.id, name: student.full_name, school: student.schoolName }} />
                     </div>
                 </div>
             </header>
 
-            {/* 2. HERO BANNER (BERGULIR SECARA NORMAL) */}
             <div className="bg-slate-900 pt-8 pb-24 px-4 sm:px-6 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
                 <div className="max-w-4xl mx-auto relative z-10">
@@ -133,21 +82,31 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                         <ArrowLeft className="h-4 w-4" /> Kembali ke Dashboard
                     </Link>
                     <h2 className="text-3xl font-bold text-white tracking-tight mb-2">Profil Preferensi Belajar</h2>
-                    <p className="text-slate-400">Analisis asesmen untuk {student.full_name} ({schoolName}).</p>
+                    <p className="text-slate-400">Analisis asesmen untuk {student.full_name} ({student.schoolName}).</p>
                 </div>
             </div>
 
-            {/* 3. KONTEN UTAMA */}
             <main className="max-w-4xl mx-auto px-4 sm:px-6 -mt-14 relative z-20 space-y-6">
 
-                {/* Kartu Kesimpulan Utama */}
+                {phaseInfo.bannerMessage && (
+                    <div className={`rounded-xl p-5 shadow-md flex items-center gap-4 text-white ${phaseInfo.isTransisi ? 'bg-linear-to-r from-indigo-600 to-purple-600' : 'bg-linear-to-r from-blue-600 to-cyan-600'}`}>
+                        <div className="bg-white/20 p-3 rounded-full shrink-0">
+                            {phaseInfo.isTransisi ? <Target className="h-6 w-6 text-white" /> : <Activity className="h-6 w-6 text-white" />}
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-lg mb-1">{phaseInfo.bannerTitle}</h3>
+                            <p className="text-sm text-white/90">{phaseInfo.bannerMessage}</p>
+                        </div>
+                    </div>
+                )}
+
                 <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 flex flex-col sm:flex-row gap-8 items-start">
                     <div className="shrink-0 flex flex-col items-center mx-auto sm:mx-0">
                         <div className="text-xs font-bold text-slate-400 mb-3 tracking-widest uppercase">
                             Tipe {uiData.isMultimodal ? 'Multimodal' : 'Dominan'}
                         </div>
                         <div className="flex flex-wrap justify-center gap-2">
-                            {uiData.domCodesArray.map(code => {
+                            {uiData.domCodesArray.map((code: string) => {
                                 const style = getVarkStyle(code);
                                 return (
                                     <div key={code} className={`h-20 w-20 sm:h-24 sm:w-24 rounded-2xl ${style.bg} border-2 ${style.border} flex flex-col items-center justify-center shadow-sm`}>
@@ -179,14 +138,13 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                     </div>
                 </section>
 
-                {/* Kartu Progress Bar Lengkap */}
                 <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
                     <h3 className="text-base font-bold text-slate-800 mb-6 flex items-center gap-2 border-b pb-3">
                         <Activity className="h-5 w-5 text-indigo-500" /> Detail Profil V-A-R-K Kamu
                     </h3>
 
                     <div className="space-y-6">
-                        {uiData.sortedScores.map((score: any) => {
+                        {uiData.sortedScores.map((score: ScoreItem) => {
                             const code = (score.code || '').trim().toUpperCase();
                             const scoreVal = Number(score.raw_score);
                             const style = getVarkStyle(code);
@@ -210,22 +168,29 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                                             ) : (
                                                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 uppercase tracking-wider">Pendukung</span>
                                             )}
-                                            <span className={`text-sm font-bold ${isDominant ? 'text-slate-900' : 'text-slate-500'}`}>{scoreVal} Poin</span>
+                                            {/* PERBAIKAN: Menambahkan persentase di Web UI */}
+                                            <span className={`text-sm font-bold ${isDominant ? 'text-slate-900' : 'text-slate-500'}`}>
+                                                {scoreVal} Poin ({Math.round(percentage)}%)
+                                            </span>
                                         </div>
                                     </div>
-                                    <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+
+                                    <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden mb-2.5">
                                         <div
                                             className={`h-full rounded-full transition-all duration-1000 ease-out ${style.bar} ${!isDominant && 'opacity-50'}`}
                                             style={{ width: `${percentage}%` }}
                                         />
                                     </div>
+
+                                    <p className={`text-sm leading-relaxed ${isDominant ? 'text-slate-700 font-medium' : 'text-slate-500'} pl-11 sm:pl-0`}>
+                                        {varkDescriptions[code]}
+                                    </p>
                                 </div>
                             );
                         })}
                     </div>
                 </section>
 
-                {/* Grid Strategi & Karir */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
                         <h4 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b pb-2">
@@ -234,13 +199,13 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                         <div className="mb-4">
                             <span className="text-xs font-semibold text-slate-400 uppercase">{uiData.phaseData.eduTitle1}</span>
                             <ul className="mt-2 space-y-1.5">
-                                {uiData.phaseData.eduList1.map((item, i) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}
+                                {uiData.phaseData.eduList1.map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}
                             </ul>
                         </div>
                         <div>
                             <span className="text-xs font-semibold text-slate-400 uppercase">{uiData.phaseData.eduTitle2}</span>
                             <ul className="mt-2 space-y-1.5">
-                                {uiData.phaseData.eduList2.map((item, i) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}
+                                {uiData.phaseData.eduList2.map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}
                             </ul>
                         </div>
                     </div>
@@ -252,13 +217,13 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                         <div className="mb-4">
                             <span className="text-xs font-semibold text-slate-400 uppercase">Fokus / Trik Ujian</span>
                             <ul className="mt-2 space-y-1.5">
-                                {uiData.phaseData.materi.map((item, i) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}
+                                {uiData.phaseData.materi.map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}
                             </ul>
                         </div>
                         <div>
                             <span className="text-xs font-semibold text-slate-400 uppercase">Prospek Karir Utama</span>
                             <div className="mt-2 flex flex-wrap gap-1.5">
-                                {uiData.dominantData.karir.slice(0, 6).map((item, i) => (
+                                {uiData.dominantData.karir.slice(0, 6).map((item: string, i: number) => (
                                     <span key={i} className="text-[11px] font-medium bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md border border-slate-200">
                                         {item}
                                     </span>
@@ -268,14 +233,13 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                     </div>
                 </div>
 
-                {/* Grid Saran Guru & Siswa */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-700">
                         <h4 className="text-sm font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-600 pb-2">
                             <HeartHandshake className="h-4 w-4 text-slate-300" /> Saran untuk Guru / Orang Tua
                         </h4>
                         <ul className="space-y-3">
-                            {uiData.phaseData.guruBk.map((item, i) => (
+                            {uiData.phaseData.guruBk.map((item: string, i: number) => (
                                 <li key={i} className="text-sm text-slate-300 flex items-start gap-3">
                                     <span className="shrink-0 mt-0.5 text-slate-500">-</span>
                                     <span className="leading-relaxed">{item}</span>
@@ -289,7 +253,7 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                             <UserCheck className="h-4 w-4" /> Apa yang Harus Kamu Lakukan?
                         </h4>
                         <ul className="space-y-3">
-                            {uiData.phaseData.siswa.map((item, i) => (
+                            {uiData.phaseData.siswa.map((item: string, i: number) => (
                                 <li key={i} className="text-sm text-slate-800 flex items-start gap-3">
                                     <Sparkles className={`h-4 w-4 shrink-0 mt-0.5 ${mainStyle.color}`} />
                                     <span className="leading-relaxed font-medium">{item}</span>
@@ -299,7 +263,6 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                     </div>
                 </div>
 
-                {/* Tombol Aksi Bawah */}
                 <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row justify-end items-center gap-4">
                     <Link
                         href="/student/dashboard"

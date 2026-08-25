@@ -3,14 +3,15 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertTriangle, Save, LogOut, X, Key, User, Loader2, Eye, EyeOff } from 'lucide-react'; // PERBAIKAN: Import ikon Eye dan EyeOff
+import { AlertTriangle, Save, LogOut, X, Key, User, Loader2, Eye, EyeOff, CheckCircle } from 'lucide-react';
 
 interface ExitConfirmationModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirmExit: () => void;
+    onConfirmExit: (isRegistered?: boolean) => void;
     onSaveAccount: (nisn: string, password: string) => Promise<void>;
     initialNisn?: string;
+    isGuestAccount?: boolean; // Menerima prop status akun
 }
 
 export default function ExitConfirmationModal({
@@ -18,27 +19,31 @@ export default function ExitConfirmationModal({
     onClose,
     onConfirmExit,
     onSaveAccount,
-    initialNisn = ''
+    initialNisn = '',
+    isGuestAccount = false
 }: ExitConfirmationModalProps) {
-    const [mode, setMode] = useState<'warning' | 'register'>('warning');
+    // Tambahkan mode 'logout_confirm'
+    const [mode, setMode] = useState<'warning' | 'register' | 'success' | 'logout_confirm'>('warning');
     const [nisn, setNisn] = useState(initialNisn);
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-
-    // PERBAIKAN: State untuk mengontrol visibilitas password
     const [showPassword, setShowPassword] = useState(false);
-
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         setMounted(true);
         if (isOpen) {
-            setMode('warning');
+            // PERBAIKAN: Pisahkan tampilan modal berdasarkan tipe akun
+            if (isGuestAccount) {
+                setMode('warning');
+            } else {
+                setMode('logout_confirm');
+            }
             setNisn(initialNisn || '');
             setPassword('');
-            setShowPassword(false); // Reset mata agar tertutup setiap kali modal dibuka
+            setShowPassword(false);
         }
-    }, [isOpen, initialNisn]);
+    }, [isOpen, initialNisn, isGuestAccount]);
 
     if (!isOpen || !mounted) return null;
 
@@ -47,6 +52,9 @@ export default function ExitConfirmationModal({
         setIsLoading(true);
         try {
             await onSaveAccount(nisn, password);
+            setMode('success');
+            // PERBAIKAN: Hitung mundur setTimeout telah dihapus! 
+            // User akan menetap di layar sukses sampai tombol ditekan.
         } catch (error) {
             console.error("Gagal menyimpan", error);
         } finally {
@@ -58,14 +66,61 @@ export default function ExitConfirmationModal({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden relative max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
 
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors z-10"
-                >
-                    <X size={20} />
-                </button>
+                {mode !== 'success' && (
+                    <button
+                        onClick={onClose}
+                        className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors z-10"
+                    >
+                        <X size={20} />
+                    </button>
+                )}
 
-                {mode === 'warning' ? (
+                {/* TAMPILAN 1: KONFIRMASI KELUAR UNTUK USER PERMANEN */}
+                {mode === 'logout_confirm' ? (
+                    <div className="p-8 text-center mt-2">
+                        <div className="w-20 h-20 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                            <LogOut size={40} />
+                        </div>
+                        <h2 className="text-2xl font-bold text-slate-800 mb-3">Konfirmasi Keluar</h2>
+                        <p className="text-slate-600 mb-8 leading-relaxed">
+                            Apakah kamu yakin ingin keluar dari aplikasi sekarang?
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={onClose}
+                                className="flex-1 py-3.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition-colors"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={() => onConfirmExit(true)}
+                                className="flex-1 py-3.5 px-4 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-md"
+                            >
+                                Ya, Keluar
+                            </button>
+                        </div>
+                    </div>
+
+                ) : mode === 'success' ? (
+                    /* TAMPILAN 2: BERHASIL MENYIMPAN AKUN (Hanya via Tombol OK) */
+                    <div className="p-10 text-center mt-2 flex flex-col items-center justify-center animate-in zoom-in duration-300">
+                        <div className="w-24 h-24 bg-green-100 text-green-500 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                            <CheckCircle size={50} />
+                        </div>
+                        <h2 className="text-2xl font-bold text-slate-800 mb-3">Akun Diamankan!</h2>
+                        <p className="text-slate-600 mb-8">
+                            Silakan masuk menggunakan NISN dan Kata Sandi barumu.
+                        </p>
+                        <button
+                            onClick={() => onConfirmExit(true)}
+                            className="w-full py-3.5 px-4 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl flex items-center justify-center transition-colors shadow-md"
+                        >
+                            OK, Menuju Halaman Login
+                        </button>
+                    </div>
+
+                ) : mode === 'warning' ? (
+                    /* TAMPILAN 3: PERINGATAN GUEST BELUM DISIMPAN */
                     <div className="p-8 text-center mt-2">
                         <div className="w-20 h-20 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
                             <AlertTriangle size={40} />
@@ -75,7 +130,6 @@ export default function ExitConfirmationModal({
                             Progres tes potensi dan gaya belajarmu belum tersimpan secara permanen. Jika kamu keluar sekarang,
                             <span className="font-bold text-rose-500"> semua hasilmu akan terhapus oleh sistem.</span>
                         </p>
-
                         <div className="space-y-3">
                             <button
                                 onClick={() => setMode('register')}
@@ -84,7 +138,7 @@ export default function ExitConfirmationModal({
                                 <Save size={18} /> Simpan & Buat Akun Permanen
                             </button>
                             <button
-                                onClick={onConfirmExit}
+                                onClick={() => onConfirmExit(false)}
                                 className="w-full py-3.5 px-4 bg-white border-2 border-slate-200 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 text-slate-600 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors"
                             >
                                 <LogOut size={18} /> Keluar Tanpa Menyimpan
@@ -92,6 +146,7 @@ export default function ExitConfirmationModal({
                         </div>
                     </div>
                 ) : (
+                    /* TAMPILAN 4: FORM REGISTER */
                     <div className="p-8">
                         <div className="mb-6">
                             <h2 className="text-2xl font-bold text-slate-800 mb-2">Simpan Hasilmu</h2>
@@ -122,7 +177,6 @@ export default function ExitConfirmationModal({
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                                         <Key size={18} />
                                     </div>
-                                    {/* PERBAIKAN: Input type dinamis dan padding kanan ditambahkan (pr-10) untuk ikon */}
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         required
@@ -131,17 +185,12 @@ export default function ExitConfirmationModal({
                                         placeholder="Buat kata sandi minimal 6 karakter"
                                         className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all"
                                     />
-                                    {/* PERBAIKAN: Tombol untuk toggle mata */}
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
                                         className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
                                     >
-                                        {showPassword ? (
-                                            <EyeOff size={18} />
-                                        ) : (
-                                            <Eye size={18} />
-                                        )}
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
                             </div>

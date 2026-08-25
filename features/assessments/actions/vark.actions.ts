@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import type { VarkProfile } from "@/types/database";
+import { submitVarkSchema, type answerItemSchema } from "../schemas/assessment.schema";
+import { z } from "zod";
 
 // ============================================================
 // ADMIN CLIENT
@@ -20,8 +22,8 @@ const supabaseAdmin = createAdminClient(
 // TYPES
 // ============================================================
 
-// Mengambil tipe 'V' | 'A' | 'R' | 'K' langsung dari database.ts
 type VarkCode = VarkProfile['dominant_code'];
+type VarkAnswer = z.infer<typeof answerItemSchema>;
 
 type DimensionRecord = {
     code: string;
@@ -39,32 +41,20 @@ type QuestionRecord = {
     | null;
 };
 
-type VarkAnswer = {
-    questionId: string;
-    value: number;
-};
-
 // ============================================================
 // CONFIG
 // ============================================================
 
 const VARK_CODES: VarkCode[] = ["V", "A", "R", "K"];
-
 const VARK_EXPECTED_QUESTIONS = 20;
-const VARK_SCORE_MIN = 1;
-const VARK_SCORE_MAX = 5;
 const VARK_SCORING_VERSION = "VARK-SCORING-v1";
-
-// ============================================================
-// VERSION MAP
-// ============================================================
 
 const VARK_VERSION_MAP: Record<string, string> = {
     SD: "VARK-SD-v1",
     MI: "VARK-MI-v1",
-    SMP: "VARK-SMP-v1", // <-- Perbaikan (sebelumnya VARK-SMP-SMA-v1)
+    SMP: "VARK-SMP-v1",
     MTs: "VARK-MTs-v1",
-    SMA: "VARK-SMA-v1", // <-- Perbaikan (sebelumnya VARK-SMP-SMA-v1)
+    SMA: "VARK-SMA-v1",
     MA: "VARK-MA-v1",
     SMK: "VARK-SMK-v1",
 };
@@ -83,6 +73,7 @@ function normalizeDimensionCode(value: unknown): VarkCode | null {
 
 // ============================================================
 // GET VARK QUESTIONS
+// (Fungsi ini tetap sama, saya sertakan agar file lengkap)
 // ============================================================
 
 export async function getVarkQuestions() {
@@ -164,7 +155,20 @@ export async function getVarkQuestions() {
 // SUBMIT VARK
 // ============================================================
 
-export async function submitVarkAssessment(versionId: string, answers: VarkAnswer[]) {
+export async function submitVarkAssessment(versionId: string, unvalidatedAnswers: VarkAnswer[]) {
+    // 1. VALIDASI INPUT MENGGUNAKAN ZOD
+    const parseResult = submitVarkSchema.safeParse({
+        versionId,
+        answers: unvalidatedAnswers,
+    });
+
+    if (!parseResult.success) {
+        const errorMessage = parseResult.error.issues[0]?.message || "Input tidak valid.";
+        throw new Error(errorMessage);
+    }
+
+    const { versionId: validVersionId, answers } = parseResult.data;
+
     const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -184,7 +188,7 @@ export async function submitVarkAssessment(versionId: string, answers: VarkAnswe
     const { data: version, error: versionError } = await supabase
         .from("assessment_versions")
         .select(`id, version_code, status`)
-        .eq("id", versionId)
+        .eq("id", validVersionId)
         .eq("status", "PUBLISHED")
         .single();
 
@@ -194,14 +198,14 @@ export async function submitVarkAssessment(versionId: string, answers: VarkAnswe
     const { data: dbQuestions, error: questionError } = await supabase
         .from("questions")
         .select(`id, dimension_id, assessment_version_id, assessment_dimensions ( code )`)
-        .eq("assessment_version_id", versionId);
+        .eq("assessment_version_id", validVersionId);
 
-    if (questionError || !dbQuestions) throw new Error("Gagal memvalidasi soal VARK.");
-    if (dbQuestions.length !== VARK_EXPECTED_QUESTIONS) throw new Error("Konfigurasi soal VARK di database tidak valid.");
-    if (!Array.isArray(answers) || answers.length !== VARK_EXPECTED_QUESTIONS) throw new Error(`Semua ${VARK_EXPECTED_QUESTIONS} soal VARK harus dijawab.`);
+    if (questionError || !dbQuestions || dbQuestions.length !== VARK_EXPECTED_QUESTIONS) {
+        throw new Error("Konfigurasi soal VARK di database tidak valid.");
+    }
 
-    const questionIds = answers.map((answer) => answer.questionId);
-    const uniqueQuestionIds = new Set(questionIds);
+    // Cek duplikasi ID pertanyaan yang masuk
+    const uniqueQuestionIds = new Set(answers.map((answer) => answer.questionId));
     if (uniqueQuestionIds.size !== answers.length) throw new Error("Terdapat jawaban soal yang duplikat.");
 
     const questionMap = new Map<string, VarkCode>();
@@ -216,17 +220,10 @@ export async function submitVarkAssessment(versionId: string, answers: VarkAnswe
         questionMap.set(question.id, code);
     }
 
-    for (const answer of answers) {
-        if (!questionMap.has(answer.questionId)) throw new Error("Terdapat question ID yang bukan bagian dari asesmen VARK ini.");
-        if (!Number.isFinite(answer.value) || answer.value < VARK_SCORE_MIN || answer.value > VARK_SCORE_MAX) {
-            throw new Error("Nilai jawaban VARK tidak valid.");
-        }
-    }
-
     const scores: Record<VarkCode, number> = { V: 0, A: 0, R: 0, K: 0 };
     for (const answer of answers) {
         const dimensionCode = questionMap.get(answer.questionId);
-        if (!dimensionCode) throw new Error("Dimensi soal tidak ditemukan.");
+        if (!dimensionCode) throw new Error("Terdapat question ID yang bukan bagian dari asesmen VARK ini.");
         scores[dimensionCode] += answer.value;
     }
 
@@ -241,7 +238,6 @@ export async function submitVarkAssessment(versionId: string, answers: VarkAnswe
     const dominantCode = sortedScores[0][0] as VarkCode;
     const secondaryCode = sortedScores[1][0] as VarkCode;
     const tertiaryCode = sortedScores[2][0] as VarkCode;
-    // 1. TAMBAHKAN BARIS INI
     const quaternaryCode = sortedScores[3][0] as VarkCode;
     const profileCode = sortedScores.map(([code]) => code).join("");
 
@@ -252,7 +248,7 @@ export async function submitVarkAssessment(versionId: string, answers: VarkAnswe
         .from("assessment_sessions")
         .insert({
             student_id: student.id,
-            assessment_version_id: versionId,
+            assessment_version_id: validVersionId,
             status: "COMPLETED",
             completed_at: new Date().toISOString(),
         })
@@ -273,7 +269,7 @@ export async function submitVarkAssessment(versionId: string, answers: VarkAnswe
 
     const { error: responseError } = await supabase.from("assessment_responses").insert(responsesToInsert);
     if (responseError) {
-        await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId); // ROLLBACK
+        await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId);
         throw new Error("Gagal menyimpan jawaban VARK.");
     }
 
@@ -282,7 +278,7 @@ export async function submitVarkAssessment(versionId: string, answers: VarkAnswe
         .insert({
             session_id: sessionId,
             student_id: student.id,
-            assessment_version_id: versionId,
+            assessment_version_id: validVersionId,
             scoring_version: VARK_SCORING_VERSION,
             total_score: totalScore,
             profile_code: profileCode,
@@ -292,7 +288,7 @@ export async function submitVarkAssessment(versionId: string, answers: VarkAnswe
         .single();
 
     if (resultError || !result) {
-        await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId); // ROLLBACK
+        await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId);
         throw new Error(`Gagal menyimpan hasil VARK: ${resultError?.message ?? ""}`);
     }
 
@@ -304,14 +300,13 @@ export async function submitVarkAssessment(versionId: string, answers: VarkAnswe
             dominant_code: dominantCode,
             secondary_code: secondaryCode,
             tertiary_code: tertiaryCode,
-            // 2. TAMBAHKAN BARIS INI
             quaternary_code: quaternaryCode,
         })
         .select("id")
         .single();
 
     if (profileError || !profile) {
-        await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId); // ROLLBACK
+        await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId);
         throw new Error("Gagal menyimpan profil VARK.");
     }
 
@@ -325,7 +320,7 @@ export async function submitVarkAssessment(versionId: string, answers: VarkAnswe
 
     const { error: varkResultsError } = await supabaseAdmin.from("vark_results").insert(varkResults);
     if (varkResultsError) {
-        await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId); // ROLLBACK
+        await supabaseAdmin.from("assessment_sessions").delete().eq("id", sessionId);
         throw new Error("Gagal menyimpan skor dimensi VARK.");
     }
 

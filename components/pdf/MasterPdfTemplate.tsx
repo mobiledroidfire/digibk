@@ -5,7 +5,7 @@ import { Document, Page, Text, View, StyleSheet, Svg, Path } from '@react-pdf/re
 const styles = StyleSheet.create({
     page: {
         paddingTop: 40,
-        paddingBottom: 65, // Jarak yang cukup agar konten tidak menabrak footer
+        paddingBottom: 65,
         paddingHorizontal: 40,
         backgroundColor: '#ffffff',
         fontFamily: 'Helvetica'
@@ -22,7 +22,6 @@ const styles = StyleSheet.create({
     headerSub: { fontSize: 10, color: '#64748b', marginTop: 5 },
     contentWrapper: { flex: 1 },
 
-    // Konfigurasi Footer dengan fixed position agar selalu di bawah
     footerContainer: {
         position: 'absolute',
         bottom: 30,
@@ -30,6 +29,7 @@ const styles = StyleSheet.create({
         right: 40,
         flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'flex-end',
         borderTopWidth: 1,
         borderTopColor: '#e2e8f0',
         paddingTop: 10,
@@ -49,16 +49,16 @@ export default function MasterPdfTemplate({ moduleName, studentName, schoolName,
     const today = new Date().toLocaleDateString('id-ID', {
         day: 'numeric', month: 'long', year: 'numeric'
     });
+    const currentYear = new Date().getFullYear();
 
     return (
         <Document>
             <Page size="A4" style={styles.page}>
-                {/* Atribut 'fixed' memastikan Header berulang jika lebih dari 1 halaman */}
                 <View style={styles.header} fixed>
                     <View style={styles.headerTop}>
-                        <Svg viewBox="0 0 24 24" width={28} height={28} color="#2563eb">
-                            <Path d="M22 10v6M2 10l10-5 10 5-10 5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                            <Path d="M6 12v5c3 3 9 3 12 0v-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                        <Svg viewBox="0 0 24 24" width={28} height={28}>
+                            <Path d="M22 10v6M2 10l10-5 10 5-10 5z" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                            <Path d="M6 12v5c3 3 9 3 12 0v-5" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
                         </Svg>
                         <Text style={styles.headerTitle}>DIGIBK</Text>
                     </View>
@@ -67,16 +67,20 @@ export default function MasterPdfTemplate({ moduleName, studentName, schoolName,
                     <Text style={styles.headerSub}>Modul: {moduleName} | Tanggal Cetak: {today}</Text>
                 </View>
 
-                {/* Konten Utama PDF */}
                 <View style={styles.contentWrapper}>
                     {children}
                 </View>
 
-                {/* Atribut 'fixed' pada Footer wajib agar function render membaca total halaman */}
                 <View style={styles.footerContainer} fixed>
-                    <Text style={styles.footerText}>
-                        Dokumen ini di-generate otomatis oleh sistem DIGIBK dan sah secara digital.
-                    </Text>
+                    <View style={{ flex: 1, paddingRight: 20 }}>
+                        <Text style={styles.footerText}>
+                            Dokumen ini di-generate otomatis oleh sistem DIGIBK dan sah secara digital.
+                        </Text>
+                        {/* PERBAIKAN: Copyright ditambahkan secara global di sini */}
+                        <Text style={[styles.footerText, { marginTop: 3 }]}>
+                            &copy; {currentYear} digitech.id - Dikembangkan oleh Hendi Prasetyo
+                        </Text>
+                    </View>
                     <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
                         `Hal ${pageNumber} / ${totalPages}`
                     )} />

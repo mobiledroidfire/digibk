@@ -10,7 +10,7 @@ import { claimAccountAction } from '@/features/auth/actions/auth.actions';
 
 interface LogoutButtonProps {
     isGuestAccount?: boolean;
-    studentNisn?: string; // TAMBAHAN 1: Menerima data NISN dari halaman utama
+    studentNisn?: string;
 }
 
 export default function LogoutButton({ isGuestAccount = false, studentNisn = '' }: LogoutButtonProps) {
@@ -20,6 +20,7 @@ export default function LogoutButton({ isGuestAccount = false, studentNisn = '' 
     const supabase = createClient();
 
     const executeLogout = async (isRegistered: boolean) => {
+        setIsModalOpen(false);
         setIsLoggingOut(true);
         try {
             await supabase.auth.signOut();
@@ -36,27 +37,15 @@ export default function LogoutButton({ isGuestAccount = false, studentNisn = '' 
     };
 
     const handleLogoutClick = () => {
-        if (isGuestAccount) {
-            setIsModalOpen(true);
-        } else {
-            executeLogout(true);
-        }
+        // PERBAIKAN: Selalu buka modal. Biarkan modal yang memutuskan isinya.
+        setIsModalOpen(true);
     };
 
     const handleSaveAccount = async (nisn: string, password: string) => {
         const result = await claimAccountAction(nisn, password);
-
         if (!result.success) {
             throw new Error(result.error || 'Gagal memvalidasi data');
         }
-
-        alert('Akun berhasil diamankan! Anda bisa login dengan NISN dan password ini nanti.');
-        setIsModalOpen(false);
-        executeLogout(true);
-    };
-
-    const handleForceExit = () => {
-        executeLogout(false);
     };
 
     return (
@@ -79,9 +68,10 @@ export default function LogoutButton({ isGuestAccount = false, studentNisn = '' 
             <ExitConfirmationModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onConfirmExit={handleForceExit}
+                onConfirmExit={(isRegistered = false) => executeLogout(isRegistered)}
                 onSaveAccount={handleSaveAccount}
-                initialNisn={studentNisn} // TAMBAHAN 2: Meneruskan NISN ke pop-up
+                initialNisn={studentNisn}
+                isGuestAccount={isGuestAccount} // PERBAIKAN: Kirim status guest ke dalam modal
             />
         </>
     );
