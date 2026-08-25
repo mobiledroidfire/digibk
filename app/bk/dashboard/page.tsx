@@ -47,29 +47,33 @@ export default async function BkDashboardPage({ searchParams }: BkDashboardProps
             <header className="relative z-50 bg-slate-900 text-white overflow-hidden shadow-xl shadow-slate-900/10">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px] translate-x-1/3 -translate-y-1/3" />
                 <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between z-10">
+
+                    {/* Bagian Kiri: Logo dan Judul */}
+                    <div className="flex items-center gap-3">
+                        <div className="bg-white/10 backdrop-blur-md p-2 rounded-xl border border-white/10">
+                            <BookOpen className="h-6 w-6 text-indigo-300" />
+                        </div>
+                        <div>
+                            <h1 className="font-extrabold text-xl tracking-tight bg-clip-text text-transparent bg-linear-to-r from-white to-slate-400 leading-tight">
+                                Dashboard Guru BK
+                            </h1>
+                            {userRole === 'SUPER_ADMIN' && <span className="text-[10px] uppercase font-bold tracking-widest text-indigo-300 bg-indigo-900/50 px-2 py-0.5 rounded-sm">Mode Pratinjau Admin</span>}
+                        </div>
+                    </div>
+
+                    {/* Bagian Kanan: Tombol Kembali (Jika Admin) dan Tombol Keluar */}
                     <div className="flex items-center gap-4">
                         {/* Jika Super Admin, tampilkan tombol kembali ke Dashboard Admin */}
                         {userRole === 'SUPER_ADMIN' && (
-                            <Link href="/admin/dashboard" className="p-2 bg-white/5 hover:bg-white/20 border border-white/10 rounded-lg transition-colors group">
+                            <Link href="/admin/dashboard" className="p-2 bg-white/5 hover:bg-white/20 border border-white/10 rounded-lg transition-colors group" title="Kembali ke Admin">
                                 <ArrowLeft className="h-5 w-5 text-slate-300 group-hover:text-white" />
                             </Link>
                         )}
 
-                        <div className="flex items-center gap-3">
-                            <div className="bg-white/10 backdrop-blur-md p-2 rounded-xl border border-white/10">
-                                <BookOpen className="h-6 w-6 text-indigo-300" />
-                            </div>
-                            <div>
-                                <h1 className="font-extrabold text-xl tracking-tight bg-clip-text text-transparent bg-linear-to-r from-white to-slate-400 leading-tight">
-                                    Dashboard Guru BK
-                                </h1>
-                                {userRole === 'SUPER_ADMIN' && <span className="text-[10px] uppercase font-bold tracking-widest text-indigo-300 bg-indigo-900/50 px-2 py-0.5 rounded-sm">Mode Pratinjau Admin</span>}
-                            </div>
-                        </div>
+                        {/* Menggunakan Komponen Logout Ber-Dialog */}
+                        <LogoutConfirmButton />
                     </div>
 
-                    {/* Menggunakan Komponen Logout Ber-Dialog */}
-                    <LogoutConfirmButton />
                 </div>
             </header>
 
