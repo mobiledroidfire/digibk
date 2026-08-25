@@ -4,13 +4,18 @@ import { createClient } from '@/lib/supabase/server';
 import { getVarkResultData } from '@/features/assessments/services/result.service';
 import { varkDictionary, type LevelData, type PhaseData } from '@/lib/data/vark';
 import type { VarkDisplayData, ScoreItem, VarkDictItem } from '../types/result.types';
-import { cleanCode } from './riasec-result.service';
+
+// Helper kecil untuk membersihkan spasi/karakter tak diundang dari kode (V, A, R, K)
+function cleanCode(code: string): string {
+    return code.trim().toUpperCase();
+}
 
 export async function getVarkDisplayLogic(resultId?: string): Promise<VarkDisplayData | null> {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('UNAUTHORIZED');
 
+    // Mengambil data siswa dan sekolah (SSOT)
     const { data: student } = await supabase
         .from('students')
         .select(`id, full_name, education_level, grade_level, schools (name)`)
@@ -25,13 +30,14 @@ export async function getVarkDisplayLogic(resultId?: string): Promise<VarkDispla
     const eduLvl = student.education_level || 'SMP';
     let grade = student.grade_level;
 
+    // Fallback jika grade_level kosong di database
     if (!grade) {
         if (eduLvl === 'SD' || eduLvl === 'MI') grade = 6;
         else if (eduLvl === 'SMA' || eduLvl === 'MA' || eduLvl === 'SMK') grade = 12;
         else grade = 7;
     }
 
-    // --- LOGIKA FASE ---
+    // --- LOGIKA FASE PENDIDIKAN ---
     let phaseKey: keyof LevelData = 'SMP_Awal';
     let bannerTitle = 'Fase Penjelajahan Minat';
     let bannerMessage = 'Eksplorasi minat dan bakat siswa.';
@@ -52,28 +58,31 @@ export async function getVarkDisplayLogic(resultId?: string): Promise<VarkDispla
         else { phaseKey = 'SMK_Transisi'; bannerTitle = "Fase Transisi Pendidikan"; bannerMessage = "Persiapan Karier: Perkuat kompetensi uji UKK dan persiapan wawancara kerja."; isTransisi = true; }
     }
 
-    // --- LOGIKA DATA HASIL ---
+    // --- LOGIKA DATA HASIL (DATABASE KE UI) ---
     const resultData = await getVarkResultData(student.id, resultId);
     if (!resultData || !resultData.profile) return null;
 
-    const profile = resultData.profile as {
-        vark_results?: ScoreItem[];
-    };
-
+    // Melekatkan tipe ke data kembalian dari database
+    const profile = resultData.profile as { vark_results?: ScoreItem[] };
     const rawResults: ScoreItem[] = profile.vark_results || [];
 
+    // Mengurutkan skor dari yang tertinggi ke terendah
     const sortedScores = [...rawResults].sort((a, b) => Number(b.raw_score) - Number(a.raw_score));
-    const maxScore = Math.max(...sortedScores.map(s => Number(s.raw_score)), 1);
+    const maxScore = sortedScores.length > 0 ? Number(sortedScores[0].raw_score) : 1;
 
+    // Mendapatkan item yang memilik skor tertinggi (Mengecek Multimodal)
     const dominantItems = sortedScores.filter(s => Number(s.raw_score) === maxScore);
     const isMultimodal = dominantItems.length > 1;
     const domCodesArray = dominantItems.map(s => cleanCode(s.code));
 
+    // Menentukan primaryCode (Ambil yang pertama dari hasil sorting)
     const primaryCode = domCodesArray[0] || 'V';
 
+    // Mencocokkan dengan kamus vark.ts
     const dominantData = (varkDictionary[primaryCode] || varkDictionary['V']) as VarkDictItem;
     const phaseData: PhaseData = dominantData.levels[phaseKey] || dominantData.levels['SMP_Transisi'];
 
+    // Mengembalikan objek rapi siap pakai untuk Komponen UI (Frontend)
     return {
         student: { id: student.id, full_name: student.full_name, education_level: eduLvl, grade_level: grade, schoolName },
         phaseInfo: { bannerTitle, bannerMessage, isTransisi },

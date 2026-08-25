@@ -1,6 +1,6 @@
 // Lokasi file: /app/api/pdf/route.tsx
 import { NextResponse } from 'next/server';
-import { renderToStream, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { renderToStream, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import MasterPdfTemplate from '@/components/pdf/MasterPdfTemplate';
 import { dimensionDefs } from '@/lib/data/riasec';
 
@@ -15,22 +15,6 @@ const styles = StyleSheet.create({
     phaseSub: { color: '#eff6ff', fontSize: 10 },
     sectionCard: { backgroundColor: '#ffffff', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 15 },
     sectionTitle: { fontSize: 13, fontWeight: 'bold', color: '#0f172a', marginBottom: 8, textTransform: 'uppercase' },
-    badgeProfil: {
-        backgroundColor: '#f8fafc',
-        padding: 15,
-        borderRadius: 12,
-        border: '2px solid #e2e8f0',
-        width: 120,
-        textAlign: 'center',
-        justifyContent: 'center',
-        marginBottom: 10,
-    },
-    badgeText: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#0f172a',
-        letterSpacing: 4
-    },
     alertBlue: { backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', padding: 10, borderRadius: 6, marginTop: 8 },
     alertBlueText: { color: '#1e40af', fontSize: 9.5, lineHeight: 1.4 },
     scoreRowContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
@@ -55,14 +39,17 @@ const styles = StyleSheet.create({
     boxLight: { flex: 1, backgroundColor: '#eff6ff', padding: 12, borderRadius: 8, border: '1px solid #bfdbfe' },
     boxLightTitle: { fontSize: 11, fontWeight: 'bold', color: '#1e40af', marginBottom: 8 },
     boxLightText: { flex: 1, fontSize: 9.5, color: '#1e3a8a', lineHeight: 1.4 },
-    varkProfileRow: { flexDirection: 'row', gap: 15, alignItems: 'center' },
-    varkBadgeGroup: { flexDirection: 'row', gap: 6 },
-    varkBadge: { width: 45, height: 45, borderRadius: 8, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+
+    // Layout untuk baris profil (Digunakan oleh VARK & RIASEC)
+    varkProfileRow: { flexDirection: 'row', gap: 15, alignItems: 'flex-start' },
+    varkBadgeGroup: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', justifyContent: 'center' },
+    varkBadge: { width: 45, height: 45, borderRadius: 8, borderWidth: 2, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
     varkBadgeText: { fontSize: 24, fontWeight: 'bold' },
     varkBadgeLabel: { fontSize: 8, color: '#64748b', fontWeight: 'bold', marginBottom: 4, textTransform: 'uppercase' },
 });
 
 const riasecColors: Record<string, string> = { 'R': '#ef4444', 'I': '#f59e0b', 'A': '#10b981', 'S': '#3b82f6', 'E': '#8b5cf6', 'C': '#64748b' };
+const riasecBgColors: Record<string, string> = { 'R': '#fef2f2', 'I': '#fffbeb', 'A': '#ecfdf5', 'S': '#eff6ff', 'E': '#f5f3ff', 'C': '#f8fafc' };
 
 const varkLabels: Record<string, string> = {
     'V': 'Visual (Penglihatan)',
@@ -111,39 +98,74 @@ export async function POST(request: Request) {
                 scoreRows.push(data.profileData.sortedScores.slice(i, i + 2));
             }
 
+            // PERBAIKAN RIASEC: Konfigurasi QuickChart API untuk 6 sumbu
+            const getScore = (code: string) => Number(data.profileData.sortedScores.find((s: ScoreItem) => s.code === code)?.raw_score) || 0;
+            const riasecChartConfig = {
+                type: 'radar',
+                data: {
+                    labels: ['Realistis', 'Investigatif', 'Artistik', 'Sosial', 'Enterprising', 'Konvensional'],
+                    datasets: [{
+                        data: [getScore('R'), getScore('I'), getScore('A'), getScore('S'), getScore('E'), getScore('C')],
+                        backgroundColor: 'rgba(99, 102, 241, 0.4)', // Warna Indigo untuk fill
+                        borderColor: 'rgb(79, 70, 229)' // Warna Indigo untuk border
+                    }]
+                },
+                options: {
+                    legend: { display: false },
+                    scale: { ticks: { display: false, max: 35, min: 0 } }
+                }
+            };
+            const riasecChartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(riasecChartConfig))}&w=250&h=250`;
+
             ModuleContent = (
                 <View style={styles.container}>
                     <View style={styles.phaseBanner} wrap={false}>
                         <Text style={styles.phaseTitle}>{data.phaseInfo.bannerTitle}</Text>
                         <Text style={styles.phaseSub}>{data.phaseInfo.bannerMessage}</Text>
                     </View>
+
+                    {/* PERBAIKAN RIASEC: Layout Kesimpulan Diubah menjadi Split Kolom */}
                     <View style={styles.sectionCard} wrap={false}>
-                        <View style={{ flexDirection: 'row' }}>
-                            <View style={styles.badgeProfil}>
-                                <Text style={{ fontSize: 8, color: '#3b82f6', textAlign: 'center', marginBottom: 2 }}>KODE PROFIL</Text>
-                                {/* PERBAIKAN 1: Pewarnaan dinamis untuk setiap huruf KODE PROFIL */}
-                                <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
-                                    {data.profileData.hyphenatedCodes.split('-').map((char: string, index: number) => (
-                                        <Text key={index} style={[styles.badgeText, { color: riasecColors[char] || '#0f172a' }]}>
-                                            {char}
-                                        </Text>
-                                    ))}
+                        <View style={styles.varkProfileRow}>
+
+                            {/* KOLOM KIRI: Kotak Huruf Profil + Grafik Radar */}
+                            <View style={{ width: 140, alignItems: 'center' }}>
+                                <Text style={styles.varkBadgeLabel}>KODE PROFIL</Text>
+
+                                <View style={styles.varkBadgeGroup}>
+                                    {data.profileData.hyphenatedCodes.split('-').map((char: string, index: number) => {
+                                        const color = riasecColors[char] || '#0f172a';
+                                        const bg = riasecBgColors[char] || '#f8fafc';
+                                        return (
+                                            <View key={index} style={[styles.varkBadge, { backgroundColor: bg, borderColor: color }]}>
+                                                <Text style={[styles.varkBadgeText, { color }]}>{char}</Text>
+                                            </View>
+                                        );
+                                    })}
+                                </View>
+
+                                <View style={{ marginTop: 10, width: '100%', backgroundColor: '#f8fafc', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center' }}>
+                                    <Text style={{ fontSize: 8, fontWeight: 'bold', color: '#64748b', marginBottom: 5 }}>PETA POTENSI RIASEC</Text>
+                                    <Image src={riasecChartUrl} style={{ width: 100, height: 100 }} />
                                 </View>
                             </View>
-                            <View style={{ flex: 1, paddingLeft: 12 }}>
+
+                            {/* KOLOM KANAN: Deskripsi Profil */}
+                            <View style={{ flex: 1, paddingLeft: 10 }}>
                                 <Text style={styles.sectionTitle}>Ringkasan Kesimpulan</Text>
 
-                                <Text style={{ fontSize: 9.5, color: '#334155', lineHeight: 1.4 }}>
+                                <Text style={{ fontSize: 9.5, color: '#334155', lineHeight: 1.4, textAlign: 'justify' }}>
                                     Tipe dominan kamu membentuk pola gabungan <Text style={{ fontWeight: 'bold' }}>{data.profileData.hyphenatedCodes}</Text>, yang mewakili {data.profileData.data1.title} ({data.profileData.data1.indonesianTitle}), {data.profileData.data2.title} ({data.profileData.data2.indonesianTitle}), dan {data.profileData.data3.title} ({data.profileData.data3.indonesianTitle}).
                                 </Text>
-                                <Text style={{ fontSize: 9, color: '#475569', marginTop: 4 }}>• {data.profileData.data1.title}: {data.profileData.data1.desc}</Text>
-                                <Text style={{ fontSize: 9, color: '#475569', marginTop: 2 }}>• {data.profileData.data2.title}: {data.profileData.data2.desc}</Text>
-                                <Text style={{ fontSize: 9, color: '#475569', marginTop: 2 }}>• {data.profileData.data3.title}: {data.profileData.data3.desc}</Text>
+                                <Text style={{ fontSize: 9, color: '#475569', marginTop: 6, lineHeight: 1.4 }}>• {data.profileData.data1.title}: {data.profileData.data1.desc}</Text>
+                                <Text style={{ fontSize: 9, color: '#475569', marginTop: 4, lineHeight: 1.4 }}>• {data.profileData.data2.title}: {data.profileData.data2.desc}</Text>
+                                <Text style={{ fontSize: 9, color: '#475569', marginTop: 4, lineHeight: 1.4 }}>• {data.profileData.data3.title}: {data.profileData.data3.desc}</Text>
 
+                                <View style={styles.alertBlue}>
+                                    <Text style={styles.alertBlueText}>* {data.profileData.dominantTieMessage}</Text>
+                                </View>
                             </View>
-                        </View>
-                        <View style={styles.alertBlue}>
-                            <Text style={styles.alertBlueText}>* {data.profileData.dominantTieMessage}</Text>
+
                         </View>
                     </View>
 
@@ -166,7 +188,6 @@ export async function POST(request: Request) {
                                                     <Text style={styles.scoreLabel}>{code} - {def.name} ({translatedName})</Text>
                                                     <Text style={styles.scoreSub}>{def.meaning}</Text>
                                                 </View>
-                                                {/* PERBAIKAN 2: Teks skor dan persentase dibuat atas-bawah mengikuti warna batang */}
                                                 <View style={{ alignItems: 'flex-end', marginLeft: 6 }}>
                                                     <Text style={[styles.scoreVal, { color: barColor }]}>{scoreNum} Poin</Text>
                                                     <Text style={[styles.scoreVal, { color: barColor }]}>({pct}%)</Text>
@@ -228,6 +249,29 @@ export async function POST(request: Request) {
             const varkLabel = varkLabels[mainStyleCode] || 'Gaya Belajar';
             const mainColor = varkColors[mainStyleCode] || '#3b82f6';
 
+            // Menyiapkan URL Gambar QuickChart untuk PDF
+            const vScore = data.uiData.sortedScores.find((s: ScoreItem) => s.code === 'V')?.raw_score || 0;
+            const aScore = data.uiData.sortedScores.find((s: ScoreItem) => s.code === 'A')?.raw_score || 0;
+            const rScore = data.uiData.sortedScores.find((s: ScoreItem) => s.code === 'R')?.raw_score || 0;
+            const kScore = data.uiData.sortedScores.find((s: ScoreItem) => s.code === 'K')?.raw_score || 0;
+
+            const chartConfig = {
+                type: 'radar',
+                data: {
+                    labels: ['Visual', 'Auditori', 'Read/Write', 'Kinestetik'],
+                    datasets: [{
+                        data: [vScore, aScore, rScore, kScore],
+                        backgroundColor: 'rgba(20, 184, 166, 0.4)',
+                        borderColor: 'rgb(13, 148, 136)'
+                    }]
+                },
+                options: {
+                    legend: { display: false },
+                    scale: { ticks: { display: false, max: 20, min: 0 } }
+                }
+            };
+            const chartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(chartConfig))}&w=250&h=250`;
+
             ModuleContent = (
                 <View style={styles.container}>
                     <View style={[styles.phaseBanner, { backgroundColor: mainColor }]} wrap={false}>
@@ -239,10 +283,14 @@ export async function POST(request: Request) {
                         <Text style={styles.sectionTitle}>Profil Preferensi Belajar</Text>
 
                         <View style={styles.varkProfileRow}>
-                            <View style={{ alignItems: 'center' }}>
+
+                            {/* KOLOM KIRI: Kotak Huruf (Badges) + Grafik Radar */}
+                            <View style={{ width: 140, alignItems: 'center' }}>
                                 <Text style={styles.varkBadgeLabel}>
                                     Tipe {data.uiData.isMultimodal ? 'Multimodal' : 'Dominan'}
                                 </Text>
+
+                                {/* Kotak Huruf */}
                                 <View style={styles.varkBadgeGroup}>
                                     {data.uiData.domCodesArray.map((code: string) => {
                                         const badgeStyle = getVarkPdfStyle(code);
@@ -253,26 +301,33 @@ export async function POST(request: Request) {
                                         );
                                     })}
                                 </View>
+
+                                {/* Grafik Radar */}
+                                <View style={{ marginTop: 10, width: '100%', backgroundColor: '#f8fafc', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#f1f5f9', alignItems: 'center' }}>
+                                    <Text style={{ fontSize: 8, fontWeight: 'bold', color: '#64748b', marginBottom: 5 }}>PETA KESEIMBANGAN</Text>
+                                    <Image src={chartUrl} style={{ width: 100, height: 100 }} />
+                                </View>
                             </View>
 
-                            <View style={{ flex: 1 }}>
-                                <Text style={{ fontSize: 11, color: '#0f172a', fontWeight: 'bold', marginBottom: 4 }}>
-                                    {data.uiData.isMultimodal ? 'Gaya Belajar Fleksibel (Campuran)' : varkLabel}
+                            {/* KOLOM KANAN: Deskripsi Profil */}
+                            <View style={{ flex: 1, paddingLeft: 10 }}>
+                                <Text style={{ fontSize: 13, color: '#0f172a', fontWeight: 'bold', marginBottom: 6 }}>
+                                    {data.uiData.isMultimodal ? 'Gaya Belajar Fleksibel (Multimodal)' : varkLabel}
                                 </Text>
-                                <Text style={{ fontSize: 9.5, color: '#475569', lineHeight: 1.4 }}>
+                                <Text style={{ fontSize: 9.5, color: '#475569', lineHeight: 1.5, textAlign: 'justify' }}>
                                     {data.uiData.isMultimodal
-                                        ? "Luar biasa! Kamu adalah pembelajar yang fleksibel. Kamu dapat menyerap informasi dengan sangat baik melalui kombinasi berbagai metode."
+                                        ? "Sebagai seorang pembelajar Multimodal, Anda memiliki keunggulan kognitif dalam memproses informasi melalui berbagai saluran. Alih-alih bergantung pada satu metode tunggal, Anda mampu mengintegrasikan isyarat visual, auditori, teks, dan kinestetik secara bersamaan. Pendekatan campuran ini memungkinkan Anda memvalidasi pemahaman dari berbagai sudut pandang, memperkuat retensi memori jangka panjang, serta memberikan fleksibilitas tinggi untuk beradaptasi dengan berbagai gaya mengajar instruktur di lingkungan akademik maupun profesional."
                                         : data.uiData.dominantData.desc}
                                 </Text>
-                            </View>
-                        </View>
 
-                        <View style={styles.alertBlue}>
-                            <Text style={styles.alertBlueText}>
-                                {data.uiData.isMultimodal
-                                    ? "* Keuntungan Multimodal: Kamu bisa dengan mudah beradaptasi dengan berbagai cara mengajar guru yang berbeda-beda!"
-                                    : `* Fokus pada kekuatanmu! Memahami bahwa kamu seorang ${varkLabel} akan membantumu belajar lebih cepat dan tidak mudah bosan.`}
-                            </Text>
+                                <View style={styles.alertBlue}>
+                                    <Text style={styles.alertBlueText}>
+                                        {data.uiData.isMultimodal
+                                            ? "* Keunggulan Multimodal: Kemampuan adaptasi ini membuat Anda tangguh menghadapi materi kompleks. Gunakan kombinasi strategi (misalnya: membaca materi, menonton video demonstrasi, lalu mendiskusikannya) untuk hasil belajar yang optimal."
+                                            : `* Fokus pada kekuatanmu! Memahami bahwa kamu seorang ${varkLabel} akan membantumu belajar lebih cepat dan tidak mudah bosan.`}
+                                    </Text>
+                                </View>
+                            </View>
                         </View>
                     </View>
 

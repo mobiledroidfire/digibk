@@ -8,15 +8,17 @@ import { dimensionDefs } from '@/lib/data/riasec';
 import { getRiasecDisplayLogic, riasecTranslations, cleanCode } from '@/features/student/services/riasec-result.service';
 import type { ScoreItem } from '@/features/student/types/result.types';
 
+import RiasecRadarChart from '@/components/charts/RiasecRadarChart';
+
 const getRiasecStyle = (code: string) => {
     switch (code) {
-        case 'R': return { color: 'text-red-600', bar: 'bg-red-500' };
-        case 'I': return { color: 'text-amber-600', bar: 'bg-amber-500' };
-        case 'A': return { color: 'text-emerald-600', bar: 'bg-emerald-500' };
-        case 'S': return { color: 'text-blue-600', bar: 'bg-blue-500' };
-        case 'E': return { color: 'text-violet-600', bar: 'bg-violet-500' };
-        case 'C': return { color: 'text-slate-600', bar: 'bg-slate-500' };
-        default: return { color: 'text-indigo-600', bar: 'bg-indigo-500' };
+        case 'R': return { color: 'text-red-600', bar: 'bg-red-500', bg: 'bg-red-50', border: 'border-red-200' };
+        case 'I': return { color: 'text-amber-600', bar: 'bg-amber-500', bg: 'bg-amber-50', border: 'border-amber-200' };
+        case 'A': return { color: 'text-emerald-600', bar: 'bg-emerald-500', bg: 'bg-emerald-50', border: 'border-emerald-200' };
+        case 'S': return { color: 'text-blue-600', bar: 'bg-blue-500', bg: 'bg-blue-50', border: 'border-blue-200' };
+        case 'E': return { color: 'text-violet-600', bar: 'bg-violet-500', bg: 'bg-violet-50', border: 'border-violet-200' };
+        case 'C': return { color: 'text-slate-600', bar: 'bg-slate-500', bg: 'bg-slate-50', border: 'border-slate-200' };
+        default: return { color: 'text-indigo-600', bar: 'bg-indigo-500', bg: 'bg-indigo-50', border: 'border-indigo-200' };
     }
 }
 
@@ -91,24 +93,55 @@ export default async function RiasecResultPage({ searchParams }: { searchParams:
                 )}
 
                 <section className="bg-white rounded-xl p-6 md:p-8 shadow-sm border border-slate-200">
-                    <div className="flex flex-col md:flex-row md:items-start gap-6">
-                        {/* PERBAIKAN: Kotak Profil dengan huruf warna-warni */}
-                        <div className="h-20 w-20 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col items-center justify-center shrink-0 shadow-sm">
-                            <span className="text-xs font-bold text-slate-500 mb-1">PROFIL</span>
-                            <div className="flex flex-row">
-                                {profileData.hyphenatedCodes.split('-').map((char: string, index: number) => (
-                                    <span key={index} className={`text-2xl font-black tracking-widest ${getRiasecStyle(char).color}`}>
-                                        {char}
-                                    </span>
-                                ))}
+                    <div className="flex flex-col md:flex-row gap-8 items-start">
+
+                        {/* Kolom Kiri: Kotak Huruf (Badges) + Grafik Radar */}
+                        <div className="shrink-0 flex flex-col items-center mx-auto md:mx-0 w-full md:w-80">
+                            <div className="text-xs font-bold text-slate-400 mb-3 tracking-widest uppercase">
+                                KODE PROFIL
+                            </div>
+
+                            <div className="flex flex-wrap justify-center gap-2 mb-6">
+                                {profileData.hyphenatedCodes.split('-').map((char: string, index: number) => {
+                                    const style = getRiasecStyle(char);
+                                    return (
+                                        // PERBAIKAN 3: Mengubah ukuran kotak (h-14 w-14 sm:h-16 sm:w-16) agar lebih kecil dan rapi
+                                        <div key={index} className={`h-14 w-14 sm:h-16 sm:w-16 rounded-2xl ${style.bg} border-2 ${style.border} flex flex-col items-center justify-center shadow-sm`}>
+                                            {/* PERBAIKAN 4: Mengubah ukuran teks (text-2xl sm:text-3xl) agar proporsional */}
+                                            <span className={`text-2xl sm:text-3xl font-black ${style.color}`}>{char}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Grafik Radar diletakkan di SINI */}
+                            <div className="w-full bg-slate-50 rounded-xl border border-slate-100 p-3 shadow-inner">
+                                <h4 className="text-center text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
+                                    Peta Potensi RIASEC
+                                </h4>
+                                {/* PERBAIKAN 5: Mengubah class "h-55" menjadi "h-[260px]" */}
+                                <div className="h-65 w-full flex items-center justify-center">
+                                    <RiasecRadarChart data={profileData.sortedScores} />
+                                </div>
                             </div>
                         </div>
-                        <div className="flex-1">
-                            <h2 className="text-lg font-bold text-slate-900 mb-3">Ringkasan Kesimpulan</h2>
-                            <p className="text-slate-700 text-sm leading-relaxed mb-4 whitespace-pre-line">{profileData.dynamicConclusion}</p>
-                            <div className="mb-4 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 flex items-start gap-2">
+
+                        {/* Kolom Kanan: Deskripsi Profil */}
+                        <div className="flex-1 text-center md:text-left">
+                            {/* Ukuran judul diperkecil dari text-2xl menjadi text-xl */}
+                            <h2 className="text-xl font-bold text-slate-800 mb-3">Ringkasan Kesimpulan</h2>
+
+                            {/* Ukuran paragraf diperkecil menjadi text-sm (menghapus sm:text-base) */}
+                            <p className="text-slate-700 text-sm leading-relaxed mb-5 whitespace-pre-line text-justify md:text-left">
+                                {profileData.dynamicConclusion}
+                            </p>
+
+                            <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 flex items-start gap-3 text-left">
                                 <Sparkles className="h-5 w-5 text-indigo-600 mt-0.5 shrink-0" />
-                                <p className="text-sm text-indigo-900 leading-relaxed font-medium">{profileData.dominantTieMessage}</p>
+                                {/* Teks pesan alert juga diperkecil sedikit menjadi text-xs sm:text-sm */}
+                                <p className="text-xs sm:text-sm text-indigo-900 leading-relaxed font-medium">
+                                    {profileData.dominantTieMessage}
+                                </p>
                             </div>
                         </div>
                     </div>

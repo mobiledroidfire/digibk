@@ -1,8 +1,11 @@
 // Lokasi file: src/features/student/types/result.types.ts
 
 import type { LevelData, PhaseData as RiasecPhase } from '@/lib/data/riasec';
-import type { PhaseData as VarkPhase } from '@/lib/data/vark';
+import type { ProfileDetailVark, PhaseData as VarkPhase } from '@/lib/data/vark';
 
+// ============================================================================
+// 1. TIPE REUSABLE (DIGUNAKAN BERSAMA OLEH RIASEC DAN VARK)
+// ============================================================================
 export interface StudentInfo {
     id: string;
     full_name: string;
@@ -13,9 +16,14 @@ export interface StudentInfo {
 
 export interface ScoreItem {
     code: string;
-    raw_score: number | string;
+    raw_score: number | string; // Tetap mempertahankan number | string milikmu
+    normalized_score?: number;  // Tambahan dari kodeku untuk database
+    rank?: number;              // Tambahan dari kodeku untuk database
 }
 
+// ============================================================================
+// 2. TIPE RIASEC (DIPERTAHANKAN 100% DARI KODE ASLIMU)
+// ============================================================================
 export interface RiasecDictItem {
     title: string;
     indonesianTitle: string;
@@ -23,12 +31,6 @@ export interface RiasecDictItem {
     levels: Record<string, RiasecPhase>;
     karir: string[];
     freelance: string[];
-}
-
-export interface VarkDictItem {
-    desc: string;
-    levels: Record<string, VarkPhase>;
-    karir: string[];
 }
 
 export interface RiasecDisplayData {
@@ -65,10 +67,30 @@ export interface RiasecDisplayData {
     tabEducationTitle: string;
 }
 
+// ============================================================================
+// 3. TIPE VARK (GABUNGAN KODE KITA)
+// ============================================================================
+
+// Menggunakan alias dari kamus VARK langsung agar 100% sinkron dengan data asli
+export type VarkDictItem = ProfileDetailVark;
+
+// Model representasi tabel profil VARK di Supabase
+export interface VarkProfileModel {
+    id: string;
+    result_id: string;
+    code: string;
+    dominant_code: string;
+    secondary_code?: string;
+    tertiary_code?: string;
+    quaternary_code?: string;
+    interpretation?: string;
+    vark_results: ScoreItem[];
+}
+
 export interface VarkDisplayData {
-    student: StudentInfo;
+    student: StudentInfo; // Menggunakan StudentInfo milikmu agar rapi
     phaseInfo: {
-        isTransisi: boolean; // <-- PERBAIKAN: Mengubah 'any' menjadi 'boolean'
+        isTransisi: boolean;
         bannerTitle: string;
         bannerMessage: string;
     };

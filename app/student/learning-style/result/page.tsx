@@ -11,6 +11,7 @@ import {
 import PrintPdfButton from '@/components/pdf/PrintPdfButton';
 import { getVarkDisplayLogic } from '@/features/student/services/vark-result.service';
 import type { ScoreItem } from '@/features/student/types/result.types';
+import VarkRadarChart from '@/components/charts/VarkRadarChart';
 
 const getVarkStyle = (code: string) => {
     switch (code.toUpperCase()) {
@@ -100,44 +101,65 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                     </div>
                 )}
 
-                <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 flex flex-col sm:flex-row gap-8 items-start">
-                    <div className="shrink-0 flex flex-col items-center mx-auto sm:mx-0">
-                        <div className="text-xs font-bold text-slate-400 mb-3 tracking-widest uppercase">
-                            Tipe {uiData.isMultimodal ? 'Multimodal' : 'Dominan'}
-                        </div>
-                        <div className="flex flex-wrap justify-center gap-2">
-                            {uiData.domCodesArray.map((code: string) => {
-                                const style = getVarkStyle(code);
-                                return (
-                                    <div key={code} className={`h-20 w-20 sm:h-24 sm:w-24 rounded-2xl ${style.bg} border-2 ${style.border} flex flex-col items-center justify-center shadow-sm`}>
-                                        <span className={`text-3xl sm:text-4xl font-black ${style.color}`}>{code}</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
+                {/* --- PERUBAHAN UTAMA: SECTION 1 (PROFIL + RADAR CHART DI BAWAH KOTAK) --- */}
+                <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
 
-                    <div className="flex-1 text-center sm:text-left">
-                        <h2 className="text-2xl font-bold text-slate-800 mb-3">
-                            {uiData.isMultimodal ? 'Gaya Belajar Fleksibel (Campuran)' : mainStyle.label}
-                        </h2>
-                        <p className="text-slate-600 leading-relaxed mb-4">
-                            {uiData.isMultimodal
-                                ? `Luar biasa! Kamu adalah pembelajar yang fleksibel. Kamu dapat menyerap informasi dengan sangat baik melalui kombinasi berbagai metode.`
-                                : uiData.dominantData.desc}
-                        </p>
+                    <div className="flex flex-col sm:flex-row gap-8 items-start">
 
-                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3 items-start text-left">
-                            <Lightbulb className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                            <p className="text-sm text-blue-800">
+                        {/* Kolom Kiri: Kotak Huruf (Badges) + Grafik Radar */}
+                        <div className="shrink-0 flex flex-col items-center mx-auto sm:mx-0 w-full sm:w-72">
+                            <div className="text-xs font-bold text-slate-400 mb-3 tracking-widest uppercase">
+                                Tipe {uiData.isMultimodal ? 'Multimodal' : 'Dominan'}
+                            </div>
+
+                            {/* Kotak Huruf */}
+                            <div className="flex flex-wrap justify-center gap-2 mb-6">
+                                {uiData.domCodesArray.map((code: string) => {
+                                    const style = getVarkStyle(code);
+                                    return (
+                                        <div key={code} className={`h-20 w-20 sm:h-24 sm:w-24 rounded-2xl ${style.bg} border-2 ${style.border} flex flex-col items-center justify-center shadow-sm`}>
+                                            <span className={`text-3xl sm:text-4xl font-black ${style.color}`}>{code}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Grafik Radar diletakkan di SINI, tepat di bawah kotak huruf */}
+                            <div className="w-full bg-slate-50 rounded-xl border border-slate-100 p-3 shadow-inner">
+                                <h4 className="text-center text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
+                                    Peta Keseimbangan
+                                </h4>
+                                {/* Batasi tinggi area grafik agar tidak terlalu besar di kolom kecil */}
+                                <div className="h-55 w-full flex items-center justify-center">
+                                    <VarkRadarChart data={uiData.sortedScores} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Kolom Kanan: Deskripsi Profil */}
+                        <div className="flex-1 text-center sm:text-left">
+                            <h2 className="text-2xl font-bold text-slate-800 mb-3">
+                                {uiData.isMultimodal ? 'Gaya Belajar Fleksibel (Multimodal)' : mainStyle.label}
+                            </h2>
+                            <p className="text-slate-600 leading-relaxed mb-4 text-sm sm:text-base text-justify sm:text-left">
                                 {uiData.isMultimodal
-                                    ? "Keuntungan Multimodal: Kamu bisa dengan mudah beradaptasi dengan berbagai cara mengajar guru yang berbeda-beda!"
-                                    : `Fokus pada kekuatanmu! Memahami bahwa kamu seorang ${mainStyle.label} akan membantumu belajar lebih cepat dan tidak mudah bosan.`}
+                                    ? "Sebagai seorang pembelajar Multimodal, Anda memiliki keunggulan kognitif dalam memproses informasi melalui berbagai saluran. Alih-alih bergantung pada satu metode tunggal, Anda mampu mengintegrasikan isyarat visual, auditori, teks, dan kinestetik secara bersamaan. Pendekatan campuran ini memungkinkan Anda memvalidasi pemahaman dari berbagai sudut pandang, memperkuat retensi memori jangka panjang, serta memberikan fleksibilitas tinggi untuk beradaptasi dengan berbagai gaya mengajar instruktur di lingkungan akademik maupun profesional."
+                                    : uiData.dominantData.desc}
                             </p>
+
+                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3 items-start text-left">
+                                <Lightbulb className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                                <p className="text-sm text-blue-800 leading-relaxed">
+                                    {uiData.isMultimodal
+                                        ? "Keunggulan Multimodal: Kemampuan adaptasi ini membuat Anda tangguh menghadapi materi kompleks. Gunakan kombinasi strategi (misalnya: membaca materi, menonton video demonstrasi, lalu mendiskusikannya) untuk hasil belajar yang optimal."
+                                        : `Fokus pada kekuatanmu! Memahami bahwa kamu seorang ${mainStyle.label} akan membantumu belajar lebih cepat dan tidak mudah bosan.`}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </section>
 
+                {/* --- SECTION 2: DETAIL PROGRESS BAR --- */}
                 <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
                     <h3 className="text-base font-bold text-slate-800 mb-6 flex items-center gap-2 border-b pb-3">
                         <Activity className="h-5 w-5 text-indigo-500" /> Detail Profil V-A-R-K Kamu
@@ -198,14 +220,12 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                         <div className="mb-4">
                             <span className="text-xs font-semibold text-slate-400 uppercase">{uiData.phaseData.eduTitle1}</span>
                             <ul className="mt-2 space-y-1.5">
-                                {/* PERBAIKAN: Dibatasi maksimal 10 */}
                                 {uiData.phaseData.eduList1.slice(0, 10).map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}
                             </ul>
                         </div>
                         <div>
                             <span className="text-xs font-semibold text-slate-400 uppercase">{uiData.phaseData.eduTitle2}</span>
                             <ul className="mt-2 space-y-1.5">
-                                {/* PERBAIKAN: Dibatasi maksimal 10 */}
                                 {uiData.phaseData.eduList2.slice(0, 10).map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}
                             </ul>
                         </div>
@@ -218,14 +238,12 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                         <div className="mb-4">
                             <span className="text-xs font-semibold text-slate-400 uppercase">Fokus / Trik Ujian</span>
                             <ul className="mt-2 space-y-1.5">
-                                {/* PERBAIKAN: Dibatasi maksimal 10 */}
                                 {uiData.phaseData.materi.slice(0, 10).map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}
                             </ul>
                         </div>
                         <div>
                             <span className="text-xs font-semibold text-slate-400 uppercase">Prospek Karir Utama</span>
                             <div className="mt-2 flex flex-wrap gap-1.5">
-                                {/* PERBAIKAN: Dibatasi maksimal 10 */}
                                 {uiData.dominantData.karir.slice(0, 10).map((item: string, i: number) => (
                                     <span key={i} className="text-[11px] font-medium bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md border border-slate-200">
                                         {item}
@@ -242,7 +260,6 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                             <HeartHandshake className="h-4 w-4 text-slate-300" /> Saran untuk Guru / Orang Tua
                         </h4>
                         <ul className="space-y-3">
-                            {/* PERBAIKAN: Dibatasi maksimal 10 */}
                             {uiData.phaseData.guruBk.slice(0, 10).map((item: string, i: number) => (
                                 <li key={i} className="text-sm text-slate-300 flex items-start gap-3">
                                     <span className="shrink-0 mt-0.5 text-slate-500">-</span>
@@ -257,7 +274,6 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                             <UserCheck className="h-4 w-4" /> Apa yang Harus Kamu Lakukan?
                         </h4>
                         <ul className="space-y-3">
-                            {/* PERBAIKAN: Dibatasi maksimal 10 */}
                             {uiData.phaseData.siswa.slice(0, 10).map((item: string, i: number) => (
                                 <li key={i} className="text-sm text-slate-800 flex items-start gap-3">
                                     <Sparkles className={`h-4 w-4 shrink-0 mt-0.5 ${mainStyle.color}`} />
