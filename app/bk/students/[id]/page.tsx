@@ -11,6 +11,11 @@ import {
 import { getStudentDetailAction, type StudentFullProfile } from '@/features/bk/actions/student-detail.actions';
 import type { EmotionType } from '@/features/student/types/emotion.types';
 
+// Import komponen grafik yang baru kita buat
+import StudentRiasecRadar from '@/features/bk/components/StudentRiasecRadar';
+import StudentVarkPie from '@/features/bk/components/StudentVarkPie';
+import StudentEmotionLine from '@/features/bk/components/StudentEmotionLine';
+
 const EMOTION_MAP: Record<EmotionType, string> = {
     'HAPPY': 'Senang', 'CALM': 'Tenang', 'NEUTRAL': 'Netral',
     'CONFUSED': 'Bingung', 'SAD': 'Sedih', 'DISAPPOINTED': 'Kecewa',
@@ -122,16 +127,26 @@ export default function StudentProfilePage() {
                                 <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">Minat & Bakat (RIASEC)</p>
                                 {profile.riasec_result ? (
                                     <div className="bg-indigo-50/50 border border-indigo-100 p-5 rounded-xl print:bg-white print:border-slate-300">
-                                        <p className="text-2xl font-black text-indigo-700 tracking-widest print:text-slate-900 mb-1">
-                                            {profile.riasec_result.code}
-                                        </p>
-                                        <p className="text-sm font-bold text-slate-800 mb-3 border-b border-indigo-100 pb-3">
-                                            {profile.riasec_result.name}
-                                        </p>
-                                        <div className="flex gap-2 items-start mt-4">
-                                            <Info className="h-4 w-4 text-indigo-400 shrink-0 mt-0.5" />
-                                            <div className="text-sm text-slate-700 leading-relaxed text-justify whitespace-pre-wrap">
-                                                {profile.riasec_result.interpretation}
+                                        <div className="flex flex-col xl:flex-row gap-4 items-center xl:items-start">
+                                            {/* GRAFIK RADAR RIASEC */}
+                                            <div className="w-full xl:w-1/3 shrink-0">
+                                                {/* Asumsi backend mengirimkan array 'scores' (opsional) */}
+                                                <StudentRiasecRadar scores={(profile.riasec_result as any).scores} />
+                                            </div>
+
+                                            <div className="w-full xl:w-2/3">
+                                                <p className="text-2xl font-black text-indigo-700 tracking-widest print:text-slate-900 mb-1">
+                                                    {profile.riasec_result.code}
+                                                </p>
+                                                <p className="text-sm font-bold text-slate-800 mb-3 border-b border-indigo-100 pb-3">
+                                                    {profile.riasec_result.name}
+                                                </p>
+                                                <div className="flex gap-2 items-start mt-4">
+                                                    <Info className="h-4 w-4 text-indigo-400 shrink-0 mt-0.5" />
+                                                    <div className="text-sm text-slate-700 leading-relaxed text-justify whitespace-pre-wrap">
+                                                        {profile.riasec_result.interpretation}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -145,19 +160,29 @@ export default function StudentProfilePage() {
                                 <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">Gaya Belajar (VARK)</p>
                                 {profile.vark_result ? (
                                     <div className="bg-teal-50/50 border border-teal-100 p-5 rounded-xl print:bg-white print:border-slate-300">
-                                        <p className="text-2xl font-black text-teal-700 tracking-widest print:text-slate-900 mb-1">
-                                            {profile.vark_result.code}
-                                        </p>
-                                        <p className="text-sm font-bold text-slate-800 mb-1">
-                                            {profile.vark_result.name}
-                                        </p>
-                                        <p className="text-xs font-semibold text-teal-600 mb-3 border-b border-teal-100 pb-3">
-                                            Tipe Dominan: {profile.vark_result.dominant}
-                                        </p>
-                                        <div className="flex gap-2 items-start mt-4">
-                                            <Info className="h-4 w-4 text-teal-500 shrink-0 mt-0.5" />
-                                            <div className="text-sm text-slate-700 leading-relaxed text-justify whitespace-pre-wrap">
-                                                {profile.vark_result.interpretation}
+                                        <div className="flex flex-col xl:flex-row gap-4 items-center xl:items-start">
+                                            {/* GRAFIK PIE VARK */}
+                                            <div className="w-full xl:w-1/3 shrink-0">
+                                                {/* Asumsi backend mengirimkan array 'scores' (opsional) */}
+                                                <StudentVarkPie scores={(profile.vark_result as any).scores} />
+                                            </div>
+
+                                            <div className="w-full xl:w-2/3">
+                                                <p className="text-2xl font-black text-teal-700 tracking-widest print:text-slate-900 mb-1">
+                                                    {profile.vark_result.code}
+                                                </p>
+                                                <p className="text-sm font-bold text-slate-800 mb-1">
+                                                    {profile.vark_result.name}
+                                                </p>
+                                                <p className="text-xs font-semibold text-teal-600 mb-3 border-b border-teal-100 pb-3">
+                                                    Tipe Dominan: {profile.vark_result.dominant}
+                                                </p>
+                                                <div className="flex gap-2 items-start mt-4">
+                                                    <Info className="h-4 w-4 text-teal-500 shrink-0 mt-0.5" />
+                                                    <div className="text-sm text-slate-700 leading-relaxed text-justify whitespace-pre-wrap">
+                                                        {profile.vark_result.interpretation}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -171,32 +196,38 @@ export default function StudentProfilePage() {
                     {/* --- RIWAYAT EMOSI --- */}
                     <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 print:shadow-none print:border-slate-300 print:rounded-lg print:break-inside-avoid">
                         <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 border-b pb-3">
-                            <Activity className="h-5 w-5 text-rose-500 print:text-slate-800" /> Rekam Emosi Terakhir (Jurus 2)
+                            <Activity className="h-5 w-5 text-rose-500 print:text-slate-800" /> Rekam Emosi (Jurus 2)
                         </h3>
 
                         {profile.recent_emotions.length === 0 ? (
                             <p className="text-sm text-slate-400 italic text-center py-6">Belum ada rekam check-in emosi dari siswa ini.</p>
                         ) : (
-                            <div className="space-y-4">
-                                {profile.recent_emotions.map((emo, idx) => (
-                                    <div key={emo.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 print:bg-white print:border-slate-200">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <span className="px-2.5 py-1 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-md uppercase shadow-sm print:shadow-none">
-                                                {EMOTION_MAP[emo.emotion]} (Skala: {emo.intensity}/10)
-                                            </span>
-                                            <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                                                <Clock className="h-3 w-3" /> {idx === 0 ? 'Terbaru' : formatIndonesianDate(emo.created_at)}
-                                            </span>
+                            <div>
+                                {/* GRAFIK GARIS TREN EMOSI */}
+                                <StudentEmotionLine data={profile.recent_emotions} />
+
+                                <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 border-t pt-4">Riwayat Check-In Terbaru</p>
+                                <div className="space-y-4 max-h-100 overflow-y-auto pr-2 print:max-h-none print:overflow-visible">
+                                    {profile.recent_emotions.map((emo, idx) => (
+                                        <div key={emo.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 print:bg-white print:border-slate-200">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <span className="px-2.5 py-1 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-md uppercase shadow-sm print:shadow-none">
+                                                    {EMOTION_MAP[emo.emotion] || emo.emotion} (Skala: {emo.intensity}/10)
+                                                </span>
+                                                <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                                                    <Clock className="h-3 w-3" /> {idx === 0 ? 'Terbaru' : formatIndonesianDate(emo.created_at)}
+                                                </span>
+                                            </div>
+                                            {idx === 0 && (
+                                                <p className="text-[10px] font-medium text-slate-400 mb-2">{formatIndonesianDate(emo.created_at)}</p>
+                                            )}
+                                            <div className="space-y-2 mt-3">
+                                                <p className="text-sm text-slate-700"><span className="font-bold text-[11px] text-slate-400 uppercase block">Konteks:</span> {emo.context}</p>
+                                                <p className="text-sm text-slate-700"><span className="font-bold text-[11px] text-slate-400 uppercase block">Respons/Usaha:</span> {emo.coping_response}</p>
+                                            </div>
                                         </div>
-                                        {idx === 0 && (
-                                            <p className="text-[10px] font-medium text-slate-400 mb-2">{formatIndonesianDate(emo.created_at)}</p>
-                                        )}
-                                        <div className="space-y-2 mt-3">
-                                            <p className="text-sm text-slate-700"><span className="font-bold text-[11px] text-slate-400 uppercase block">Konteks:</span> {emo.context}</p>
-                                            <p className="text-sm text-slate-700"><span className="font-bold text-[11px] text-slate-400 uppercase block">Respons/Usaha:</span> {emo.coping_response}</p>
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </section>

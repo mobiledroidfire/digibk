@@ -4,22 +4,30 @@
 import { createClient } from '@/lib/supabase/server';
 import type { EmotionType } from '@/features/student/types/emotion.types';
 
+export interface ScoreItem { name: string; score: number; }
+export interface VarkScoreItem extends ScoreItem { fill: string; }
+
 export interface StudentFullProfile {
     id: string;
     full_name: string;
     student_code: string;
     class_name: string;
-    riasec_result: { code: string; name: string; interpretation: string; } | null;
-    vark_result: { code: string; name: string; dominant: string; interpretation: string; } | null;
+    riasec_result: { code: string; name: string; interpretation: string; scores: ScoreItem[] } | null;
+    vark_result: { code: string; name: string; dominant: string; interpretation: string; scores: VarkScoreItem[] } | null;
     recent_emotions: { id: string; emotion: EmotionType; intensity: number; context: string; coping_response: string; created_at: string; }[];
 }
 
 type StudentWithClass = { id: string; full_name: string; student_code: string; school_id: string; class_memberships: { classes: { name: string } | null }[] | null; };
-type RiasecRecord = { code: string; primary_code: string; secondary_code: string; tertiary_code: string; };
-type VarkRecord = { code: string; dominant_code: string; };
 type EmotionRecord = { id: string; emotion: EmotionType; intensity: number; context: string; coping_response: string; created_at: string; };
 
-// --- KAMUS ON-THE-FLY (Ubah teks di sini, semua siswa otomatis terupdate!) ---
+// Mengakali "any" di Supabase Response
+type ScoreResult = { code: string; raw_score: number };
+type BaseProfile = { code: string; };
+type RiasecProfileRaw = BaseProfile & { primary_code: string; secondary_code: string; tertiary_code: string; riasec_results: ScoreResult[] };
+type VarkProfileRaw = BaseProfile & { dominant_code: string; vark_results: ScoreResult[] };
+
+
+// --- KAMUS ON-THE-FLY ---
 const RIASEC_DESC: Record<string, { title: string, id: string, desc: string }> = {
     'R': { title: 'Realistic', id: 'Realistis', desc: 'Menyukai aktivitas fisik, mesin, alat, dan lingkungan luar ruangan.' },
     'I': { title: 'Investigative', id: 'Investigatif', desc: 'Memiliki rasa ingin tahu yang tinggi, menyukai analisis, dan sains.' },
@@ -52,47 +60,62 @@ export async function getStudentDetailAction(studentId: string): Promise<{ succe
         if (studentError || !student) throw new Error('Siswa tidak ditemukan.');
         if (roleData.role !== 'SUPER_ADMIN' && student.school_id !== roleData.school_id) throw new Error('Anda tidak memiliki hak akses ke data siswa ini.');
 
-        // 1. KEMBALI MENGGUNAKAN QUERY LAMA YANG TERBUKTI AMAN & BERHASIL
-        const { data: riasecProfile } = await supabase.from('riasec_profiles').select('code, primary_code, secondary_code, tertiary_code, assessment_results!inner(student_id)').eq('assessment_results.student_id', studentId).order('created_at', { ascending: false }).limit(1).returns<RiasecRecord[]>().maybeSingle();
-        const { data: varkProfile } = await supabase.from('vark_profiles').select('code, dominant_code, assessment_results!inner(student_id)').eq('assessment_results.student_id', studentId).order('created_at', { ascending: false }).limit(1).returns<VarkRecord[]>().maybeSingle();
-        const { data: emotions } = await supabase.from('emotional_checkins').select('id, emotion, intensity, context, coping_response, created_at').eq('student_id', studentId).order('created_at', { ascending: false }).limit(5).returns<EmotionRecord[]>();
+        // 1. KEMBALI MENGGUNAKAN QUERY LAMA + MENGAMBIL TABEL SKOR
+        const { data: riasecData } = await supabase.from('riasec_profiles').select('code, primary_code, secondary_code, tertiary_code, riasec_results(code, raw_score), assessment_results!inner(student_id)').eq('assessment_results.student_id', studentId).order('created_at', { ascending: false }).limit(1).returns<RiasecProfileRaw[]>().maybeSingle();
+        const { data: varkData } = await supabase.from('vark_profiles').select('code, dominant_code, vark_results(code, raw_score), assessment_results!inner(student_id)').eq('assessment_results.student_id', studentId).order('created_at', { ascending: false }).limit(1).returns<VarkProfileRaw[]>().maybeSingle();
+        const { data: emotions } = await supabase.from('emotional_checkins').select('id, emotion, intensity, context, coping_response, created_at').eq('student_id', studentId).order('created_at', { ascending: false }).limit(10).returns<EmotionRecord[]>();
 
-        // --- MERAKIT RIASEC ON-THE-FLY ---
+        // --- MERAKIT RIASEC ON-THE-FLY & GRAFIK ---
         let finalRiasec = null;
-        if (riasecProfile && riasecProfile.code) {
-            const c1 = riasecProfile.primary_code || riasecProfile.code[0];
-            const c2 = riasecProfile.secondary_code || riasecProfile.code[1];
-            const c3 = riasecProfile.tertiary_code || riasecProfile.code[2];
+        if (riasecData && riasecData.code) {
+            const c1 = riasecData.primary_code || riasecData.code[0];
+            const c2 = riasecData.secondary_code || riasecData.code[1];
+            const c3 = riasecData.tertiary_code || riasecData.code[2];
 
             const d1 = RIASEC_DESC[c1] || RIASEC_DESC['C'];
             const d2 = RIASEC_DESC[c2] || RIASEC_DESC['C'];
             const d3 = RIASEC_DESC[c3] || RIASEC_DESC['C'];
 
+            // Merakit Data untuk Grafik Radar
+            const scores: ScoreItem[] = (riasecData.riasec_results || []).map(r => ({
+                name: RIASEC_DESC[r.code]?.title || r.code,
+                score: Number(r.raw_score) || 0
+            }));
+
             finalRiasec = {
-                code: riasecProfile.code,
+                code: riasecData.code,
                 name: `${d1.id}, ${d2.id}, & ${d3.id}`,
-                interpretation: `Tipe dominan kamu membentuk pola gabungan ${c1}-${c2}-${c3}, yang mewakili ${d1.title} (${d1.id}), ${d2.title} (${d2.id}), dan ${d3.title} (${d3.id}).\n\n• ${d1.title}: ${d1.desc}\n• ${d2.title}: ${d2.desc}\n• ${d3.title}: ${d3.desc}`
+                interpretation: `Tipe dominan kamu membentuk pola gabungan ${c1}-${c2}-${c3}, yang mewakili ${d1.title} (${d1.id}), ${d2.title} (${d2.id}), dan ${d3.title} (${d3.id}).\n\n• ${d1.title}: ${d1.desc}\n• ${d2.title}: ${d2.desc}\n• ${d3.title}: ${d3.desc}`,
+                scores: scores
             };
         }
 
-        // --- MERAKIT VARK ON-THE-FLY ---
+        // --- MERAKIT VARK ON-THE-FLY & GRAFIK ---
         let finalVark = null;
-        if (varkProfile && varkProfile.code) {
-            const isMultimodal = varkProfile.code.length > 1;
+        if (varkData && varkData.code) {
+            const isMultimodal = varkData.code.length > 1;
 
-            // Merakit nama otomatis berdasarkan jumlah huruf di database (Bisa "AK" atau "AKRV")
-            const varkParts = varkProfile.code.split('').map(char => VARK_DESC[char]?.id || char);
+            const varkParts = varkData.code.split('').map(char => VARK_DESC[char]?.id || char);
             let varkName = varkParts.join(', ');
             if (varkParts.length > 1) {
                 const last = varkParts.pop();
                 varkName = `${varkParts.join(', ')} & ${last}`;
             }
 
+            // Merakit Data untuk Grafik Pie
+            const varkColors: Record<string, string> = { V: '#3b82f6', A: '#10b981', R: '#f59e0b', K: '#ef4444' };
+            const varkScores: VarkScoreItem[] = (varkData.vark_results || []).map(r => ({
+                name: VARK_DESC[r.code]?.id || r.code,
+                score: Number(r.raw_score) || 0,
+                fill: varkColors[r.code] || '#cbd5e1'
+            }));
+
             finalVark = {
-                code: varkProfile.code,
+                code: varkData.code,
                 name: varkName,
-                dominant: isMultimodal ? 'Gaya Belajar Fleksibel (Multimodal)' : (VARK_DESC[varkProfile.dominant_code]?.id || 'Tunggal'),
-                interpretation: isMultimodal ? VARK_MULTIMODAL : (VARK_DESC[varkProfile.dominant_code]?.desc || 'Data gaya belajar ditemukan.')
+                dominant: isMultimodal ? 'Gaya Belajar Fleksibel (Multimodal)' : (VARK_DESC[varkData.dominant_code]?.id || 'Tunggal'),
+                interpretation: isMultimodal ? VARK_MULTIMODAL : (VARK_DESC[varkData.dominant_code]?.desc || 'Data gaya belajar ditemukan.'),
+                scores: varkScores
             };
         }
 
