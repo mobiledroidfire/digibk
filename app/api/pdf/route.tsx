@@ -15,22 +15,22 @@ const styles = StyleSheet.create({
     phaseSub: { color: '#eff6ff', fontSize: 10 },
     sectionCard: { backgroundColor: '#ffffff', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 15 },
     sectionTitle: { fontSize: 13, fontWeight: 'bold', color: '#0f172a', marginBottom: 8, textTransform: 'uppercase' },
-    // Ganti dua baris ini di dalam file /app/api/pdf/route.tsx
+    // Ganti dua baris ini di dalam /app/api/pdf/route.tsx
     badgeProfil: {
-        backgroundColor: '#eff6ff',
-        padding: 12,
-        borderRadius: 8,
-        border: '1px solid #bfdbfe', // Tambahan garis pinggir tipis
-        width: 110, // Diperlebar agar tidak sesak
+        backgroundColor: '#f8fafc', // Latar belakang abu-abu sangat muda/bersih
+        padding: 15,
+        borderRadius: 12,
+        border: '2px solid #e2e8f0', // Garis pinggir yang lebih tegas
+        width: 120, // Diperlebar agar huruf tidak sesak
         textAlign: 'center',
-        marginBottom: 8,
-        justifyContent: 'center'
+        justifyContent: 'center',
+        marginBottom: 10,
     },
     badgeText: {
-        fontSize: 24, // Huruf diperbesar drastis dari sebelumnya 16
+        fontSize: 28, // Huruf diperbesar drastis (sebelumnya 16)
         fontWeight: 'bold',
-        color: '#1e40af', // Warna biru yang lebih gelap dan profesional
-        letterSpacing: 3 // Jarak antar huruf agar terlihat elegan
+        color: '#0f172a', // Warna biru dongker kehitaman agar lebih profesional
+        letterSpacing: 4 // Jarak antar huruf agar terlihat elegan dan premium
     },
     alertBlue: { backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', padding: 10, borderRadius: 6, marginTop: 8 },
     alertBlueText: { color: '#1e40af', fontSize: 9.5, lineHeight: 1.4 },
