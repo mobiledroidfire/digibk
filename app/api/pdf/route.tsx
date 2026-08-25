@@ -111,15 +111,20 @@ export async function POST(request: Request) {
                             </View>
                             <View style={{ flex: 1, paddingLeft: 12 }}>
                                 <Text style={styles.sectionTitle}>Ringkasan Kesimpulan</Text>
+
+                                {/* PERBAIKAN: Menambahkan data3 agar PDF menampilkan 3 profil lengkap */}
                                 <Text style={{ fontSize: 9.5, color: '#334155', lineHeight: 1.4 }}>
-                                    Tipe dominan kamu adalah <Text style={{ fontWeight: 'bold' }}>{data.profileData.data1.title} ({data.profileData.data1.indonesianTitle})</Text> dengan pola gabungan {data.profileData.hyphenatedCodes}.
+                                    Tipe dominan kamu membentuk pola gabungan <Text style={{ fontWeight: 'bold' }}>{data.profileData.hyphenatedCodes}</Text>, yang mewakili {data.profileData.data1.title} ({data.profileData.data1.indonesianTitle}), {data.profileData.data2.title} ({data.profileData.data2.indonesianTitle}), dan {data.profileData.data3.title} ({data.profileData.data3.indonesianTitle}).
                                 </Text>
                                 <Text style={{ fontSize: 9, color: '#475569', marginTop: 4 }}>• {data.profileData.data1.title}: {data.profileData.data1.desc}</Text>
                                 <Text style={{ fontSize: 9, color: '#475569', marginTop: 2 }}>• {data.profileData.data2.title}: {data.profileData.data2.desc}</Text>
+                                <Text style={{ fontSize: 9, color: '#475569', marginTop: 2 }}>• {data.profileData.data3.title}: {data.profileData.data3.desc}</Text>
+
                             </View>
                         </View>
                         <View style={styles.alertBlue}>
-                            <Text style={styles.alertBlueText}>* Kamu memiliki kecerdasan minat yang saling mendukung. Perpaduan ini menjadi kekuatan utamamu dalam menentukan pendidikan lanjutan dan karier masa depan!</Text>
+                            {/* PERBAIKAN: Menggunakan pesan dinamis dari service */}
+                            <Text style={styles.alertBlueText}>* {data.profileData.dominantTieMessage}</Text>
                         </View>
                     </View>
 
@@ -158,32 +163,31 @@ export async function POST(request: Request) {
                         <View style={styles.gridCol}>
                             <Text style={styles.colHeader}>Studi Lanjut & Karier</Text>
                             <Text style={styles.colSubHeader}>REKOMENDASI STUDI / JURUSAN</Text>
-                            {/* PERBAIKAN: Semua list dibatasi maksimal 5 */}
-                            {data.mixedData.mixedEdu1.slice(0, 5).map((item: string, i: number) => <View key={`edu1-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
+                            {data.mixedData.mixedEdu1.slice(0, 10).map((item: string, i: number) => <View key={`edu1-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                             <Text style={styles.colSubHeader}>PILIHAN ALTERNATIF (VOKASI)</Text>
-                            {data.mixedData.mixedEdu2.slice(0, 5).map((item: string, i: number) => <View key={`edu2-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
+                            {data.mixedData.mixedEdu2.slice(0, 10).map((item: string, i: number) => <View key={`edu2-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                             <Text style={styles.colSubHeader}>PEKERJAAN MASA DEPAN</Text>
-                            {data.mixedData.mixedKarir.slice(0, 5).map((item: string, i: number) => <View key={`karir-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
+                            {data.mixedData.mixedKarir.slice(0, 10).map((item: string, i: number) => <View key={`karir-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                         </View>
                         <View style={styles.gridCol}>
                             <Text style={styles.colHeader}>Pengembangan Diri</Text>
                             <Text style={styles.colSubHeader}>MATERI YANG PERLU DIPERKUAT</Text>
-                            {data.mixedData.mixedMateri.slice(0, 5).map((item: string, i: number) => <View key={`mat-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
+                            {data.mixedData.mixedMateri.slice(0, 10).map((item: string, i: number) => <View key={`mat-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                             <Text style={styles.colSubHeader}>PELUANG FREELANCE / MANDIRI</Text>
-                            {data.mixedData.mixedFreelance.slice(0, 5).map((item: string, i: number) => <View key={`free-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
+                            {data.mixedData.mixedFreelance.slice(0, 10).map((item: string, i: number) => <View key={`free-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                             <Text style={styles.colSubHeader}>LAYANAN PENDUKUNG IDEAL</Text>
-                            {data.mixedData.mixedLayanan.slice(0, 5).map((item: string, i: number) => <View key={`lay-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
+                            {data.mixedData.mixedLayanan.slice(0, 10).map((item: string, i: number) => <View key={`lay-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                         </View>
                     </View>
 
                     <View style={styles.gridRow} wrap={false}>
                         <View style={styles.boxDark}>
                             <Text style={styles.boxDarkTitle}>Yang Perlu Dilakukan Guru / Orang Tua</Text>
-                            {data.mixedData.mixedGuruBk.slice(0, 5).map((item: string, i: number) => <View key={`gbk-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxDarkText}>{item}</Text></View>)}
+                            {data.mixedData.mixedGuruBk.slice(0, 10).map((item: string, i: number) => <View key={`gbk-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxDarkText}>{item}</Text></View>)}
                         </View>
                         <View style={styles.boxLight}>
                             <Text style={styles.boxLightTitle}>Yang Perlu Kamu Lakukan (Siswa)</Text>
-                            {data.mixedData.mixedSiswa.slice(0, 5).map((item: string, i: number) => <View key={`sis-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxLightText}>{item}</Text></View>)}
+                            {data.mixedData.mixedSiswa.slice(0, 10).map((item: string, i: number) => <View key={`sis-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxLightText}>{item}</Text></View>)}
                         </View>
                     </View>
                 </View>
@@ -281,27 +285,27 @@ export async function POST(request: Request) {
                         <View style={styles.gridCol}>
                             <Text style={styles.colHeader}>Strategi Belajar</Text>
                             <Text style={styles.colSubHeader}>{data.uiData.phaseData.eduTitle1}</Text>
-                            {data.uiData.phaseData.eduList1.slice(0, 5).map((item: string, i: number) => <View key={`e1-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
+                            {data.uiData.phaseData.eduList1.slice(0, 10).map((item: string, i: number) => <View key={`e1-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                             <Text style={styles.colSubHeader}>{data.uiData.phaseData.eduTitle2}</Text>
-                            {data.uiData.phaseData.eduList2.slice(0, 5).map((item: string, i: number) => <View key={`e2-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
+                            {data.uiData.phaseData.eduList2.slice(0, 10).map((item: string, i: number) => <View key={`e2-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                         </View>
                         <View style={styles.gridCol}>
                             <Text style={styles.colHeader}>Pengayaan & Materi</Text>
                             <Text style={styles.colSubHeader}>FOKUS / TRIK UJIAN</Text>
-                            {data.uiData.phaseData.materi.slice(0, 5).map((item: string, i: number) => <View key={`m-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
+                            {data.uiData.phaseData.materi.slice(0, 10).map((item: string, i: number) => <View key={`m-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                             <Text style={styles.colSubHeader}>PROSPEK KARIR UTAMA</Text>
-                            {data.uiData.dominantData.karir.slice(0, 5).map((item: string, i: number) => <View key={`k-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
+                            {data.uiData.dominantData.karir.slice(0, 10).map((item: string, i: number) => <View key={`k-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                         </View>
                     </View>
 
                     <View style={styles.gridRow} wrap={false}>
                         <View style={styles.boxDark}>
                             <Text style={styles.boxDarkTitle}>Saran untuk Guru / Orang Tua</Text>
-                            {data.uiData.phaseData.guruBk.slice(0, 5).map((item: string, i: number) => <View key={`g-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxDarkText}>{item}</Text></View>)}
+                            {data.uiData.phaseData.guruBk.slice(0, 10).map((item: string, i: number) => <View key={`g-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxDarkText}>{item}</Text></View>)}
                         </View>
                         <View style={styles.boxLight}>
                             <Text style={styles.boxLightTitle}>Apa yang Harus Kamu Lakukan?</Text>
-                            {data.uiData.phaseData.siswa.slice(0, 5).map((item: string, i: number) => <View key={`s-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxLightText}>{item}</Text></View>)}
+                            {data.uiData.phaseData.siswa.slice(0, 10).map((item: string, i: number) => <View key={`s-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxLightText}>{item}</Text></View>)}
                         </View>
                     </View>
                 </View>

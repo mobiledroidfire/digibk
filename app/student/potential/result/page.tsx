@@ -26,7 +26,7 @@ export default async function RiasecResultPage({ searchParams }: { searchParams:
     let displayData;
     try {
         displayData = await getRiasecDisplayLogic(resolvedParams.id, false);
-    } catch (error: unknown) { // PERBAIKAN: Mengubah 'any' menjadi 'unknown'
+    } catch (error: unknown) {
         if (error instanceof Error && error.message === 'UNAUTHORIZED') redirect('/login');
         redirect('/student/dashboard?error=Akses_Ditolak');
     }
@@ -79,7 +79,6 @@ export default async function RiasecResultPage({ searchParams }: { searchParams:
             <main className="max-w-4xl mx-auto px-4 sm:px-6 -mt-14 relative z-20 space-y-6">
 
                 {phaseInfo.bannerMessage && (
-                    /* PERBAIKAN: bg-gradient-to-r diubah menjadi bg-linear-to-r */
                     <div className={`rounded-xl p-5 shadow-md flex items-center gap-4 text-white ${phaseInfo.isTransisi ? 'bg-linear-to-r from-indigo-600 to-purple-600' : 'bg-linear-to-r from-blue-600 to-cyan-600'}`}>
                         <div className="bg-white/20 p-3 rounded-full shrink-0">
                             {phaseInfo.isTransisi ? <Target className="h-6 w-6 text-white" /> : <Activity className="h-6 w-6 text-white" />}
@@ -146,11 +145,12 @@ export default async function RiasecResultPage({ searchParams }: { searchParams:
                         </h4>
                         <div className="mb-4">
                             <span className="text-xs font-semibold text-slate-400 uppercase">{mixedData.phase1.eduTitle1}</span>
-                            <ul className="mt-2 space-y-1.5">{mixedData.mixedEdu1.slice(0, 5).map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}</ul>
+                            {/* PERBAIKAN: Diubah menjadi maksimal 10 item */}
+                            <ul className="mt-2 space-y-1.5">{mixedData.mixedEdu1.slice(0, 10).map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}</ul>
                         </div>
                         <div>
                             <span className="text-xs font-semibold text-slate-400 uppercase">{mixedData.phase1.eduTitle2}</span>
-                            <ul className="mt-2 space-y-1.5">{mixedData.mixedEdu2.slice(0, 5).map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}</ul>
+                            <ul className="mt-2 space-y-1.5">{mixedData.mixedEdu2.slice(0, 10).map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}</ul>
                         </div>
                     </div>
 
@@ -161,12 +161,12 @@ export default async function RiasecResultPage({ searchParams }: { searchParams:
                         <div className="mb-4">
                             <span className="text-xs font-semibold text-slate-400 uppercase">Pekerjaan Masa Depan</span>
                             <div className="mt-2 flex flex-wrap gap-1.5">
-                                {mixedData.mixedKarir.slice(0, 5).map((item: string, i: number) => <span key={i} className="text-[11px] font-medium bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md border">{item}</span>)}
+                                {mixedData.mixedKarir.slice(0, 10).map((item: string, i: number) => <span key={i} className="text-[11px] font-medium bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md border">{item}</span>)}
                             </div>
                         </div>
                         <div>
                             <span className="text-xs font-semibold text-slate-400 uppercase">Peluang Khusus</span>
-                            <ul className="mt-2 space-y-1.5">{mixedData.mixedFreelance.slice(0, 5).map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}</ul>
+                            <ul className="mt-2 space-y-1.5">{mixedData.mixedFreelance.slice(0, 10).map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}</ul>
                         </div>
                     </div>
 
@@ -176,11 +176,11 @@ export default async function RiasecResultPage({ searchParams }: { searchParams:
                         </h4>
                         <div className="mb-4">
                             <span className="text-xs font-semibold text-slate-400 uppercase">Fokus Materi ({student.education_level})</span>
-                            <ul className="mt-2 space-y-1.5">{mixedData.mixedMateri.slice(0, 5).map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}</ul>
+                            <ul className="mt-2 space-y-1.5">{mixedData.mixedMateri.slice(0, 10).map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}</ul>
                         </div>
                         <div>
                             <span className="text-xs font-semibold text-slate-400 uppercase">Layanan Pendukung</span>
-                            <ul className="mt-2 space-y-1.5">{mixedData.mixedLayanan.slice(0, 5).map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}</ul>
+                            <ul className="mt-2 space-y-1.5">{mixedData.mixedLayanan.slice(0, 10).map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}</ul>
                         </div>
                     </div>
                 </div>
@@ -190,13 +190,13 @@ export default async function RiasecResultPage({ searchParams }: { searchParams:
                         <h4 className="text-sm font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-600 pb-2">
                             <HeartHandshake className="h-4 w-4 text-slate-300" /> Saran untuk Guru / Orang Tua
                         </h4>
-                        <ul className="space-y-3">{mixedData.mixedGuruBk.slice(0, 5).map((item: string, i: number) => <li key={i} className="text-sm text-slate-300 flex items-start gap-3"><span className="shrink-0 mt-0.5 text-slate-500">-</span> <span>{item}</span></li>)}</ul>
+                        <ul className="space-y-3">{mixedData.mixedGuruBk.slice(0, 10).map((item: string, i: number) => <li key={i} className="text-sm text-slate-300 flex items-start gap-3"><span className="shrink-0 mt-0.5 text-slate-500">-</span> <span>{item}</span></li>)}</ul>
                     </div>
                     <div className="bg-blue-50 rounded-xl p-6 shadow-sm border border-blue-100">
                         <h4 className="text-sm font-bold text-blue-900 mb-4 flex items-center gap-2 border-b border-blue-200 pb-2">
                             <UserCheck className="h-4 w-4 text-blue-600" /> Saran untuk Kamu
                         </h4>
-                        <ul className="space-y-3">{mixedData.mixedSiswa.slice(0, 5).map((item: string, i: number) => <li key={i} className="text-sm text-blue-800 flex items-start gap-3"><Sparkles className="h-4 w-4 shrink-0 mt-0.5 opacity-50" /> <span>{item}</span></li>)}</ul>
+                        <ul className="space-y-3">{mixedData.mixedSiswa.slice(0, 10).map((item: string, i: number) => <li key={i} className="text-sm text-blue-800 flex items-start gap-3"><Sparkles className="h-4 w-4 shrink-0 mt-0.5 opacity-50" /> <span>{item}</span></li>)}</ul>
                     </div>
                 </div>
 

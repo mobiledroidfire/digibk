@@ -168,7 +168,6 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                                             ) : (
                                                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 uppercase tracking-wider">Pendukung</span>
                                             )}
-                                            {/* PERBAIKAN: Menambahkan persentase di Web UI */}
                                             <span className={`text-sm font-bold ${isDominant ? 'text-slate-900' : 'text-slate-500'}`}>
                                                 {scoreVal} Poin ({Math.round(percentage)}%)
                                             </span>
@@ -199,13 +198,15 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                         <div className="mb-4">
                             <span className="text-xs font-semibold text-slate-400 uppercase">{uiData.phaseData.eduTitle1}</span>
                             <ul className="mt-2 space-y-1.5">
-                                {uiData.phaseData.eduList1.map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}
+                                {/* PERBAIKAN: Dibatasi maksimal 10 */}
+                                {uiData.phaseData.eduList1.slice(0, 10).map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}
                             </ul>
                         </div>
                         <div>
                             <span className="text-xs font-semibold text-slate-400 uppercase">{uiData.phaseData.eduTitle2}</span>
                             <ul className="mt-2 space-y-1.5">
-                                {uiData.phaseData.eduList2.map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}
+                                {/* PERBAIKAN: Dibatasi maksimal 10 */}
+                                {uiData.phaseData.eduList2.slice(0, 10).map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}
                             </ul>
                         </div>
                     </div>
@@ -217,13 +218,15 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                         <div className="mb-4">
                             <span className="text-xs font-semibold text-slate-400 uppercase">Fokus / Trik Ujian</span>
                             <ul className="mt-2 space-y-1.5">
-                                {uiData.phaseData.materi.map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}
+                                {/* PERBAIKAN: Dibatasi maksimal 10 */}
+                                {uiData.phaseData.materi.slice(0, 10).map((item: string, i: number) => <li key={i} className="text-sm text-slate-700 flex gap-2"><span className="text-slate-400">•</span> {item}</li>)}
                             </ul>
                         </div>
                         <div>
                             <span className="text-xs font-semibold text-slate-400 uppercase">Prospek Karir Utama</span>
                             <div className="mt-2 flex flex-wrap gap-1.5">
-                                {uiData.dominantData.karir.slice(0, 6).map((item: string, i: number) => (
+                                {/* PERBAIKAN: Dibatasi maksimal 10 */}
+                                {uiData.dominantData.karir.slice(0, 10).map((item: string, i: number) => (
                                     <span key={i} className="text-[11px] font-medium bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md border border-slate-200">
                                         {item}
                                     </span>
@@ -239,7 +242,8 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                             <HeartHandshake className="h-4 w-4 text-slate-300" /> Saran untuk Guru / Orang Tua
                         </h4>
                         <ul className="space-y-3">
-                            {uiData.phaseData.guruBk.map((item: string, i: number) => (
+                            {/* PERBAIKAN: Dibatasi maksimal 10 */}
+                            {uiData.phaseData.guruBk.slice(0, 10).map((item: string, i: number) => (
                                 <li key={i} className="text-sm text-slate-300 flex items-start gap-3">
                                     <span className="shrink-0 mt-0.5 text-slate-500">-</span>
                                     <span className="leading-relaxed">{item}</span>
@@ -253,7 +257,8 @@ export default async function VarkResultPage({ searchParams }: { searchParams: P
                             <UserCheck className="h-4 w-4" /> Apa yang Harus Kamu Lakukan?
                         </h4>
                         <ul className="space-y-3">
-                            {uiData.phaseData.siswa.map((item: string, i: number) => (
+                            {/* PERBAIKAN: Dibatasi maksimal 10 */}
+                            {uiData.phaseData.siswa.slice(0, 10).map((item: string, i: number) => (
                                 <li key={i} className="text-sm text-slate-800 flex items-start gap-3">
                                     <Sparkles className={`h-4 w-4 shrink-0 mt-0.5 ${mainStyle.color}`} />
                                     <span className="leading-relaxed font-medium">{item}</span>

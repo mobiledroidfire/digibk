@@ -14,13 +14,10 @@ export function cleanCode(code?: string): string {
     return code ? code.trim().toUpperCase() : '';
 }
 
-function blendArrays(arr1: string[] = [], arr2: string[] = [], arr3: string[] = [], maxItems: number, isPdf: boolean = false): string[] {
-    let combined: string[];
-    if (isPdf) {
-        combined = [...arr1.slice(0, 4), ...arr2.slice(0, 2), ...arr3.slice(0, 1)];
-    } else {
-        combined = [...arr1, ...arr2.slice(0, Math.max(1, Math.floor(arr2.length / 2))), ...arr3.slice(0, 1)];
-    }
+// PERBAIKAN: Fungsi blendArrays disederhanakan agar menyuplai data penuh (maksimal batas limit)
+// tanpa pemotongan ketat di awal. Data dari arr1 (Primary) tetap diprioritaskan.
+function blendArrays(arr1: string[] = [], arr2: string[] = [], arr3: string[] = [], maxItems: number = 10): string[] {
+    const combined = [...arr1, ...arr2, ...arr3];
     return [...new Set(combined)].slice(0, maxItems);
 }
 
@@ -74,7 +71,6 @@ export async function getRiasecDisplayLogic(resultId?: string, isPdf: boolean = 
     const resultData = await getRiasecResultData(student.id, resultId);
     if (!resultData || !resultData.profile) return null;
 
-    // Type Assertion: Memberi tahu TypeScript bentuk asli dari profile Supabase
     const profile = resultData.profile as {
         primary_code?: string;
         secondary_code?: string;
@@ -83,7 +79,6 @@ export async function getRiasecDisplayLogic(resultId?: string, isPdf: boolean = 
     };
 
     const rawResults: ScoreItem[] = profile.riasec_results || [];
-    // Parameter 'a' dan 'b' kini otomatis dikenali sebagai ScoreItem
     const sortedScores = [...rawResults].sort((a, b) => Number(b.raw_score) - Number(a.raw_score));
 
     const code1 = cleanCode(profile.primary_code) || 'C';
@@ -91,27 +86,28 @@ export async function getRiasecDisplayLogic(resultId?: string, isPdf: boolean = 
     const code3 = cleanCode(profile.tertiary_code) || 'I';
     const hyphenatedCodes = `${code1}-${code2}-${code3}`;
 
-    // Casting ke RiasecDictItem agar tidak terjadi error saat memanggil .levels
     const data1 = (riasecDictionary[code1] || riasecDictionary['C']) as RiasecDictItem;
     const data2 = (riasecDictionary[code2] || riasecDictionary['S']) as RiasecDictItem;
     const data3 = (riasecDictionary[code3] || riasecDictionary['I']) as RiasecDictItem;
 
-    const dynamicConclusion = `Tipe dominan kamu adalah ${data1.title} (${data1.indonesianTitle}) dan ${data2.title} (${data2.indonesianTitle}) dengan pola gabungan ${hyphenatedCodes}.\n\n• ${data1.title}: ${data1.desc}\n• ${data2.title}: ${data2.desc}`;
-    const dominantTieMessage = `Hebat! Kamu memiliki kecerdasan minat yang seimbang pada beberapa bidang sekaligus. Perpaduan ini membuatmu lebih mudah beradaptasi di berbagai lingkungan!`;
+    // PERBAIKAN: Memasukkan data3 (Tipe Ketiga) ke dalam kesimpulan agar profil yang seri juga dijabarkan
+    const dynamicConclusion = `Tipe dominan kamu membentuk pola gabungan ${hyphenatedCodes}, yang mewakili ${data1.title} (${data1.indonesianTitle}), ${data2.title} (${data2.indonesianTitle}), dan ${data3.title} (${data3.indonesianTitle}).\n\n• ${data1.title}: ${data1.desc}\n• ${data2.title}: ${data2.desc}\n• ${data3.title}: ${data3.desc}`;
 
-    // Hilangkan pemaksaan "as any", sekarang ini 100% Type-Safe
+    const dominantTieMessage = `Hebat! Kamu memiliki kecerdasan minat yang saling mendukung. Perpaduan ini menjadi kekuatan utamamu dalam menentukan pendidikan lanjutan dan karier masa depan!`;
+
     const phase1: PhaseData = data1.levels[phaseKey] || data1.levels['SMP_Transisi'];
     const phase2: PhaseData = data2.levels[phaseKey] || data2.levels['SMP_Transisi'];
     const phase3: PhaseData = data3.levels[phaseKey] || data3.levels['SMP_Transisi'];
 
-    const mixedEdu1 = blendArrays(phase1.eduList1, phase2.eduList1, phase3.eduList1, isPdf ? 6 : 5, isPdf);
-    const mixedEdu2 = blendArrays(phase1.eduList2, phase2.eduList2, phase3.eduList2, isPdf ? 6 : 5, isPdf);
-    const mixedMateri = blendArrays(phase1.materi, phase2.materi, phase3.materi, 6, isPdf);
-    const mixedLayanan = blendArrays(phase1.layanan, phase2.layanan, phase3.layanan, 5, isPdf);
-    const mixedGuruBk = blendArrays(phase1.guruBk, phase2.guruBk, phase3.guruBk, 4, isPdf);
-    const mixedSiswa = blendArrays(phase1.siswa, phase2.siswa, phase3.siswa, 4, isPdf);
-    const mixedKarir = blendArrays(data1.karir, data2.karir, data3.karir, 7, isPdf);
-    const mixedFreelance = blendArrays(data1.freelance, data2.freelance, data3.freelance, 5, isPdf);
+    // Menarik hingga 10 item dari service, batasan spesifik tetap dikelola oleh .slice(0,10) di front-end
+    const mixedEdu1 = blendArrays(phase1.eduList1, phase2.eduList1, phase3.eduList1, 10);
+    const mixedEdu2 = blendArrays(phase1.eduList2, phase2.eduList2, phase3.eduList2, 10);
+    const mixedMateri = blendArrays(phase1.materi, phase2.materi, phase3.materi, 10);
+    const mixedLayanan = blendArrays(phase1.layanan, phase2.layanan, phase3.layanan, 10);
+    const mixedGuruBk = blendArrays(phase1.guruBk, phase2.guruBk, phase3.guruBk, 10);
+    const mixedSiswa = blendArrays(phase1.siswa, phase2.siswa, phase3.siswa, 10);
+    const mixedKarir = blendArrays(data1.karir, data2.karir, data3.karir, 10);
+    const mixedFreelance = blendArrays(data1.freelance, data2.freelance, data3.freelance, 10);
 
     let tabEducationTitle = "Pengembangan Diri & Studi";
     if (eduLvl === 'SD' || eduLvl === 'MI') tabEducationTitle = "Aktivitas & Ekstrakurikuler";
