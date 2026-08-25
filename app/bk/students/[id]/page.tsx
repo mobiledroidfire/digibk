@@ -6,46 +6,21 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
     ArrowLeft, User, GraduationCap, Printer,
-    BrainCircuit, Activity, Clock, ShieldAlert, HeartPulse
+    BrainCircuit, Activity, Clock, ShieldAlert, HeartPulse, Info
 } from 'lucide-react';
 import { getStudentDetailAction, type StudentFullProfile } from '@/features/bk/actions/student-detail.actions';
 import type { EmotionType } from '@/features/student/types/emotion.types';
 
-// 1. Kamus Terjemahan Emosi
 const EMOTION_MAP: Record<EmotionType, string> = {
     'HAPPY': 'Senang', 'CALM': 'Tenang', 'NEUTRAL': 'Netral',
     'CONFUSED': 'Bingung', 'SAD': 'Sedih', 'DISAPPOINTED': 'Kecewa',
     'ANGRY': 'Marah', 'AFRAID': 'Takut', 'ANXIOUS': 'Cemas', 'OTHER': 'Lainnya'
 };
 
-// 2. Kamus Terjemahan RIASEC
-const RIASEC_MAP: Record<string, string> = {
-    'R': 'Realistic (Praktikal)',
-    'I': 'Investigative (Analitis)',
-    'A': 'Artistic (Kreatif)',
-    'S': 'Social (Sosial)',
-    'E': 'Enterprising (Kepemimpinan)',
-    'C': 'Conventional (Terstruktur)'
-};
-
-// 3. Kamus Terjemahan VARK
-const VARK_MAP: Record<string, string> = {
-    'V': 'Visual (Penglihatan / Gambar)',
-    'A': 'Auditory (Pendengaran / Lisan)',
-    'R': 'Read/Write (Membaca / Menulis)',
-    'K': 'Kinesthetic (Praktik / Gerakan)'
-};
-
 const formatIndonesianDate = (dateString: string) => {
     return new Intl.DateTimeFormat('id-ID', {
         day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
     }).format(new Date(dateString)) + ' WIB';
-};
-
-// Fungsi pembantu untuk menerjemahkan kode gabungan RIASEC (misal: "IAC")
-const formatRiasec = (code: string) => {
-    if (!code) return '';
-    return code.split('').map(char => RIASEC_MAP[char] || char).join(', ');
 };
 
 export default function StudentProfilePage() {
@@ -69,13 +44,9 @@ export default function StudentProfilePage() {
         loadData();
     }, [studentId]);
 
-    const handlePrint = () => {
-        window.print();
-    };
+    const handlePrint = () => window.print();
 
-    if (isLoading) {
-        return <div className="min-h-screen flex items-center justify-center bg-slate-50"><p className="text-slate-500 font-medium animate-pulse">Memuat profil siswa...</p></div>;
-    }
+    if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><p className="text-slate-500 font-medium animate-pulse">Memuat profil siswa...</p></div>;
 
     if (errorMsg || !profile) {
         return (
@@ -125,7 +96,7 @@ export default function StudentProfilePage() {
                             </div>
                             {isAtRisk && (
                                 <div className="inline-flex items-center justify-center gap-2 bg-rose-50 border border-rose-200 text-rose-700 px-4 py-2 rounded-xl text-sm font-bold print:border-rose-500">
-                                    <HeartPulse className="h-5 w-5 animate-pulse print:animate-none" /> Perlu Perhatian
+                                    <HeartPulse className="h-5 w-5 animate-pulse print:animate-none" /> Perlu Perhatian Khusus
                                 </div>
                             )}
                         </div>
@@ -139,43 +110,56 @@ export default function StudentProfilePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 print:block print:space-y-6">
 
-                    {/* --- BAGIAN RIASEC & VARK YANG SUDAH DIPERBAIKI --- */}
+                    {/* --- ASESMEN POTENSI --- */}
                     <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 print:shadow-none print:border-slate-300 print:rounded-lg print:break-inside-avoid">
                         <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 border-b pb-3">
                             <BrainCircuit className="h-5 w-5 text-indigo-500 print:text-slate-800" /> Asesmen Potensi (Jurus 1)
                         </h3>
 
                         <div className="space-y-6">
+                            {/* RIASEC */}
                             <div>
-                                <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Minat & Bakat (RIASEC)</p>
+                                <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">Minat & Bakat (RIASEC)</p>
                                 {profile.riasec_result ? (
-                                    <div className="bg-indigo-50/50 border border-indigo-100 p-4 rounded-xl print:bg-white print:border-slate-300">
-                                        {/* Menampilkan Kode Mentah dengan gaya yang bagus */}
-                                        <p className="text-2xl font-black text-indigo-700 tracking-widest print:text-slate-900">
+                                    <div className="bg-indigo-50/50 border border-indigo-100 p-5 rounded-xl print:bg-white print:border-slate-300">
+                                        <p className="text-2xl font-black text-indigo-700 tracking-widest print:text-slate-900 mb-1">
                                             {profile.riasec_result.code}
                                         </p>
-                                        {/* Menerjemahkan kode menjadi kepanjangannya */}
-                                        <p className="text-sm font-bold text-slate-700 mt-2">
-                                            {formatRiasec(profile.riasec_result.code)}
+                                        <p className="text-sm font-bold text-slate-800 mb-3 border-b border-indigo-100 pb-3">
+                                            {profile.riasec_result.name}
                                         </p>
-                                        {/* Tetap tampilkan nama profil dari database JIKA tidak bernilai 'Profil Tidak Diketahui' */}
-                                        {profile.riasec_result.name !== 'Profil Tidak Diketahui' && (
-                                            <p className="text-xs text-slate-500 mt-1">{profile.riasec_result.name}</p>
-                                        )}
+                                        <div className="flex gap-2 items-start mt-4">
+                                            <Info className="h-4 w-4 text-indigo-400 shrink-0 mt-0.5" />
+                                            <div className="text-sm text-slate-700 leading-relaxed text-justify whitespace-pre-wrap">
+                                                {profile.riasec_result.interpretation}
+                                            </div>
+                                        </div>
                                     </div>
                                 ) : (
                                     <p className="text-sm text-slate-400 italic">Siswa belum mengerjakan tes RIASEC.</p>
                                 )}
                             </div>
 
+                            {/* VARK */}
                             <div>
-                                <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Gaya Belajar (VARK)</p>
+                                <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">Gaya Belajar (VARK)</p>
                                 {profile.vark_result ? (
-                                    <div className="bg-teal-50/50 border border-teal-100 p-4 rounded-xl print:bg-white print:border-slate-300">
-                                        {/* Menerjemahkan kode dominan VARK */}
-                                        <p className="text-lg font-black text-teal-800 print:text-slate-900">
-                                            Tipe: {VARK_MAP[profile.vark_result.dominant] || profile.vark_result.dominant}
+                                    <div className="bg-teal-50/50 border border-teal-100 p-5 rounded-xl print:bg-white print:border-slate-300">
+                                        <p className="text-2xl font-black text-teal-700 tracking-widest print:text-slate-900 mb-1">
+                                            {profile.vark_result.code}
                                         </p>
+                                        <p className="text-sm font-bold text-slate-800 mb-1">
+                                            {profile.vark_result.name}
+                                        </p>
+                                        <p className="text-xs font-semibold text-teal-600 mb-3 border-b border-teal-100 pb-3">
+                                            Tipe Dominan: {profile.vark_result.dominant}
+                                        </p>
+                                        <div className="flex gap-2 items-start mt-4">
+                                            <Info className="h-4 w-4 text-teal-500 shrink-0 mt-0.5" />
+                                            <div className="text-sm text-slate-700 leading-relaxed text-justify whitespace-pre-wrap">
+                                                {profile.vark_result.interpretation}
+                                            </div>
+                                        </div>
                                     </div>
                                 ) : (
                                     <p className="text-sm text-slate-400 italic">Siswa belum mengerjakan tes VARK.</p>
@@ -184,6 +168,7 @@ export default function StudentProfilePage() {
                         </div>
                     </section>
 
+                    {/* --- RIWAYAT EMOSI --- */}
                     <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 print:shadow-none print:border-slate-300 print:rounded-lg print:break-inside-avoid">
                         <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 border-b pb-3">
                             <Activity className="h-5 w-5 text-rose-500 print:text-slate-800" /> Rekam Emosi Terakhir (Jurus 2)
@@ -196,7 +181,7 @@ export default function StudentProfilePage() {
                                 {profile.recent_emotions.map((emo, idx) => (
                                     <div key={emo.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 print:bg-white print:border-slate-200">
                                         <div className="flex justify-between items-start mb-2">
-                                            <span className="px-2.5 py-1 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-md uppercase">
+                                            <span className="px-2.5 py-1 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-md uppercase shadow-sm print:shadow-none">
                                                 {EMOTION_MAP[emo.emotion]} (Skala: {emo.intensity}/10)
                                             </span>
                                             <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
