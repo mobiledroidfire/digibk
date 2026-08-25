@@ -3,27 +3,11 @@ import { NextResponse } from 'next/server';
 import { renderToBuffer, Text, View, StyleSheet } from '@react-pdf/renderer';
 import MasterPdfTemplate from '@/components/pdf/MasterPdfTemplate';
 import { createClient } from '@/lib/supabase/server';
-
-// IMPORT SERVICE SSOT
-// PERBAIKAN: Menggunakan getVarkResultData
 import { getRiasecResultData, getVarkResultData } from '@/features/assessments/services/result.service';
 
-// Import Data
-import {
-    riasecDictionary,
-    dimensionDefs,
-    PhaseData as RiasecPhaseData,
-    type RiasecProfile
-} from '@/lib/data/riasec';
+import { riasecDictionary, dimensionDefs, PhaseData as RiasecPhaseData, type RiasecProfile } from '@/lib/data/riasec';
+import { varkDictionary, PhaseData as VarkPhaseData, type VarkProfile } from '@/lib/data/vark';
 
-// PERBAIKAN: Import PhaseData sebagai VarkPhaseData
-import {
-    varkDictionary,
-    PhaseData as VarkPhaseData,
-    type VarkProfile
-} from '@/lib/data/vark';
-
-// Helper: Proporsi dominan yang lebih akurat
 function blendAccurate(arr1: string[] = [], arr2: string[] = [], arr3: string[] = [], maxItems: number): string[] {
     const combined = [...arr1.slice(0, 4), ...arr2.slice(0, 2), ...arr3.slice(0, 1)];
     return [...new Set(combined)].slice(0, maxItems);
@@ -33,22 +17,17 @@ function cleanCode(code?: string): string {
     return code ? code.trim().toUpperCase() : '';
 }
 
-// STYLESHEET 
 const styles = StyleSheet.create({
     container: { padding: 5 },
     phaseBanner: { backgroundColor: '#3b82f6', padding: 12, borderRadius: 8, marginBottom: 15 },
     phaseTitle: { color: '#ffffff', fontSize: 13, fontWeight: 'bold', marginBottom: 2 },
     phaseSub: { color: '#eff6ff', fontSize: 10 },
-
     sectionCard: { backgroundColor: '#ffffff', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 15 },
     sectionTitle: { fontSize: 13, fontWeight: 'bold', color: '#0f172a', marginBottom: 8, textTransform: 'uppercase' },
-
     badgeProfil: { backgroundColor: '#eff6ff', padding: '6 12', borderRadius: 6, width: 80, textAlign: 'center', marginBottom: 8 },
     badgeText: { fontSize: 16, fontWeight: 'bold', color: '#1d4ed8' },
-
     alertBlue: { backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', padding: 10, borderRadius: 6, marginTop: 8 },
     alertBlueText: { color: '#1e40af', fontSize: 9.5, lineHeight: 1.4 },
-
     scoreRowContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
     scoreItem: { width: '48%' },
     scoreItemFull: { width: '100%', marginBottom: 12 },
@@ -58,58 +37,40 @@ const styles = StyleSheet.create({
     scoreVal: { fontSize: 10, fontWeight: 'bold', color: '#1d4ed8' },
     barBg: { height: 6, backgroundColor: '#e2e8f0', borderRadius: 3, width: '100%', marginTop: 2 },
     barFill: { height: 6, borderRadius: 3 },
-
     gridRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginBottom: 15 },
     gridCol: { flex: 1, backgroundColor: '#ffffff', padding: 10, borderRadius: 8, border: '1px solid #e2e8f0' },
-
     colHeader: { fontSize: 11, fontWeight: 'bold', color: '#0f172a', marginBottom: 6, borderBottom: '1px solid #f1f5f9', paddingBottom: 4 },
     colSubHeader: { fontSize: 9, fontWeight: 'bold', color: '#64748b', marginTop: 6, marginBottom: 3, textTransform: 'uppercase' },
-
     bulletContainer: { flexDirection: 'row', marginBottom: 4, alignItems: 'flex-start' },
     bulletPoint: { width: 12, fontSize: 10, color: '#64748b' },
     bulletItem: { flex: 1, fontSize: 9.5, color: '#334155', lineHeight: 1.4 },
-
     boxDark: { flex: 1, backgroundColor: '#1e293b', padding: 12, borderRadius: 8 },
     boxDarkTitle: { fontSize: 11, fontWeight: 'bold', color: '#ffffff', marginBottom: 8 },
     boxDarkText: { flex: 1, fontSize: 9.5, color: '#cbd5e1', lineHeight: 1.4 },
-
     boxLight: { flex: 1, backgroundColor: '#eff6ff', padding: 12, borderRadius: 8, border: '1px solid #bfdbfe' },
     boxLightTitle: { fontSize: 11, fontWeight: 'bold', color: '#1e40af', marginBottom: 8 },
     boxLightText: { flex: 1, fontSize: 9.5, color: '#1e3a8a', lineHeight: 1.4 }
 });
 
 const hollandTranslations: Record<string, string> = {
-    'Realistic': 'Realistis',
-    'Investigative': 'Investigatif',
-    'Artistic': 'Artistik',
-    'Social': 'Sosial',
-    'Enterprising': 'Wirausaha',
-    'Conventional': 'Konvensional'
+    'Realistic': 'Realistis', 'Investigative': 'Investigatif', 'Artistic': 'Artistik',
+    'Social': 'Sosial', 'Enterprising': 'Wirausaha', 'Conventional': 'Konvensional'
 };
 
 const riasecColors: Record<string, string> = {
-    'R': '#ef4444',
-    'I': '#f59e0b',
-    'A': '#10b981',
-    'S': '#3b82f6',
-    'E': '#8b5cf6',
-    'C': '#64748b'
+    'R': '#ef4444', 'I': '#f59e0b', 'A': '#10b981', 'S': '#3b82f6', 'E': '#8b5cf6', 'C': '#64748b'
 };
 
-// PERBAIKAN: Menambahkan dimensi 'R' untuk VARK
-const varkTranslations: Record<string, string> = {
-    'V': 'Penglihatan (Visual)',
-    'A': 'Pendengaran (Aural)',
-    'R': 'Membaca/Menulis (Read/Write)',
-    'K': 'Praktik/Fisik (Kinesthetic)'
+// Penamaan Label VARK yang lebih bersih
+const varkLabels: Record<string, string> = {
+    'V': 'Visual (Penglihatan)',
+    'A': 'Auditori (Pendengaran)',
+    'R': 'Read/Write (Membaca/Menulis)',
+    'K': 'Kinestetik (Praktik Fisik)'
 };
 
-// PERBAIKAN: Menambahkan warna untuk dimensi 'R'
 const varkColors: Record<string, string> = {
-    'V': '#3b82f6', // Biru
-    'A': '#10b981', // Hijau
-    'R': '#8b5cf6', // Ungu
-    'K': '#f59e0b'  // Oranye
+    'V': '#3b82f6', 'A': '#10b981', 'R': '#8b5cf6', 'K': '#f59e0b'
 };
 
 export async function POST(request: Request) {
@@ -130,8 +91,7 @@ export async function POST(request: Request) {
         if (!student) return NextResponse.json({ error: 'Data siswa tidak ditemukan' }, { status: 404 });
 
         const studentName = student.full_name;
-        const schoolObj = student.schools;
-        const baseSchoolName = schoolObj && typeof schoolObj === 'object' && 'name' in schoolObj ? String(schoolObj.name) : 'Sekolah Anda';
+        const baseSchoolName = student.schools && typeof student.schools === 'object' && 'name' in student.schools ? String(student.schools.name) : 'Sekolah Anda';
         const eduLvl = student.education_level || 'SMP';
 
         let defaultGrade = 7;
@@ -163,16 +123,12 @@ export async function POST(request: Request) {
         let ModuleContent;
         let moduleTitle = '';
 
-        // ==========================================================
-        // RENDER PDF: RIASEC 
-        // ==========================================================
         if (moduleType === 'RIASEC') {
             moduleTitle = `Laporan Potensi Bakat Minat`;
-
             const resultData = await getRiasecResultData(student.id, resultId);
 
             if (!resultData || !resultData.profile) {
-                ModuleContent = <View><Text style={{ fontSize: 10 }}>Data hasil RIASEC versi terbaru belum tersedia.</Text></View>;
+                ModuleContent = <View><Text style={{ fontSize: 10 }}>Data hasil RIASEC belum tersedia.</Text></View>;
             } else {
                 const actualProfile = resultData.profile as RiasecProfile;
                 const rawResults = actualProfile.riasec_results || [];
@@ -188,12 +144,9 @@ export async function POST(request: Request) {
                 const data3 = riasecDictionary[code3] || riasecDictionary['I'];
 
                 const riasecLevels1 = data1.levels as Record<string, RiasecPhaseData>;
-                const riasecLevels2 = data2.levels as Record<string, RiasecPhaseData>;
-                const riasecLevels3 = data3.levels as Record<string, RiasecPhaseData>;
-
                 const phase1: RiasecPhaseData = riasecLevels1[phaseKey] || riasecLevels1['SMP_Transisi'];
-                const phase2: RiasecPhaseData = riasecLevels2[phaseKey] || riasecLevels2['SMP_Transisi'];
-                const phase3: RiasecPhaseData = riasecLevels3[phaseKey] || riasecLevels3['SMP_Transisi'];
+                const phase2: RiasecPhaseData = (data2.levels as Record<string, RiasecPhaseData>)[phaseKey] || (data2.levels as Record<string, RiasecPhaseData>)['SMP_Transisi'];
+                const phase3: RiasecPhaseData = (data3.levels as Record<string, RiasecPhaseData>)[phaseKey] || (data3.levels as Record<string, RiasecPhaseData>)['SMP_Transisi'];
 
                 const mixedEdu1 = blendAccurate(phase1.eduList1, phase2.eduList1, phase3.eduList1, 6);
                 const mixedEdu2 = blendAccurate(phase1.eduList2, phase2.eduList2, phase3.eduList2, 6);
@@ -205,9 +158,7 @@ export async function POST(request: Request) {
                 const mixedSiswa = blendAccurate(phase1.siswa, phase2.siswa, phase3.siswa, 4);
 
                 const scoreRows = [];
-                for (let i = 0; i < sortedScores.length; i += 2) {
-                    scoreRows.push(sortedScores.slice(i, i + 2));
-                }
+                for (let i = 0; i < sortedScores.length; i += 2) { scoreRows.push(sortedScores.slice(i, i + 2)); }
 
                 ModuleContent = (
                     <View style={styles.container}>
@@ -215,7 +166,6 @@ export async function POST(request: Request) {
                             <Text style={styles.phaseTitle}>{bannerTitle}</Text>
                             <Text style={styles.phaseSub}>{bannerMessage}</Text>
                         </View>
-
                         <View style={styles.sectionCard} wrap={false}>
                             <View style={{ flexDirection: 'row' }}>
                                 <View style={styles.badgeProfil}>
@@ -238,7 +188,6 @@ export async function POST(request: Request) {
 
                         <View style={styles.sectionCard} wrap={false}>
                             <Text style={styles.sectionTitle}>Ringkasan Skor 6 Dimensi (RIASEC)</Text>
-
                             {scoreRows.map((row, idx) => (
                                 <View key={idx} style={styles.scoreRowContainer}>
                                     {row.map((sc) => {
@@ -248,7 +197,6 @@ export async function POST(request: Request) {
                                         const scoreNum = Number(sc.raw_score);
                                         const pct = Math.min(Math.round((scoreNum / 35) * 100), 100);
                                         const barColor = riasecColors[code] || '#3b82f6';
-
                                         return (
                                             <View key={code} style={styles.scoreItem}>
                                                 <View style={styles.scoreTextRow}>
@@ -267,94 +215,59 @@ export async function POST(request: Request) {
                                 </View>
                             ))}
                         </View>
-
                         <View style={styles.gridRow} break>
                             <View style={styles.gridCol}>
                                 <Text style={styles.colHeader}>Studi Lanjut & Karier</Text>
                                 <Text style={styles.colSubHeader}>REKOMENDASI STUDI / JURUSAN</Text>
-                                {mixedEdu1.map((item, i) => (
-                                    <View key={`edu1-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
-                                ))}
+                                {mixedEdu1.map((item, i) => <View key={`edu1-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                                 <Text style={styles.colSubHeader}>PILIHAN ALTERNATIF (VOKASI)</Text>
-                                {mixedEdu2.map((item, i) => (
-                                    <View key={`edu2-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
-                                ))}
+                                {mixedEdu2.map((item, i) => <View key={`edu2-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                                 <Text style={styles.colSubHeader}>PEKERJAAN MASA DEPAN</Text>
-                                {mixedKarir.map((item, i) => (
-                                    <View key={`karir-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
-                                ))}
+                                {mixedKarir.map((item, i) => <View key={`karir-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                             </View>
-
                             <View style={styles.gridCol}>
                                 <Text style={styles.colHeader}>Pengembangan Diri</Text>
                                 <Text style={styles.colSubHeader}>MATERI YANG PERLU DIPERKUAT</Text>
-                                {mixedMateri.map((item, i) => (
-                                    <View key={`mat-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
-                                ))}
+                                {mixedMateri.map((item, i) => <View key={`mat-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                                 <Text style={styles.colSubHeader}>PELUANG FREELANCE / MANDIRI</Text>
-                                {mixedFreelance.map((item, i) => (
-                                    <View key={`free-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
-                                ))}
+                                {mixedFreelance.map((item, i) => <View key={`free-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                                 <Text style={styles.colSubHeader}>LAYANAN PENDUKUNG IDEAL</Text>
-                                {mixedLayanan.map((item, i) => (
-                                    <View key={`lay-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
-                                ))}
+                                {mixedLayanan.map((item, i) => <View key={`lay-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                             </View>
                         </View>
-
                         <View style={styles.gridRow} wrap={false}>
                             <View style={styles.boxDark}>
                                 <Text style={styles.boxDarkTitle}>Yang Perlu Dilakukan Guru / Orang Tua</Text>
-                                {mixedGuruBk.map((item, i) => (
-                                    <View key={`gbk-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxDarkText}>{item}</Text></View>
-                                ))}
+                                {mixedGuruBk.map((item, i) => <View key={`gbk-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxDarkText}>{item}</Text></View>)}
                             </View>
                             <View style={styles.boxLight}>
                                 <Text style={styles.boxLightTitle}>Yang Perlu Kamu Lakukan (Siswa)</Text>
-                                {mixedSiswa.map((item, i) => (
-                                    <View key={`sis-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxLightText}>{item}</Text></View>
-                                ))}
+                                {mixedSiswa.map((item, i) => <View key={`sis-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxLightText}>{item}</Text></View>)}
                             </View>
                         </View>
                     </View>
                 );
             }
-        }
-        // ==========================================================
-        // RENDER PDF: VARK 
-        // ==========================================================
-        else if (moduleType === 'VARK') { // PERBAIKAN: Modul diubah menjadi VARK
+        } else if (moduleType === 'VARK') {
             moduleTitle = `Laporan Gaya Belajar`;
-
-            // PERBAIKAN: Menggunakan getVarkResultData
             const resultData = await getVarkResultData(student.id, resultId);
 
             if (!resultData || !resultData.profile) {
-                ModuleContent = <View><Text style={{ fontSize: 10 }}>Data hasil VARK versi terbaru belum tersedia.</Text></View>;
+                ModuleContent = <View><Text style={{ fontSize: 10 }}>Data hasil VARK belum tersedia.</Text></View>;
             } else {
-                type ValidResultItem = {
-                    code: string;
-                    raw_score: number | string;
-                };
-
-                type SafeDatabaseProfile = Omit<VarkProfile, 'vark_results'> & {
-                    vark_results?: ValidResultItem[];
-                    vak_results?: ValidResultItem[]; // Tetap kita sediakan fallback aman jika data lama masih di database
-                };
-
-                const actualProfile = resultData.profile as unknown as SafeDatabaseProfile;
-                // Prioritaskan vark_results, fallback ke vak_results
+                const actualProfile = resultData.profile as any;
                 const rawResults = actualProfile.vark_results || actualProfile.vak_results || [];
-                const sortedScores = [...rawResults].sort((a, b) => Number(b.raw_score) - Number(a.raw_score));
+                const sortedScores = [...rawResults].sort((a: any, b: any) => Number(b.raw_score) - Number(a.raw_score));
+                const maxScore = Math.max(...sortedScores.map((s: any) => Number(s.raw_score)), 1);
 
-                const domCode = cleanCode(actualProfile.dominant_code) || 'V';
-                const domData = varkDictionary[domCode] || varkDictionary['V'];
+                // Logika Mendeteksi Gaya Belajar Campuran (Multimodal)
+                const dominantItems = sortedScores.filter((s: any) => Number(s.raw_score) === maxScore);
+                const isMultimodal = dominantItems.length > 1;
+                const domCodesArray = dominantItems.map((s: any) => cleanCode(s.code));
 
-                // PERBAIKAN: Menggunakan VarkPhaseData
-                const varkLevels = domData.levels as Record<string, VarkPhaseData>;
-                const phaseData: VarkPhaseData = varkLevels[phaseKey] || varkLevels['SMP_Transisi'];
-
-                const maxScore = Math.max(...sortedScores.map(s => Number(s.raw_score)), 1);
+                const primaryCode = domCodesArray[0] || 'V';
+                const domData = varkDictionary[primaryCode] || varkDictionary['V'];
+                const phaseData: VarkPhaseData = (domData.levels as Record<string, VarkPhaseData>)[phaseKey] || (domData.levels as Record<string, VarkPhaseData>)['SMP_Transisi'];
 
                 ModuleContent = (
                     <View style={styles.container}>
@@ -366,40 +279,45 @@ export async function POST(request: Request) {
                         <View style={styles.sectionCard} wrap={false}>
                             <View style={{ flexDirection: 'row' }}>
                                 <View style={styles.badgeProfil}>
-                                    <Text style={{ fontSize: 8, color: '#3b82f6', textAlign: 'center', marginBottom: 2 }}>DOMINAN</Text>
-                                    <Text style={styles.badgeText}>{domCode}</Text>
+                                    <Text style={{ fontSize: 8, color: '#3b82f6', textAlign: 'center', marginBottom: 2 }}>{isMultimodal ? 'MULTIMODAL' : 'DOMINAN'}</Text>
+                                    <Text style={styles.badgeText}>{domCodesArray.join('-')}</Text>
                                 </View>
                                 <View style={{ flex: 1, paddingLeft: 12 }}>
-                                    <Text style={styles.sectionTitle}>{domData.title} ({domData.indonesianTitle})</Text>
+                                    <Text style={styles.sectionTitle}>
+                                        {isMultimodal ? 'Gaya Belajar Campuran (Multimodal)' : varkLabels[primaryCode]}
+                                    </Text>
                                     <Text style={{ fontSize: 9.5, color: '#334155', lineHeight: 1.4 }}>
-                                        {domData.desc}
+                                        {isMultimodal
+                                            ? `Kamu adalah pembelajar fleksibel! Kamu mengombinasikan gaya belajar ${domCodesArray.map(c => varkLabels[c]).join(' dan ')} dengan sama baiknya.`
+                                            : domData.desc}
                                     </Text>
                                 </View>
+                            </View>
+                            <View style={styles.alertBlue}>
+                                <Text style={styles.alertBlueText}>
+                                    {isMultimodal
+                                        ? '* Keuntungan Multimodal: Kamu bisa menyesuaikan diri dengan berbagai cara mengajar guru. Gunakan kombinasi strategi belajar di bawah ini untuk hasil maksimal!'
+                                        : `* Fokus pada kekuatanmu! Memahami bahwa gaya utamamu adalah ${varkLabels[primaryCode]} akan membantumu menyerap pelajaran dengan jauh lebih cepat dan tidak mudah bosan.`}
+                                </Text>
                             </View>
                         </View>
 
                         <View style={styles.sectionCard} wrap={false}>
                             <Text style={styles.sectionTitle}>Ringkasan Skor V-A-R-K</Text>
-
-                            {sortedScores.map((sc) => {
+                            {sortedScores.map((sc: any) => {
                                 const code = cleanCode(sc.code);
-                                const dictRef = varkDictionary[code] || { title: code, indonesianTitle: '' };
                                 const scoreNum = Number(sc.raw_score);
-                                // PERBAIKAN: Menggunakan varkTranslations
-                                const translatedName = varkTranslations[code] || dictRef.indonesianTitle || '';
-
                                 const isDominant = scoreNum === maxScore;
                                 const status = isDominant ? 'Dominan' : 'Pendukung';
-
                                 const pct = Math.min((scoreNum / maxScore) * 100, 100);
-                                // PERBAIKAN: Menggunakan varkColors
                                 const barColor = varkColors[code] || '#3b82f6';
+                                const labelName = varkLabels[code] || code;
 
                                 return (
                                     <View key={code} style={styles.scoreItemFull}>
                                         <View style={styles.scoreTextRow}>
                                             <View style={{ flex: 1, paddingRight: 8 }}>
-                                                <Text style={styles.scoreLabel}>{code} - {dictRef.title} ({translatedName})</Text>
+                                                <Text style={styles.scoreLabel}>{code} - {labelName}</Text>
                                             </View>
                                             <Text style={[styles.scoreVal, { color: isDominant ? '#10b981' : '#64748b' }]}>
                                                 {scoreNum} Poin ({status})
@@ -417,40 +335,26 @@ export async function POST(request: Request) {
                             <View style={styles.gridCol}>
                                 <Text style={styles.colHeader}>Strategi Belajar</Text>
                                 <Text style={styles.colSubHeader}>{phaseData.eduTitle1}</Text>
-                                {phaseData.eduList1.map((item, i) => (
-                                    <View key={`str1-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
-                                ))}
+                                {phaseData.eduList1.map((item, i) => <View key={`str1-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                                 <Text style={styles.colSubHeader}>{phaseData.eduTitle2}</Text>
-                                {phaseData.eduList2.map((item, i) => (
-                                    <View key={`str2-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
-                                ))}
+                                {phaseData.eduList2.map((item, i) => <View key={`str2-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                             </View>
-
                             <View style={styles.gridCol}>
                                 <Text style={styles.colHeader}>Pengayaan & Materi</Text>
                                 <Text style={styles.colSubHeader}>FOKUS / TRIK UJIAN</Text>
-                                {phaseData.materi.map((item, i) => (
-                                    <View key={`mat-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
-                                ))}
+                                {phaseData.materi.map((item, i) => <View key={`mat-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                                 <Text style={styles.colSubHeader}>PROSPEK KARIR UTAMA</Text>
-                                {domData.karir.slice(0, 5).map((item, i) => (
-                                    <View key={`kar-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>
-                                ))}
+                                {domData.karir.slice(0, 5).map((item, i) => <View key={`kar-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>•</Text><Text style={styles.bulletItem}>{item}</Text></View>)}
                             </View>
                         </View>
-
                         <View style={styles.gridRow} wrap={false}>
                             <View style={styles.boxDark}>
                                 <Text style={styles.boxDarkTitle}>Saran untuk Guru / Orang Tua</Text>
-                                {phaseData.guruBk.map((item, i) => (
-                                    <View key={`gbk-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxDarkText}>{item}</Text></View>
-                                ))}
+                                {phaseData.guruBk.map((item, i) => <View key={`gbk-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxDarkText}>{item}</Text></View>)}
                             </View>
                             <View style={styles.boxLight}>
                                 <Text style={styles.boxLightTitle}>Apa yang Harus Kamu Lakukan?</Text>
-                                {phaseData.siswa.map((item, i) => (
-                                    <View key={`sis-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxLightText}>{item}</Text></View>
-                                ))}
+                                {phaseData.siswa.map((item, i) => <View key={`sis-${i}`} style={styles.bulletContainer}><Text style={styles.bulletPoint}>-</Text><Text style={styles.boxLightText}>{item}</Text></View>)}
                             </View>
                         </View>
                     </View>
@@ -461,9 +365,7 @@ export async function POST(request: Request) {
         }
 
         const MyDocument = (
-            <MasterPdfTemplate moduleName={moduleTitle} studentName={studentName}
-                schoolName={schoolNameWithGrade}
-            >
+            <MasterPdfTemplate moduleName={moduleTitle} studentName={studentName} schoolName={schoolNameWithGrade}>
                 {ModuleContent}
             </MasterPdfTemplate>
         );
@@ -479,7 +381,6 @@ export async function POST(request: Request) {
                 'Content-Disposition': `attachment; filename="Hasil_${moduleType}_${safeStudentName}.pdf"`,
             },
         });
-
     } catch (error) {
         console.error('Gagal membuat PDF:', error);
         return NextResponse.json({ error: 'Gagal membuat file PDF' }, { status: 500 });
