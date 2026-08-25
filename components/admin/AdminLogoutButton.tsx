@@ -30,7 +30,7 @@ export default function AdminLogoutButton() {
         <>
             <button
                 onClick={() => setIsOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white rounded-lg transition-all duration-300 text-sm font-semibold"
+                className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-rose-700 text-slate-300 hover:text-white rounded-lg transition-all duration-300 text-sm font-semibold"
             >
                 <LogOut className="h-4 w-4" /> Keluar
             </button>
