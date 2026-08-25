@@ -73,7 +73,6 @@ function normalizeDimensionCode(value: unknown): VarkCode | null {
 
 // ============================================================
 // GET VARK QUESTIONS
-// (Fungsi ini tetap sama, saya sertakan agar file lengkap)
 // ============================================================
 
 export async function getVarkQuestions() {
@@ -239,7 +238,23 @@ export async function submitVarkAssessment(versionId: string, unvalidatedAnswers
     const secondaryCode = sortedScores[1][0] as VarkCode;
     const tertiaryCode = sortedScores[2][0] as VarkCode;
     const quaternaryCode = sortedScores[3][0] as VarkCode;
-    const profileCode = sortedScores.map(([code]) => code).join("");
+
+    // --- PERBAIKAN BUG MULTIMODAL & HYBRID DICTIONARY ---
+    // Hanya gabungkan huruf yang skornya sama kuat dengan skor tertinggi
+    const maxVarkScore = sortedScores[0][1];
+    const dominantVarkItems = sortedScores.filter(([_, score]) => score === maxVarkScore);
+    const profileCode = dominantVarkItems.map(([code]) => code).join("");
+
+    const VARK_DESC: Record<string, string> = {
+        'V': 'Kamu peka terhadap informasi visual. Menggunakan gambar, diagram, grafik, atau video akan membuat materi jauh lebih mudah diingat.',
+        'A': 'Kamu menyerap informasi dengan mendengarkan. Penjelasan guru, diskusi, atau merekam materi adalah metode paling jitu untukmu.',
+        'R': 'Kamu kuat memahami instruksi teks. Membaca buku teks, merangkum materi, atau menulis ulang catatan adalah cara paling efektif.',
+        'K': 'Kamu tipe pembelajar yang harus "bergerak". Melakukan eksperimen, simulasi, atau praktik langsung akan membuatmu cepat paham.'
+    };
+    const VARK_MULTIMODAL = 'Sebagai seorang pembelajar Multimodal, Anda memiliki keunggulan kognitif dalam memproses informasi melalui berbagai saluran. Alih-alih bergantung pada satu metode tunggal, Anda mampu mengintegrasikan isyarat visual, auditori, teks, dan kinestetik secara bersamaan.';
+
+    // Jika huruf yang dominan lebih dari 1, simpan teks Multimodal
+    const dbVarkInterpretation = profileCode.length > 1 ? VARK_MULTIMODAL : (VARK_DESC[dominantCode] || '');
 
     // ----------------------------------------------------------
     // SESSION (TABEL INDUK)
@@ -292,6 +307,7 @@ export async function submitVarkAssessment(versionId: string, unvalidatedAnswers
         throw new Error(`Gagal menyimpan hasil VARK: ${resultError?.message ?? ""}`);
     }
 
+    // Simpan profile ke database dengan interpretation dari Hybrid Dictionary
     const { data: profile, error: profileError } = await supabaseAdmin
         .from("vark_profiles")
         .insert({
@@ -301,6 +317,7 @@ export async function submitVarkAssessment(versionId: string, unvalidatedAnswers
             secondary_code: secondaryCode,
             tertiary_code: tertiaryCode,
             quaternary_code: quaternaryCode,
+            interpretation: dbVarkInterpretation, // Disimpan ke DB
         })
         .select("id")
         .single();

@@ -9,57 +9,17 @@ export interface StudentFullProfile {
     full_name: string;
     student_code: string;
     class_name: string;
-    riasec_result: {
-        code: string;
-        name: string;
-        interpretation: string;
-    } | null;
-    vark_result: {
-        code: string;
-        name: string; // BARU: Untuk menampung "Auditori & Kinestetik"
-        dominant: string;
-        interpretation: string;
-    } | null;
-    recent_emotions: {
-        id: string;
-        emotion: EmotionType;
-        intensity: number;
-        context: string;
-        coping_response: string;
-        created_at: string;
-    }[];
+    riasec_result: { code: string; name: string; interpretation: string; } | null;
+    vark_result: { code: string; name: string; dominant: string; interpretation: string; } | null;
+    recent_emotions: { id: string; emotion: EmotionType; intensity: number; context: string; coping_response: string; created_at: string; }[];
 }
 
-type StudentWithClass = {
-    id: string;
-    full_name: string;
-    student_code: string;
-    school_id: string;
-    class_memberships: { classes: { name: string } | null }[] | null;
-};
+type StudentWithClass = { id: string; full_name: string; student_code: string; school_id: string; class_memberships: { classes: { name: string } | null }[] | null; };
+type RiasecRecord = { code: string; primary_code: string; secondary_code: string; tertiary_code: string; };
+type VarkRecord = { code: string; dominant_code: string; };
+type EmotionRecord = { id: string; emotion: EmotionType; intensity: number; context: string; coping_response: string; created_at: string; };
 
-type RiasecRecord = {
-    code: string;
-    primary_code: string;
-    secondary_code: string;
-    tertiary_code: string;
-};
-
-type VarkRecord = {
-    code: string;
-    dominant_code: string;
-};
-
-type EmotionRecord = {
-    id: string;
-    emotion: EmotionType;
-    intensity: number;
-    context: string;
-    coping_response: string;
-    created_at: string;
-};
-
-// --- KAMUS DESKRIPSI (Single Source of Truth) ---
+// --- KAMUS ON-THE-FLY (Ubah teks di sini, semua siswa otomatis terupdate!) ---
 const RIASEC_DESC: Record<string, { title: string, id: string, desc: string }> = {
     'R': { title: 'Realistic', id: 'Realistis', desc: 'Menyukai aktivitas fisik, mesin, alat, dan lingkungan luar ruangan.' },
     'I': { title: 'Investigative', id: 'Investigatif', desc: 'Memiliki rasa ingin tahu yang tinggi, menyukai analisis, dan sains.' },
@@ -92,11 +52,12 @@ export async function getStudentDetailAction(studentId: string): Promise<{ succe
         if (studentError || !student) throw new Error('Siswa tidak ditemukan.');
         if (roleData.role !== 'SUPER_ADMIN' && student.school_id !== roleData.school_id) throw new Error('Anda tidak memiliki hak akses ke data siswa ini.');
 
+        // 1. KEMBALI MENGGUNAKAN QUERY LAMA YANG TERBUKTI AMAN & BERHASIL
         const { data: riasecProfile } = await supabase.from('riasec_profiles').select('code, primary_code, secondary_code, tertiary_code, assessment_results!inner(student_id)').eq('assessment_results.student_id', studentId).order('created_at', { ascending: false }).limit(1).returns<RiasecRecord[]>().maybeSingle();
         const { data: varkProfile } = await supabase.from('vark_profiles').select('code, dominant_code, assessment_results!inner(student_id)').eq('assessment_results.student_id', studentId).order('created_at', { ascending: false }).limit(1).returns<VarkRecord[]>().maybeSingle();
         const { data: emotions } = await supabase.from('emotional_checkins').select('id, emotion, intensity, context, coping_response, created_at').eq('student_id', studentId).order('created_at', { ascending: false }).limit(5).returns<EmotionRecord[]>();
 
-        // --- MERAKIT RIASEC ---
+        // --- MERAKIT RIASEC ON-THE-FLY ---
         let finalRiasec = null;
         if (riasecProfile && riasecProfile.code) {
             const c1 = riasecProfile.primary_code || riasecProfile.code[0];
@@ -114,12 +75,12 @@ export async function getStudentDetailAction(studentId: string): Promise<{ succe
             };
         }
 
-        // --- MERAKIT VARK ---
+        // --- MERAKIT VARK ON-THE-FLY ---
         let finalVark = null;
         if (varkProfile && varkProfile.code) {
             const isMultimodal = varkProfile.code.length > 1;
 
-            // Merakit nama seperti "Auditori & Kinestetik"
+            // Merakit nama otomatis berdasarkan jumlah huruf di database (Bisa "AK" atau "AKRV")
             const varkParts = varkProfile.code.split('').map(char => VARK_DESC[char]?.id || char);
             let varkName = varkParts.join(', ');
             if (varkParts.length > 1) {

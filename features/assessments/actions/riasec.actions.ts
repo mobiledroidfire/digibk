@@ -205,7 +205,6 @@ export async function submitRiasecAssessment(versionId: string, unvalidatedAnswe
 
     const questionMap = new Map<string, RiasecCode>();
 
-    // PERBAIKAN: Mengganti any[] dengan DatabaseQuestionRecord[]
     for (const question of dbQuestions as unknown as DatabaseQuestionRecord[]) {
         const dim = question.assessment_dimensions;
         const rawCode = Array.isArray(dim) ? dim[0]?.code : dim?.code;
@@ -234,6 +233,23 @@ export async function submitRiasecAssessment(versionId: string, unvalidatedAnswe
     const secondaryCode = sortedScores[1][0] as RiasecCode;
     const tertiaryCode = sortedScores[2][0] as RiasecCode;
     const profileCode = sortedScores.slice(0, 3).map(([code]) => code).join("");
+
+    // --- KAMUS UNTUK DISIMPAN KE DB (Penerapan Hybrid) ---
+    const RIASEC_DESC: Record<string, { title: string, id: string, desc: string }> = {
+        'R': { title: 'Realistic', id: 'Realistis', desc: 'Menyukai aktivitas fisik, mesin, alat, dan lingkungan luar ruangan.' },
+        'I': { title: 'Investigative', id: 'Investigatif', desc: 'Memiliki rasa ingin tahu yang tinggi, menyukai analisis, dan sains.' },
+        'A': { title: 'Artistic', id: 'Artistik', desc: 'Menyukai kreativitas, seni, kebebasan berekspresi, dan inovasi.' },
+        'S': { title: 'Social', id: 'Sosial', desc: 'Menyukai interaksi, gemar menolong, dan membimbing orang lain.' },
+        'E': { title: 'Enterprising', id: 'Wirausaha', desc: 'Menyukai kepemimpinan, mampu memengaruhi orang lain, dan berani mengambil risiko.' },
+        'C': { title: 'Conventional', id: 'Konvensional', desc: 'Menyukai keteraturan, mengolah data, dan aktivitas yang terstruktur.' }
+    };
+
+    const d1 = RIASEC_DESC[dominantCode] || RIASEC_DESC['C'];
+    const d2 = RIASEC_DESC[secondaryCode] || RIASEC_DESC['C'];
+    const d3 = RIASEC_DESC[tertiaryCode] || RIASEC_DESC['C'];
+
+    const dbRiasecName = `${d1.id}, ${d2.id}, & ${d3.id}`;
+    const dbRiasecInterpretation = `Tipe dominan kamu membentuk pola gabungan ${dominantCode}-${secondaryCode}-${tertiaryCode}, yang mewakili ${d1.title} (${d1.id}), ${d2.title} (${d2.id}), dan ${d3.title} (${d3.id}).\n\n• ${d1.title}: ${d1.desc}\n• ${d2.title}: ${d2.desc}\n• ${d3.title}: ${d3.desc}`;
 
     // ----------------------------------------------------------
     // DATABASE INSERTS DENGAN ROLLBACK
@@ -291,8 +307,8 @@ export async function submitRiasecAssessment(versionId: string, unvalidatedAnswe
             primary_code: dominantCode,
             secondary_code: secondaryCode,
             tertiary_code: tertiaryCode,
-            profile_name: null,
-            interpretation: null,
+            profile_name: dbRiasecName,             // Data dirakit dan disimpan ke database
+            interpretation: dbRiasecInterpretation, // Data dirakit dan disimpan ke database
         })
         .select("id")
         .single();
