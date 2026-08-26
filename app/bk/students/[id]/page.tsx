@@ -11,7 +11,7 @@ import {
 import { getStudentDetailAction, type StudentFullProfile } from '@/features/bk/actions/student-detail.actions';
 import type { EmotionType } from '@/features/student/types/emotion.types';
 
-// Import komponen grafik yang baru kita buat
+// Import komponen grafik
 import StudentRiasecRadar from '@/features/bk/components/StudentRiasecRadar';
 import StudentVarkPie from '@/features/bk/components/StudentVarkPie';
 import StudentEmotionLine from '@/features/bk/components/StudentEmotionLine';
@@ -70,7 +70,7 @@ export default function StudentProfilePage() {
     const isAtRisk = latestEmotion && ['SAD', 'DISAPPOINTED', 'ANGRY', 'AFRAID', 'ANXIOUS'].includes(latestEmotion.emotion) && latestEmotion.intensity >= 7;
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-16 font-sans print:bg-white print:pb-0 print:w-full">
+        <div className="min-h-screen bg-slate-50 pb-16 font-sans print:bg-white print:pb-0 print:w-full print:overflow-visible">
 
             <header className="bg-indigo-700 text-white shadow-md print:hidden sticky top-0 z-50">
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -83,15 +83,19 @@ export default function StudentProfilePage() {
                 </div>
             </header>
 
-            <main className="max-w-5xl mx-auto px-4 sm:px-6 mt-8 space-y-6 print:mt-0 print:space-y-6 print:px-0 print:max-w-none">
+            <main className="max-w-5xl mx-auto px-4 sm:px-6 mt-8 space-y-6 print:mt-0 print:space-y-6 print:px-0 print:max-w-none print:overflow-visible">
 
-                <div className="hidden print:block text-center border-b-2 border-slate-800 pb-4 mb-6">
-                    <h1 className="text-2xl font-black text-slate-900 uppercase tracking-widest">Sistem DIGIBK</h1>
-                    <h2 className="text-lg font-bold text-slate-700 mt-1">Laporan Profil & Asesmen Psikologis Siswa</h2>
-                    <p className="text-sm text-slate-500 mt-1">Dicetak pada: {new Date().toLocaleDateString('id-ID')} | ID Dokumen: {profile.student_code}</p>
+                {/* --- HEADER CETAK DENGAN LOGO TOPI WISUDA --- */}
+                <div className="hidden print:flex print:flex-col print:items-center text-center border-b-2 border-slate-800 pb-5 mb-6">
+                    <div className="flex items-center justify-center gap-3 mb-2">
+                        <GraduationCap className="h-10 w-10 text-slate-900" strokeWidth={2.5} />
+                        <h1 className="text-3xl font-black text-slate-900 uppercase tracking-widest mt-1">SISTEM DIGIBK</h1>
+                    </div>
+                    <h2 className="text-lg font-bold text-slate-700">Laporan Profil & Asesmen Psikologis Siswa</h2>
+                    <p className="text-sm text-slate-500 mt-1 font-medium">Dicetak pada: {new Date().toLocaleDateString('id-ID')} | ID Dokumen: {profile.student_code}</p>
                 </div>
 
-                <section className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 flex flex-col sm:flex-row items-center sm:items-start gap-6 relative overflow-hidden print:shadow-none print:border-slate-300 print:rounded-lg print:flex-row print:items-start">
+                <section className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 flex flex-col sm:flex-row items-center sm:items-start gap-6 relative overflow-hidden print:shadow-none print:border-slate-300 print:rounded-lg print:flex-row print:items-start print:break-inside-avoid">
                     <div className="h-24 w-24 rounded-full bg-indigo-50 flex items-center justify-center shrink-0 border-4 border-indigo-100 z-10 print:border-slate-300">
                         <User className="h-10 w-10 text-indigo-500 print:text-slate-700" />
                     </div>
@@ -115,29 +119,30 @@ export default function StudentProfilePage() {
                     </div>
                 </section>
 
-                {/* PERBAIKAN: Memaksa Grid menjadi Kolom (Vertikal) saat dicetak agar tidak berdesakan */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 print:flex print:flex-col print:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 print:flex print:flex-col print:gap-8 print:overflow-visible">
 
                     {/* --- ASESMEN POTENSI --- */}
-                    <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 print:shadow-none print:border-none print:p-0">
+                    <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 print:shadow-none print:border-none print:p-0 print:overflow-visible">
                         <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 border-b pb-3 print:border-slate-400">
                             <BrainCircuit className="h-5 w-5 text-indigo-500 print:text-slate-800" /> Asesmen Potensi (Jurus 1)
                         </h3>
 
-                        <div className="space-y-6">
+                        <div className="space-y-6 print:space-y-8">
                             {/* RIASEC */}
+                            {/* Mengunci section ini agar tidak terpotong halaman */}
                             <div className="print:break-inside-avoid">
                                 <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">Minat & Bakat (RIASEC)</p>
                                 {profile.riasec_result ? (
-                                    <div className="bg-indigo-50/50 border border-indigo-100 p-5 rounded-xl print:bg-white print:border-slate-300">
-                                        {/* PERBAIKAN: Memaksa tata letak menyamping saat dicetak dan membatasi ukuran grafik */}
-                                        <div className="flex flex-col xl:flex-row gap-4 items-center xl:items-start print:flex-row print:items-start print:flex-nowrap">
+                                    <div className="bg-indigo-50/50 border border-indigo-100 p-5 rounded-xl print:bg-white print:border-slate-300 print:p-6">
 
-                                            <div className="w-full xl:w-1/3 shrink-0 print:w-48 print:h-48 flex items-center justify-center">
+                                        {/* KUNCI PERBAIKAN: Posisi menyamping (flex-row), lebar tetap, dilarang menyusut (shrink-0) */}
+                                        <div className="flex flex-col xl:flex-row gap-6 items-center xl:items-start print:flex print:flex-row print:flex-nowrap print:items-start">
+
+                                            <div className="w-full xl:w-1/3 shrink-0 print:w-[250px] print:h-[250px] flex items-center justify-center">
                                                 <StudentRiasecRadar scores={(profile.riasec_result as any).scores} />
                                             </div>
 
-                                            <div className="w-full xl:w-2/3 print:w-auto print:flex-1">
+                                            <div className="w-full xl:w-2/3 print:flex-1">
                                                 <p className="text-2xl font-black text-indigo-700 tracking-widest print:text-slate-900 mb-1">
                                                     {profile.riasec_result.code}
                                                 </p>
@@ -159,18 +164,19 @@ export default function StudentProfilePage() {
                             </div>
 
                             {/* VARK */}
-                            <div className="print:break-inside-avoid print:mt-8">
+                            <div className="print:break-inside-avoid">
                                 <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">Gaya Belajar (VARK)</p>
                                 {profile.vark_result ? (
-                                    <div className="bg-teal-50/50 border border-teal-100 p-5 rounded-xl print:bg-white print:border-slate-300">
-                                        {/* PERBAIKAN: Sama seperti RIASEC, memaksa dimensi grafik saat dicetak */}
-                                        <div className="flex flex-col xl:flex-row gap-4 items-center xl:items-start print:flex-row print:items-start print:flex-nowrap">
+                                    <div className="bg-teal-50/50 border border-teal-100 p-5 rounded-xl print:bg-white print:border-slate-300 print:p-6">
 
-                                            <div className="w-full xl:w-1/3 shrink-0 print:w-48 print:h-48 flex items-center justify-center">
+                                        {/* KUNCI PERBAIKAN: Posisi menyamping (flex-row), lebar tetap, dilarang menyusut (shrink-0) */}
+                                        <div className="flex flex-col xl:flex-row gap-6 items-center xl:items-start print:flex print:flex-row print:flex-nowrap print:items-start">
+
+                                            <div className="w-full xl:w-1/3 shrink-0 print:w-[250px] print:h-[250px] flex items-center justify-center">
                                                 <StudentVarkPie scores={(profile.vark_result as any).scores} />
                                             </div>
 
-                                            <div className="w-full xl:w-2/3 print:w-auto print:flex-1">
+                                            <div className="w-full xl:w-2/3 print:flex-1">
                                                 <p className="text-2xl font-black text-teal-700 tracking-widest print:text-slate-900 mb-1">
                                                     {profile.vark_result.code}
                                                 </p>
@@ -197,7 +203,6 @@ export default function StudentProfilePage() {
                     </section>
 
                     {/* --- RIWAYAT EMOSI --- */}
-                    {/* PERBAIKAN: Memisahkan bagian ini agar tidak terpotong di tengah halaman */}
                     <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 print:shadow-none print:border-none print:p-0 print:break-before-auto">
                         <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 border-b pb-3 print:border-slate-400">
                             <Activity className="h-5 w-5 text-rose-500 print:text-slate-800" /> Rekam Emosi (Jurus 2)
@@ -208,15 +213,13 @@ export default function StudentProfilePage() {
                         ) : (
                             <div>
                                 <div className="print:break-inside-avoid">
-                                    {/* GRAFIK GARIS TREN EMOSI */}
                                     <StudentEmotionLine data={profile.recent_emotions} />
                                 </div>
 
                                 <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 border-t pt-4 print:border-slate-300">Riwayat Check-In Terbaru</p>
 
-                                <div className="space-y-4 max-h-100 overflow-y-auto pr-2 print:max-h-none print:overflow-visible">
+                                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 print:max-h-none print:overflow-visible">
                                     {profile.recent_emotions.map((emo, idx) => (
-                                        // PERBAIKAN: break-inside-avoid pada setiap kotak emosi
                                         <div key={emo.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 print:bg-white print:border-slate-300 print:break-inside-avoid">
                                             <div className="flex justify-between items-start mb-2">
                                                 <span className="px-2.5 py-1 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-md uppercase shadow-sm print:shadow-none print:border-slate-400">
