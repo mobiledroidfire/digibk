@@ -138,7 +138,7 @@ export default function StudentProfilePage() {
                                         {/* KUNCI PERBAIKAN: Posisi menyamping (flex-row), lebar tetap, dilarang menyusut (shrink-0) */}
                                         <div className="flex flex-col xl:flex-row gap-6 items-center xl:items-start print:flex print:flex-row print:flex-nowrap print:items-start">
 
-                                            <div className="w-full xl:w-1/3 shrink-0 print:w-[250px] print:h-[250px] flex items-center justify-center">
+                                            <div className="w-full xl:w-1/3 shrink-0 print:w-62.5 print:h-62.5 flex items-center justify-center">
                                                 <StudentRiasecRadar scores={(profile.riasec_result as any).scores} />
                                             </div>
 
@@ -172,7 +172,7 @@ export default function StudentProfilePage() {
                                         {/* KUNCI PERBAIKAN: Posisi menyamping (flex-row), lebar tetap, dilarang menyusut (shrink-0) */}
                                         <div className="flex flex-col xl:flex-row gap-6 items-center xl:items-start print:flex print:flex-row print:flex-nowrap print:items-start">
 
-                                            <div className="w-full xl:w-1/3 shrink-0 print:w-[250px] print:h-[250px] flex items-center justify-center">
+                                            <div className="w-full xl:w-1/3 shrink-0 print:w-62.5 print:h-62.5 flex items-center justify-center">
                                                 <StudentVarkPie scores={(profile.vark_result as any).scores} />
                                             </div>
 
@@ -218,7 +218,7 @@ export default function StudentProfilePage() {
 
                                 <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 border-t pt-4 print:border-slate-300">Riwayat Check-In Terbaru</p>
 
-                                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 print:max-h-none print:overflow-visible">
+                                <div className="space-y-4 max-h-100 overflow-y-auto pr-2 print:max-h-none print:overflow-visible">
                                     {profile.recent_emotions.map((emo, idx) => (
                                         <div key={emo.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 print:bg-white print:border-slate-300 print:break-inside-avoid">
                                             <div className="flex justify-between items-start mb-2">
