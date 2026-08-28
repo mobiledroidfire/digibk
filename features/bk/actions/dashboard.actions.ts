@@ -3,6 +3,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import type { EmotionType } from '@/features/student/types/emotion.types';
+import { isAtRisk } from '@/lib/rules/emotion.rules';
 
 export interface StudentListItem {
     id: string;
@@ -203,9 +204,7 @@ export async function getBkDashboardDataAction(
 
         const studentList: StudentListItem[] = (pagedStudentsRaw || []).map((student) => {
             const studentEmotion = allEmotions?.find(e => e.student_id === student.id);
-            const isCritical = studentEmotion
-                ? ['SAD', 'DISAPPOINTED', 'ANGRY', 'AFRAID', 'ANXIOUS'].includes(studentEmotion.emotion) && studentEmotion.intensity >= 7
-                : false;
+            const isCritical = isAtRisk(studentEmotion?.emotion, studentEmotion?.intensity);
 
             let cName = 'Belum Ada Kelas';
             if (student.class_memberships && student.class_memberships.length > 0) {

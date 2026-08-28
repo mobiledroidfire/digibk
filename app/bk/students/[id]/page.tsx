@@ -9,24 +9,13 @@ import {
     BrainCircuit, Activity, Clock, ShieldAlert, HeartPulse, Info
 } from 'lucide-react';
 import { getStudentDetailAction, type StudentFullProfile } from '@/features/bk/actions/student-detail.actions';
-import type { EmotionType } from '@/features/student/types/emotion.types';
+import { isAtRisk as checkStudentRisk, getEmotionLabel } from '@/lib/rules/emotion.rules';
+import { formatIndonesianDate } from '@/lib/utils/date.utils';
 
 // Import komponen grafik
 import StudentRiasecRadar from '@/features/bk/components/StudentRiasecRadar';
 import StudentVarkPie from '@/features/bk/components/StudentVarkPie';
 import StudentEmotionLine from '@/features/bk/components/StudentEmotionLine';
-
-const EMOTION_MAP: Record<EmotionType, string> = {
-    'HAPPY': 'Senang', 'CALM': 'Tenang', 'NEUTRAL': 'Netral',
-    'CONFUSED': 'Bingung', 'SAD': 'Sedih', 'DISAPPOINTED': 'Kecewa',
-    'ANGRY': 'Marah', 'AFRAID': 'Takut', 'ANXIOUS': 'Cemas', 'OTHER': 'Lainnya'
-};
-
-const formatIndonesianDate = (dateString: string) => {
-    return new Intl.DateTimeFormat('id-ID', {
-        day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
-    }).format(new Date(dateString)) + ' WIB';
-};
 
 export default function StudentProfilePage() {
     const params = useParams();
@@ -67,7 +56,7 @@ export default function StudentProfilePage() {
     }
 
     const latestEmotion = profile.recent_emotions[0];
-    const isAtRisk = latestEmotion && ['SAD', 'DISAPPOINTED', 'ANGRY', 'AFRAID', 'ANXIOUS'].includes(latestEmotion.emotion) && latestEmotion.intensity >= 7;
+    const isAtRisk = latestEmotion && checkStudentRisk(latestEmotion.emotion, latestEmotion.intensity);
 
     return (
         <div className="min-h-screen bg-slate-50 pb-16 font-sans print:bg-white print:pb-0 print:w-full print:overflow-visible">
@@ -129,17 +118,13 @@ export default function StudentProfilePage() {
 
                         <div className="space-y-6 print:space-y-8">
                             {/* RIASEC */}
-                            {/* Mengunci section ini agar tidak terpotong halaman */}
                             <div className="print:break-inside-avoid">
                                 <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">Minat & Bakat (RIASEC)</p>
                                 {profile.riasec_result ? (
                                     <div className="bg-indigo-50/50 border border-indigo-100 p-5 rounded-xl print:bg-white print:border-slate-300 print:p-6">
-
-                                        {/* KUNCI PERBAIKAN: Posisi menyamping (flex-row), lebar tetap, dilarang menyusut (shrink-0) */}
                                         <div className="flex flex-col xl:flex-row gap-6 items-center xl:items-start print:flex print:flex-row print:flex-nowrap print:items-start">
-
                                             <div className="w-full xl:w-1/3 shrink-0 print:w-62.5 print:h-62.5 flex items-center justify-center">
-                                                <StudentRiasecRadar scores={(profile.riasec_result as any).scores} />
+                                                <StudentRiasecRadar scores={profile.riasec_result.scores} />
                                             </div>
 
                                             <div className="w-full xl:w-2/3 print:flex-1">
@@ -168,12 +153,9 @@ export default function StudentProfilePage() {
                                 <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">Gaya Belajar (VARK)</p>
                                 {profile.vark_result ? (
                                     <div className="bg-teal-50/50 border border-teal-100 p-5 rounded-xl print:bg-white print:border-slate-300 print:p-6">
-
-                                        {/* KUNCI PERBAIKAN: Posisi menyamping (flex-row), lebar tetap, dilarang menyusut (shrink-0) */}
                                         <div className="flex flex-col xl:flex-row gap-6 items-center xl:items-start print:flex print:flex-row print:flex-nowrap print:items-start">
-
                                             <div className="w-full xl:w-1/3 shrink-0 print:w-62.5 print:h-62.5 flex items-center justify-center">
-                                                <StudentVarkPie scores={(profile.vark_result as any).scores} />
+                                                <StudentVarkPie scores={profile.vark_result.scores} />
                                             </div>
 
                                             <div className="w-full xl:w-2/3 print:flex-1">
@@ -223,7 +205,7 @@ export default function StudentProfilePage() {
                                         <div key={emo.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 print:bg-white print:border-slate-300 print:break-inside-avoid">
                                             <div className="flex justify-between items-start mb-2">
                                                 <span className="px-2.5 py-1 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-md uppercase shadow-sm print:shadow-none print:border-slate-400">
-                                                    {EMOTION_MAP[emo.emotion] || emo.emotion} (Skala: {emo.intensity}/10)
+                                                    {getEmotionLabel(emo.emotion)} (Skala: {emo.intensity}/10)
                                                 </span>
                                                 <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 print:text-slate-500">
                                                     <Clock className="h-3 w-3" /> {idx === 0 ? 'Terbaru' : formatIndonesianDate(emo.created_at)}

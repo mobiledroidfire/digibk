@@ -22,7 +22,17 @@ const supabaseAdmin = createAdminClient(
 // TYPES
 // ============================================================
 
-type VarkCode = VarkProfile['dominant_code'];
+import {
+    VARK_CODES,
+    VARK_EXPECTED_QUESTIONS,
+    VARK_SCORING_VERSION,
+    VARK_VERSION_MAP,
+    VARK_DIMENSION_PRIORITY,
+    VARK_DESC,
+    VARK_MULTIMODAL_DESC,
+    type VarkCode
+} from "@/lib/constants/vark.constants";
+
 type VarkAnswer = z.infer<typeof answerItemSchema>;
 
 type DimensionRecord = {
@@ -40,28 +50,6 @@ type QuestionRecord = {
     | DimensionRecord[]
     | null;
 };
-
-// ============================================================
-// CONFIG
-// ============================================================
-
-const VARK_CODES: VarkCode[] = ["V", "A", "R", "K"];
-const VARK_EXPECTED_QUESTIONS = 20;
-const VARK_SCORING_VERSION = "VARK-SCORING-v1";
-
-const VARK_VERSION_MAP: Record<string, string> = {
-    SD: "VARK-SD-v1",
-    MI: "VARK-MI-v1",
-    SMP: "VARK-SMP-v1",
-    MTs: "VARK-MTs-v1",
-    SMA: "VARK-SMA-v1",
-    MA: "VARK-MA-v1",
-    SMK: "VARK-SMK-v1",
-};
-
-// ============================================================
-// HELPER
-// ============================================================
 
 function normalizeDimensionCode(value: unknown): VarkCode | null {
     const code = String(value ?? "").trim().toUpperCase();
@@ -228,10 +216,9 @@ export async function submitVarkAssessment(versionId: string, unvalidatedAnswers
 
     const totalScore = Object.values(scores).reduce((total, score) => total + score, 0);
 
-    const dimensionPriority: Record<VarkCode, number> = { V: 1, A: 2, R: 3, K: 4 };
     const sortedScores = Object.entries(scores).sort(([codeA, scoreA], [codeB, scoreB]) => {
         if (scoreB !== scoreA) return scoreB - scoreA;
-        return dimensionPriority[codeA as VarkCode] - dimensionPriority[codeB as VarkCode];
+        return VARK_DIMENSION_PRIORITY[codeA as VarkCode] - VARK_DIMENSION_PRIORITY[codeB as VarkCode];
     });
 
     const dominantCode = sortedScores[0][0] as VarkCode;
@@ -245,16 +232,8 @@ export async function submitVarkAssessment(versionId: string, unvalidatedAnswers
     const dominantVarkItems = sortedScores.filter(([_, score]) => score === maxVarkScore);
     const profileCode = dominantVarkItems.map(([code]) => code).join("");
 
-    const VARK_DESC: Record<string, string> = {
-        'V': 'Kamu peka terhadap informasi visual. Menggunakan gambar, diagram, grafik, atau video akan membuat materi jauh lebih mudah diingat.',
-        'A': 'Kamu menyerap informasi dengan mendengarkan. Penjelasan guru, diskusi, atau merekam materi adalah metode paling jitu untukmu.',
-        'R': 'Kamu kuat memahami instruksi teks. Membaca buku teks, merangkum materi, atau menulis ulang catatan adalah cara paling efektif.',
-        'K': 'Kamu tipe pembelajar yang harus "bergerak". Melakukan eksperimen, simulasi, atau praktik langsung akan membuatmu cepat paham.'
-    };
-    const VARK_MULTIMODAL = 'Sebagai seorang pembelajar Multimodal, Anda memiliki keunggulan kognitif dalam memproses informasi melalui berbagai saluran. Alih-alih bergantung pada satu metode tunggal, Anda mampu mengintegrasikan isyarat visual, auditori, teks, dan kinestetik secara bersamaan.';
-
     // Jika huruf yang dominan lebih dari 1, simpan teks Multimodal
-    const dbVarkInterpretation = profileCode.length > 1 ? VARK_MULTIMODAL : (VARK_DESC[dominantCode] || '');
+    const dbVarkInterpretation = profileCode.length > 1 ? VARK_MULTIMODAL_DESC : (VARK_DESC[dominantCode]?.desc || '');
 
     // ----------------------------------------------------------
     // SESSION (TABEL INDUK)

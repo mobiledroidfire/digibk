@@ -13,7 +13,16 @@ const supabaseAdmin = createAdminClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-type RiasecCode = Exclude<RiasecProfile['primary_code'], null>;
+import {
+    RIASEC_CODES,
+    RIASEC_EXPECTED_QUESTIONS,
+    RIASEC_SCORING_VERSION,
+    RIASEC_VERSION_MAP,
+    RIASEC_DIMENSION_PRIORITY,
+    RIASEC_DESC,
+    type RiasecCode
+} from "@/lib/constants/riasec.constants";
+
 type RiasecAnswer = z.infer<typeof answerItemSchema>;
 
 type DimensionRecord = {
@@ -41,20 +50,6 @@ type DatabaseQuestionRecord = {
     | DimensionRecord
     | DimensionRecord[]
     | null;
-};
-
-const RIASEC_CODES: RiasecCode[] = ["R", "I", "A", "S", "E", "C"];
-const RIASEC_EXPECTED_QUESTIONS = 42;
-const RIASEC_SCORING_VERSION = "RIASEC-SCORING-v1";
-
-const RIASEC_VERSION_MAP: Record<string, string> = {
-    SD: "RIASEC-SD-v1",
-    MI: "RIASEC-MI-v1",
-    SMP: "RIASEC-SMP-v1",
-    MTs: "RIASEC-MTs-v1",
-    SMA: "RIASEC-SMA-v1",
-    MA: "RIASEC-MA-v1",
-    SMK: "RIASEC-SMK-v1",
 };
 
 function normalizeDimensionCode(value: unknown): RiasecCode | null {
@@ -223,26 +218,15 @@ export async function submitRiasecAssessment(versionId: string, unvalidatedAnswe
 
     const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
 
-    const dimensionPriority: Record<RiasecCode, number> = { R: 1, I: 2, A: 3, S: 4, E: 5, C: 6 };
     const sortedScores = Object.entries(scores).sort(([codeA, scoreA], [codeB, scoreB]) => {
         if (scoreB !== scoreA) return scoreB - scoreA;
-        return dimensionPriority[codeA as RiasecCode] - dimensionPriority[codeB as RiasecCode];
+        return RIASEC_DIMENSION_PRIORITY[codeA as RiasecCode] - RIASEC_DIMENSION_PRIORITY[codeB as RiasecCode];
     });
 
     const dominantCode = sortedScores[0][0] as RiasecCode;
     const secondaryCode = sortedScores[1][0] as RiasecCode;
     const tertiaryCode = sortedScores[2][0] as RiasecCode;
     const profileCode = sortedScores.slice(0, 3).map(([code]) => code).join("");
-
-    // --- KAMUS UNTUK DISIMPAN KE DB (Penerapan Hybrid) ---
-    const RIASEC_DESC: Record<string, { title: string, id: string, desc: string }> = {
-        'R': { title: 'Realistic', id: 'Realistis', desc: 'Menyukai aktivitas fisik, mesin, alat, dan lingkungan luar ruangan.' },
-        'I': { title: 'Investigative', id: 'Investigatif', desc: 'Memiliki rasa ingin tahu yang tinggi, menyukai analisis, dan sains.' },
-        'A': { title: 'Artistic', id: 'Artistik', desc: 'Menyukai kreativitas, seni, kebebasan berekspresi, dan inovasi.' },
-        'S': { title: 'Social', id: 'Sosial', desc: 'Menyukai interaksi, gemar menolong, dan membimbing orang lain.' },
-        'E': { title: 'Enterprising', id: 'Wirausaha', desc: 'Menyukai kepemimpinan, mampu memengaruhi orang lain, dan berani mengambil risiko.' },
-        'C': { title: 'Conventional', id: 'Konvensional', desc: 'Menyukai keteraturan, mengolah data, dan aktivitas yang terstruktur.' }
-    };
 
     const d1 = RIASEC_DESC[dominantCode] || RIASEC_DESC['C'];
     const d2 = RIASEC_DESC[secondaryCode] || RIASEC_DESC['C'];

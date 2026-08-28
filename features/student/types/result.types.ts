@@ -2,6 +2,7 @@
 
 import type { LevelData, PhaseData as RiasecPhase } from '@/lib/data/riasec';
 import type { ProfileDetailVark, PhaseData as VarkPhase } from '@/lib/data/vark';
+export type { RiskLevel } from '@/lib/rules/emotion.rules';
 
 // ============================================================================
 // 1. TIPE REUSABLE (DIGUNAKAN BERSAMA OLEH RIASEC DAN VARK)
@@ -16,13 +17,22 @@ export interface StudentInfo {
 
 export interface ScoreItem {
     code: string;
-    raw_score: number | string; // Tetap mempertahankan number | string milikmu
-    normalized_score?: number;  // Tambahan dari kodeku untuk database
-    rank?: number;              // Tambahan dari kodeku untuk database
+    raw_score: number | string;
+    normalized_score?: number | null;
+    rank?: number | null;
+}
+
+export interface ChartScoreItem {
+    name: string;
+    score: number;
+}
+
+export interface VarkChartScoreItem extends ChartScoreItem {
+    fill: string;
 }
 
 // ============================================================================
-// 2. TIPE RIASEC (DIPERTAHANKAN 100% DARI KODE ASLIMU)
+// 2. TIPE RIASEC
 // ============================================================================
 export interface RiasecDictItem {
     title: string;
@@ -68,13 +78,10 @@ export interface RiasecDisplayData {
 }
 
 // ============================================================================
-// 3. TIPE VARK (GABUNGAN KODE KITA)
+// 3. TIPE VARK
 // ============================================================================
-
-// Menggunakan alias dari kamus VARK langsung agar 100% sinkron dengan data asli
 export type VarkDictItem = ProfileDetailVark;
 
-// Model representasi tabel profil VARK di Supabase
 export interface VarkProfileModel {
     id: string;
     result_id: string;
@@ -88,11 +95,11 @@ export interface VarkProfileModel {
 }
 
 export interface VarkDisplayData {
-    student: StudentInfo; // Menggunakan StudentInfo milikmu agar rapi
+    student: StudentInfo;
     phaseInfo: {
         isTransisi: boolean;
         bannerTitle: string;
-        bannerMessage: string;
+        bannerMessage: string | null;
     };
     uiData: {
         sortedScores: ScoreItem[];
