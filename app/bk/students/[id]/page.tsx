@@ -9,7 +9,7 @@ import {
     BrainCircuit, Activity, Clock, ShieldAlert, HeartPulse, Info
 } from 'lucide-react';
 import { getStudentDetailAction, type StudentFullProfile } from '@/features/bk/actions/student-detail.actions';
-import { isAtRisk as checkStudentRisk, getEmotionLabel } from '@/lib/rules/emotion.rules';
+import { isAtRisk as checkStudentRisk, getEmotionLabelWithEmoji } from '@/lib/rules/emotion.rules';
 import { formatIndonesianDate } from '@/lib/utils/date.utils';
 
 // Import komponen grafik
@@ -204,8 +204,8 @@ export default function StudentProfilePage() {
                                     {profile.recent_emotions.map((emo, idx) => (
                                         <div key={emo.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 print:bg-white print:border-slate-300 print:break-inside-avoid">
                                             <div className="flex justify-between items-start mb-2">
-                                                <span className="px-2.5 py-1 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-md uppercase shadow-sm print:shadow-none print:border-slate-400">
-                                                    {getEmotionLabel(emo.emotion)} (Skala: {emo.intensity}/10)
+                                                <span className="px-2.5 py-1 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-md shadow-sm print:shadow-none print:border-slate-400">
+                                                    {getEmotionLabelWithEmoji(emo.emotion)} (Skala: {emo.intensity}/10)
                                                 </span>
                                                 <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 print:text-slate-500">
                                                     <Clock className="h-3 w-3" /> {idx === 0 ? 'Terbaru' : formatIndonesianDate(emo.created_at)}

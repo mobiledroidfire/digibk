@@ -4,6 +4,7 @@
 import React from 'react';
 import type { EmotionStat } from '@/features/bk/actions/dashboard.actions';
 import type { EmotionType } from '@/features/student/types/emotion.types';
+import { getEmotionEmoji } from '@/lib/rules/emotion.rules';
 
 const EMOTION_CONFIG: Record<EmotionType, { label: string, color: string, bg: string }> = {
     'HAPPY': { label: 'Senang', color: 'bg-emerald-500', bg: 'bg-emerald-50' },
@@ -54,7 +55,10 @@ export default function EmotionSummaryChart({ data, total }: EmotionSummaryChart
                         <div key={stat.emotion} className="flex items-center gap-3">
                             <div className={`w-3 h-3 rounded-full ${config.color} shadow-xs shrink-0`} />
                             <div>
-                                <p className="text-xs font-bold text-slate-700">{config.label}</p>
+                                <p className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                                    <span>{getEmotionEmoji(stat.emotion)}</span>
+                                    <span>{config.label}</span>
+                                </p>
                                 <p className="text-[11px] font-medium text-slate-400">{stat.count} Siswa ({stat.percentage}%)</p>
                             </div>
                         </div>
